@@ -18,7 +18,7 @@ source ./../setup.conf
 source ./../functions
 
 verify_vdrversion "$VDRVERSION" || exit 1
-[ $(( ${VDRVERSION:2:1} % 2 )) -eq 0 ] && VDRWEB="ftp://ftp.cadsoft.de/vdr" || VDRWEB="ftp://ftp.cadsoft.de/vdr/Developer"
+[ $(( ${VDRVERSION:2:1} % 2 )) -eq 0 ] && VDRWEB="ftp://ftp.tvdr.de/vdr" || VDRWEB="ftp://ftp.tvdr.de/vdr/Developer"
 
 # create error file
 error_file="$SOURCEDIR/x-vdr/.error"
@@ -124,7 +124,7 @@ ln -vnfs vdr-$VDRVERSION VDR
 
 # create VDR make.config
 function make_makeconfig() {
-  MAKECONFIG="$SOURCEDIR/VDR/Make.config"
+  MAKECONFIG="$SOURCEDIR/VDR/Make.global"
   [ -f $MAKECONFIG ] && mv -f $MAKECONFIG $MAKECONFIG.old
 
   {
@@ -780,7 +780,8 @@ function make_makeconfig() {
   } > $MAKECONFIG
 }
 make_makeconfig
-
+cd $SOURCEDIR/VDR
+cp Make.global Make.config
 ## patch VDR
 cd $SOURCEDIR/VDR
 
