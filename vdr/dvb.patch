@@ -1,0 +1,11 @@
+--- vdr-1.7.8/dvbdevice.h.orig	2009-09-29 19:29:34.000000000 +0200
++++ vdr-1.7.8/dvbdevice.h	2009-09-29 19:29:54.000000000 +0200
+@@ -16,7 +16,7 @@
+ #include "device.h"
+ #include "dvbspu.h"
+ 
+-#if DVB_API_VERSION != 5 || DVB_API_VERSION_MINOR != 0
++#if DVB_API_VERSION != 5 
+ #error VDR requires Linux DVB driver API version 5.0!
+ #endif
+ 
