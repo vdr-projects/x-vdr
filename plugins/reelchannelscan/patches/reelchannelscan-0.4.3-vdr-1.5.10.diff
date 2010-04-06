@@ -1,0 +1,31 @@
+diff -Naur reelchannelscan-0.4.3-orig/filter.c reelchannelscan-0.4.3/filter.c
+--- reelchannelscan-0.4.3-orig/filter.c	2007-05-19 15:50:09.000000000 +0200
++++ reelchannelscan-0.4.3/filter.c	2007-10-20 13:33:05.000000000 +0200
+@@ -400,9 +400,15 @@
+         int Ppid = pmt.getPCRPid();
+         int Apids[MAXAPIDS + 1] = { 0 };
+         int Dpids[MAXDPIDS + 1] = { 0 };
++#if VDRVERSNUM >= 10510
++        int Spids[MAXDPIDS + 1] = { 0 };
++#endif
+ #if VDRVERSNUM >= 10332
+         char ALangs[MAXAPIDS + 1][MAXLANGCODE2] = { "" };
+         char DLangs[MAXDPIDS + 1][MAXLANGCODE2] = { "" };
++#if VDRVERSNUM >= 10510
++        char SLangs[MAXDPIDS + 1][MAXLANGCODE2] = { "" };
++#endif
+ #else
+         char ALangs[MAXAPIDS + 1][4] = { "" };
+         char DLangs[MAXDPIDS + 1][4] = { "" };
+@@ -481,7 +484,11 @@
+                 delete d;
+                 }
+             }
++#if VDRVERSNUM >= 10510
++        Channel->SetPids(Vpid, Vpid ? Ppid : 0, Apids, ALangs, Dpids, DLangs, Spids, SLangs, Tpid);
++#else
+         Channel->SetPids(Vpid, Vpid ? Ppid : 0, Apids, ALangs, Dpids, DLangs, Tpid);
++#endif
+         //printf("#### %i %s %i %i SID  %i\n",num,Channel->Name(),Vpid, Apids[0], Channel->Sid());
+         Channel->SetCaIds(CaDescriptors->CaIds());
+         Channel->SetCaDescriptors(CaDescriptorHandler.AddCaDescriptors(CaDescriptors));

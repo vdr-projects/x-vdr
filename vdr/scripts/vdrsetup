@@ -1,0 +1,1896 @@
+#!/bin/bash
+#
+# (x-)vdrsetup 0.0.8 - script for OSDServer on localhost
+# by Marc Wernecke - www.zulu-entertainment.de
+# 12.02.2009
+
+script="$0"
+
+# convenient return values
+true=0
+false=1
+
+
+# Some generic stuff for handling a connection
+
+function error() {
+    # Fatal error. Send quit command, close FIFO and terminate netcat
+    DoLog "fatal error, disconnecting..."
+    [ "${reply2xx[0]}" != 202 ] && SendCmd Quit
+
+    exec 3>&-
+    exec 4>&-
+
+    kill $pid
+
+    exit 1
+}
+
+function ConnectServer() {
+    # Connect to the OSDServer
+    DoLog "connecting to the OSDServer..."
+    # Set up temporary fifo and open as file descriptor 3 and 4
+    mkfifo --mode=700 /tmp/pipe-in$$ /tmp/pipe-out$$
+    exec 3<> /tmp/pipe-in$$
+    exec 4<> /tmp/pipe-out$$
+    rm /tmp/pipe-in$$ /tmp/pipe-out$$
+    
+    # Connect to server using the fifo
+    { 
+        netcat $1 $2
+        
+        # In case of connection loss:
+        echo 499 disconnected
+        echo 202 Good Bye.
+    } <&3 >&4 &
+    pid=$!
+    
+    # Sending to the server: use >&3
+    # Receive from the server: use <&4
+}
+
+
+function ReadReply() {
+    # Read a complete server reply until 2xx return code,
+    # and store replies in each category by number
+    reply2xx=()
+    reply3xx=()
+    reply4xx=()
+    reply5xx=()
+    reply6xx=()
+
+    while read -r code line <&4 ; do
+        echo "< $code $line"
+        # screen echo
+
+        # vdrsetup debug
+        if [ "$vdrsetup_use_debug" = "on" ]; then
+            [ "$vdrsetup_use_log" = "on" ] && echo "< $code $line" >> "$vdrsetup_log"
+            [ "$vdrsetup_use_syslog" = "on" ] && $LOGGER "< $code $line"
+        fi
+
+        case $code in
+            2*)     IFS=$' \t\n\r' reply2xx=($code "$line")
+                    ;;
+            3*)     IFS=$' \t\n\r' reply3xx=($code $line)
+                    ;;
+            4*)     IFS=$' \t\n\r' reply4xx=($code "$line")
+                    ;;
+            5*)     IFS=$' \t\n\r' reply5xx=($code "$line")
+                    ;;
+            6*)     IFS=$' \t\n\r' reply6xx=($code "$line")
+                    ;;
+        esac
+        [ -n "${reply2xx[0]}" ] && break
+    done
+
+    [ -n "${reply4xx[0]}" ] && return $false
+    return $true
+}
+
+function SendCmd() {
+    # Send a command and read the reply
+
+    echo "> $*"
+    # screen echo
+
+    echo "$*" >&3
+    # network send
+
+    # vdrsetup debug
+    if [ "$vdrsetup_use_debug" = "on" ]; then
+        [ "$vdrsetup_use_log" = "on" ] && echo "> $*" >> "$vdrsetup_log"
+        [ "$vdrsetup_use_syslog" = "on" ] && $LOGGER "> $*"
+    fi
+
+    ReadReply
+}
+
+function IsEvent() {
+    # Helper to check reply for a certain event
+
+    [ "${reply3xx[0]}" != 300 ] && return $false
+    [ "${reply3xx[1]}" != "$1" ] && return $false
+    [ "${reply3xx[2]}" != "$2" ] && return $false
+
+    return $true
+}
+
+
+function QuoteString() {
+    # Quote arbitrary string for use in '' and ""
+    local str="${!1}"
+    
+    str="${str//'\'/\\\\}"
+    str="${str//'\\'/\\\\}"
+    # work around bash bug: double quoted '\'
+    
+    str="${str//\'/$'\\\''}"
+    # This is bogus, anyone knows something better to replace ' by \' ?
+    
+    str="${str//\"/\\\"}"
+    str="${str//$'\r'/\\r}"
+    str="${str//$'\n'/\\n}"
+    str="${str//$'\t'/\\t}"
+    
+    eval "$1=\$str"
+}
+
+function UnquoteString() {
+    # Unquote string
+    local str="${!1}"
+
+    str="${str//\\r/$'\r'}"
+    str="${str//\\n/$'\n'}"
+    str="${str//\\t/$'\t'}"
+    str="${str//\\\"/\"}"
+    str="${str//\\\'/\'}"
+    str="${str//\\\\/\\}"
+
+    eval "$1=\$str"
+}
+
+
+##############
+#  vdrsetup  #
+##############
+vdrsetup_ok_ends="on"
+vdrsetup_key_timeout=1000
+# logging
+LOGGER="logger -- ${0##*/} - "
+vdrsetup_use_screen="on"            # echo setup changings to the screen
+vdrsetup_use_log="off"              # echo setup changings to $vdrsetup_log
+vdrsetup_log="/tmp/vdrsetup.log"    # log file
+vdrsetup_use_syslog="on"            # echo setup changings (with LOGGER) to syslog
+vdrsetup_use_debug="off"            # enable comunications log
+
+# vdr configuration
+config=/etc/default/vdr             # path to vdr configuration
+. $config                           # load vdr configuration
+[ -f "$VDRCONFDIR/plugins/vdrsetup.conf" ] && . "$VDRCONFDIR/plugins/vdrsetup.conf"
+
+# x-vdr
+have_xvdr="on"
+[ ! -f /usr/local/src/x-vdr/setup.conf ] && have_xvdr="off"
+
+# /tmp/vdr-help.tmp
+[ ! -f /tmp/vdr-help.tmp ] && $VDRPRG --help  | sed -e '/^$/d' -e 's/^. //' > /tmp/vdr-help.tmp
+
+# vdr-desc.cache
+[ ! -f /tmp/vdr-desc.cache ] && $VDRPRG --version | sed -e 's/\(^[^ ]*\)\(.*$\)/\1_desc="\1\2"/' -e '/^streamdev/s/-/_/' -e 's/^\[.*//' | sort > /tmp/vdr-desc.cache
+. /tmp/vdr-desc.cache
+vdr_version=$(echo $vdr_desc | sed -e 's/[^)]*$//')
+plugin_api=$(echo $vdr_desc  | sed -e 's/[^)]*$//' -e 's/^[^\/]*//g' -e 's/\///' -e 's/\/*)//')
+
+# reset logfile
+[ "$vdrsetup_use_log" = "on" ] && echo "$0" > "$vdrsetup_log"
+
+# helper functions =>
+function DoLog() {
+    [ "$vdrsetup_use_log" = "on" ]    && echo "$*" >> "$vdrsetup_log"
+    [ "$vdrsetup_use_screen" = "on" ] && echo ">> $*"
+    [ "$vdrsetup_use_syslog" = "on" ] && $LOGGER "$*"
+}
+
+function CreateDir() {
+    directory="$*"
+    if [ ! -d "$directory" ]; then
+        SendCmd "Message -seconds 10 'Create $directory?'" || return $false
+        if IsEvent Message keyOk ; then
+            mkdir -p "$directory"
+            chown -R $VDRUSER:$VDRGROUP "$directory"
+            [ -d "$directory" ] && DoLog "creating \"$directory\""
+        fi
+    else
+        DoLog "directory \"$directory\" already exist"
+    fi
+}
+
+# Menu functions =>
+
+##### Script-Setup Menu #####
+function ScriptSetup() {
+    # Menu --------------------------------------------------------------------------------------------------------------------------------->
+    SendCmd      "enterlocal"                                                                                                || return $false
+    SendCmd      "menu=New Menu                                               'Skript Intern'"                               || return $false
+    SendCmd      "menu.SetColorKeyText -blue 'Help'"                                                                         || return $false
+    SendCmd      "menu.SetColumns 24"                                                                                        || return $false
+    SendCmd      "menu.EnableEvent keyOk keyBlue close"                                                                      || return $false
+    # List --------------------------------------------------------------------------------------------------------------------------------->
+    SendCmd      "menu.AddNew OsdItem      -unselectable                      '--- Einstellungen ---'"                       || return $false
+    SendCmd "opt1=menu.AddNew EditListItem -selectname '$vdrsetup_ok_ends'    'Beim Speichern beenden'               on off" || return $false
+    SendCmd "opt2=menu.AddNew EditIntItem                                     'Tasten Timeout (ms)' '$vdrsetup_key_timeout'" || return $false
+    SendCmd      "menu.AddNew OsdItem      -unselectable                      ''"                                            || return $false
+    SendCmd      "menu.AddNew OsdItem      -unselectable                      '--- Logging ---'"                             || return $false
+    SendCmd "opt3=menu.AddNew EditListItem -selectname '$vdrsetup_use_log'    'Benutze Log Datei'                    on off" || return $false
+    SendCmd "opt4=menu.AddNew EditStrItem                                     'Log Datei'                    $vdrsetup_log'" || return $false
+    SendCmd "opt5=menu.AddNew EditListItem -selectname '$vdrsetup_use_syslog' 'Syslog benutzen'                      on off" || return $false
+    SendCmd "opt6=menu.AddNew EditListItem -selectname '$vdrsetup_use_debug'  'Debug Nachrichten'                    on off" || return $false
+    SendCmd      "menu.AddNew OsdItem      -unselectable                      ''"                                            || return $false
+    SendCmd      "menu.AddNew OsdItem      -unselectable                      '--- Befehle ---'"                             || return $false
+    SendCmd "opt7=menu.AddNew OsdItem                                         'Cache neu erstellen'"                         || return $false
+    SendCmd      "opt7.EnableEvent keyRed focus blur"                                                                        || return $false
+    # <--------------------------------------------------------------------------------------------------------------------------------- List
+    SendCmd      "_focus.addsubmenu menu"                                                                                    || return $false
+    SendCmd      "opt1.SetCurrent"                                                                                           || return $false
+    SendCmd      "menu.show"                                                                                                 || return $false
+    # <--------------------------------------------------------------------------------------------------------------------------------- Menu
+
+    while true; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk
+        if IsEvent menu keyOk ; then
+            echo "# $script" > "$VDRCONFDIR/plugins/vdrsetup.conf"
+            # vdrsetup_ok_ends
+            SendCmd "opt1.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            vdrsetup_ok_ends="${reply6xx[1]}"
+            echo "vdrsetup_ok_ends=\"$vdrsetup_ok_ends\"" >> "$VDRCONFDIR/plugins/vdrsetup.conf"
+            # key_timeout
+            SendCmd "opt2.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            vdrsetup_key_timeout="${reply6xx[1]}"
+            echo "vdrsetup_key_timeout=\"$vdrsetup_key_timeout\"" >> "$VDRCONFDIR/plugins/vdrsetup.conf"
+            # vdrsetup_use_log
+            SendCmd "opt3.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            vdrsetup_use_log="${reply6xx[1]}"
+            echo "vdrsetup_use_log=\"$vdrsetup_use_log\"" >> "$VDRCONFDIR/plugins/vdrsetup.conf"
+            # vdrsetup_log
+            SendCmd "opt4.GetValue -quoted" || return $false
+            if [ "${reply5xx[0]}" = 500 ]; then
+                value=$(echo " ${reply5xx[1]}" | sed -e 's/^ //g' -e 's/\\r//g')
+                [ -d "$(dirname "$value")" ] && vdrsetup_log="$value"
+            fi
+            echo "vdrsetup_log=\"$vdrsetup_log\"" >> "$VDRCONFDIR/plugins/vdrsetup.conf"
+            # vdrsetup_use_syslog
+            SendCmd "opt5.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            vdrsetup_use_syslog="${reply6xx[1]}"
+            echo "vdrsetup_use_syslog=\"$vdrsetup_use_syslog\"" >> "$VDRCONFDIR/plugins/vdrsetup.conf"
+            # vdrsetup_use_debug
+            SendCmd "opt6.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            vdrsetup_use_debug="${reply6xx[1]}"
+            echo "vdrsetup_use_debug=\"$vdrsetup_use_debug\"" >> "$VDRCONFDIR/plugins/vdrsetup.conf"
+            # close the submenu
+            if [ "$vdrsetup_ok_ends" = "on" ]; then
+                SendCmd "menu.SendState osBack" || return $false
+#                SendCmd "delete menu" || return $false
+#                SendCmd "leavelocal" || return $false
+#                return $true
+            fi
+        fi
+        if IsEvent opt7 focus ; then
+            SendCmd "menu.SetColorKeyText -red Create" || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        if IsEvent opt7 blur ; then
+            SendCmd "menu.SetColorKeyText -red ''" || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        if IsEvent opt7 keyRed ; then
+            SendCmd "Message -seconds 10 '/tmp/vdr-desc.cache erstellen?'" || return $false
+            if IsEvent Message keyOk ; then
+                $VDRPRG --version | sed -e 's/\(^[^ ]*\)\(.*$\)/\1_desc="\1\2"/' -e '/^streamdev/s/-/_/' -e 's/^\[.*//' | sort > /tmp/vdr-desc.cache
+                . /tmp/vdr-desc.cache
+            fi
+        fi
+        # keyBlue (Help)
+        if IsEvent menu keyBlue ; then
+            SendCmd "Message -seconds 5 'Auswahl mit Links und Rechts, speichern mit Ok'" || return $false
+        fi
+        # close the submenu
+        if IsEvent menu close ; then
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+            return $true
+        fi
+    done
+}
+
+##### System-Start Menu #####
+function SystemStart() {
+    Gdm="$(find /etc/rc*d/S*gdm)"
+    if [ -n "$Gdm" ]; then
+      DESKTOP_MANGER="gdm"
+      [ -f /etc/rc2.d/S30gdm ] && echo warning
+      [ -f /etc/rc3.d/S30gdm ] && DESKTOP="on"
+    fi
+
+    RUNLEVEL_STR="$(cat /etc/inittab | grep -m1 ^id:)"
+    RUNLEVEL=$(echo $RUNLEVEL_STR | cut -f2 -d":")
+    if [ $RUNLEVEL -eq 5 ] || [ "$DESKTOP_MANGER" ="gdm" -a $RUNLEVEL -gt 2 ]; then
+        DESKTOP="on"
+    else
+        DESKTOP="off"
+    fi
+
+    # Menu ------------------------------------------------------------------------------------------------------------->
+    SendCmd "enterlocal"                                                                                 || return $false
+    SendCmd "menu=New Menu                                                'Systemstart'"                 || return $false
+    SendCmd      "menu.SetColorKeyText -blue 'Help'"                                                     || return $false
+    SendCmd      "menu.SetColumns 24"                                                                    || return $false
+    SendCmd      "menu.EnableEvent keyOk close"                                                          || return $false
+    # List ------------------------------------------------------------------------------------------------------------->
+    SendCmd      "menu.AddNew OsdItem      -unselectable                  '--- Programme ---'"           || return $false
+    SendCmd "opt1=menu.AddNew EditListItem -selectname   '$AUTOSTART'     'VDR'                  on off" || return $false
+    SendCmd      "opt1.EnableEvent keyBlue"                                                              || return $false
+    SendCmd "opt2=menu.AddNew EditListItem -selectname   '$XPLAYER'       'Xserver und Player'   on off" || return $false
+    SendCmd      "opt2.EnableEvent keyBlue"                                                              || return $false
+    SendCmd "opt3=menu.AddNew EditListItem -selectname   '$DESKTOP'       'Desktop-Manager'      on off" || return $false
+    SendCmd      "opt3.EnableEvent keyBlue"                                                              || return $false
+    SendCmd "opt4=menu.AddNew EditListItem -selectname   '$vdradmin'      'VDR-Admin'            on off" || return $false
+    SendCmd      "opt4.EnableEvent keyBlue"                                                              || return $false
+    SendCmd      "menu.AddNew OsdItem      -unselectable ''"                                             || return $false
+    SendCmd      "menu.AddNew OsdItem      -unselectable                  '--- Module ---'"              || return $false
+    SendCmd "optA=menu.AddNew EditListItem -selectname   '$em8300'        'DXR3'                 on off" || return $false
+    SendCmd      "optA.EnableEvent keyBlue"                                                              || return $false
+    SendCmd "optB=menu.AddNew EditListItem -selectname   '$graphlcd_base' 'GraphLCD'             on off" || return $false
+    SendCmd      "optB.EnableEvent keyBlue"                                                              || return $false
+    SendCmd "optC=menu.AddNew EditListItem -selectname   '$LCDproc'       'LCDproc'              on off" || return $false
+    SendCmd      "optC.EnableEvent keyBlue"                                                              || return $false
+    SendCmd "optD=menu.AddNew EditListItem -selectname   '$lirc'          'Lirc'                 on off" || return $false
+    SendCmd      "optD.EnableEvent keyBlue"                                                              || return $false
+    SendCmd "optE=menu.AddNew EditIntItem  -min 1 -max 2                  'Lirc Port'      '$lirc_port'" || return $false
+    SendCmd      "optE.EnableEvent keyBlue"                                                              || return $false
+    # <------------------------------------------------------------------------------------------------------------- List
+    SendCmd      "_focus.addsubmenu menu"                                                                || return $false
+    SendCmd      "opt1.SetCurrent"                                                                       || return $false
+    SendCmd      "menu.show"                                                                             || return $false
+    # <------------------------------------------------------------------------------------------------------------- Menu
+
+    while true; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk
+        if IsEvent menu keyOk ; then
+            # AUTOSTART
+            SendCmd "opt1.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$AUTOSTART" != "${reply6xx[1]}" ]; then
+                DoLog "changing AUTOSTART to ${reply6xx[1]}"
+                sed -i $config -e "/^AUTOSTART=/s/$AUTOSTART/${reply6xx[1]}/"
+                AUTOSTART=${reply6xx[1]}
+            fi
+            # Xserver and Player
+            SendCmd "opt2.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$XPLAYER" != "${reply6xx[1]}" ]; then
+                DoLog "changing XPLAYER to ${reply6xx[1]}"
+                sed -i $config -e "/^XPLAYER=/s/$XPLAYER/${reply6xx[1]}/"
+                XPLAYER=${reply6xx[1]}
+            fi
+            # Desktop-Manager
+            SendCmd "opt3.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$DESKTOP" != "${reply6xx[1]}" ] || [ "$DESKTOP" = "$XPLAYER" ]; then
+                DESKTOP=${reply6xx[1]}
+                [ "$XPLAYER" = "on" ] && DESKTOP="off"
+                DoLog "changing Desktop-Manager to $DESKTOP"
+                # runlevel
+                if [ $RUNLEVEL -eq 5 -a "$DESKTOP" = "off" ]; then
+                    sed -i /etc/inittab -e "s/$RUNLEVEL_STR/id:3:initdefault:/"
+                elif [ $RUNLEVEL -ne 5 -a "$DESKTOP" = "on" ]; then
+                    sed -i /etc/inittab -e "s/$RUNLEVEL_STR/id:5:initdefault:/"
+                fi
+                XWRAPPER_STR="$(cat /etc/X11/Xwrapper.config | grep -m1 ^allowed_users)"
+                XWRAPPER=$(echo $XWRAPPER_STR | cut -f2 -d"=")
+                if [ "$DESKTOP" != "on" -a "$XWRAPPER" != "anybody" ]; then
+                    log "Setting 'allowed_users' to 'anybody' in /etc/X11/Xwrapper.config"
+                    sed -i /etc/X11/Xwrapper.config -e "s/$XWRAPPER_STR/allowed_users=anybody/g"
+                fi
+            fi
+            # vdradmin
+            SendCmd "opt4.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$vdradmin" != "${reply6xx[1]}" ]; then
+                DoLog "changing vdradmin to ${reply6xx[1]}"
+                sed -i $config -e "/^vdradmin=/s/$vdradmin/${reply6xx[1]}/"
+                vdradmin=${reply6xx[1]}
+            fi
+            # dxr3
+            SendCmd "optA.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$em8300" != "${reply6xx[1]}" ]; then
+                DoLog "changing em8300 to ${reply6xx[1]}"
+                sed -i $config -e "/^em8300=/s/$em8300/${reply6xx[1]}/"
+                em8300=${reply6xx[1]}
+            fi
+            # graphlcd_base
+            SendCmd "optB.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$graphlcd_base" != "${reply6xx[1]}" ]; then
+                DoLog "changing graphlcd_base to ${reply6xx[1]}"
+                sed -i $config -e "/^graphlcd_base=/s/$graphlcd_base/${reply6xx[1]}/"
+                graphlcd_base=${reply6xx[1]}
+            fi
+            # LCDproc
+            SendCmd "optC.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$LCDproc" != "${reply6xx[1]}" ]; then
+                DoLog "changing LCDproc to ${reply6xx[1]}"
+                sed -i $config -e "/^LCDproc=/s/$LCDproc/${reply6xx[1]}/"
+                LCDproc=${reply6xx[1]}
+            fi
+            # lirc
+            SendCmd "optD.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$lirc" != "${reply6xx[1]}" ]; then
+                DoLog "changing lirc to ${reply6xx[1]}"
+                sed -i $config -e "/^lirc=/s/$lirc/${reply6xx[1]}/"
+                lirc=${reply6xx[1]}
+            fi
+            # lirc_port
+            SendCmd "optE.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$lirc_port" != "${reply6xx[1]}" ]; then
+                DoLog "changing lirc_port to ${reply6xx[1]}"
+                sed -i $config -e "/^lirc_port=/s/$lirc_port/${reply6xx[1]}/"
+                lirc_port=${reply6xx[1]}
+            fi
+            # close the submenu
+            if [ "$vdrsetup_ok_ends" = "on" ]; then
+                SendCmd "menu.SendState osBack" || return $false
+#                SendCmd "delete menu" || return $false
+#                SendCmd "leavelocal" || return $false
+#                return $true
+            fi
+        fi
+
+        # keyBlue (Help)
+        if IsEvent opt1 keyBlue ; then
+            SendCmd "Message -seconds 5 'VDR automatisch starten on/off'" || return $false
+        fi
+        if IsEvent opt2 keyBlue ; then
+            SendCmd "Message -seconds 5 'Xserver und Player automatisch starten on/off'" || return $false
+        fi
+        if IsEvent opt3 keyBlue ; then
+            SendCmd "Message -seconds 5 'Desktop-Manager automatisch starten on/off'" || return $false
+        fi
+        if IsEvent opt4 keyBlue ; then
+            SendCmd "Message -seconds 5 'VDRAdmin automatisch starten on/off'" || return $false
+        fi
+
+        if IsEvent optA keyBlue ; then
+            SendCmd "Message -seconds 5 'Modul automatisch laden on/off'" || return $false
+        fi
+        if IsEvent optB keyBlue ; then
+            SendCmd "Message -seconds 5 'Modul automatisch laden on/off'" || return $false
+        fi
+        if IsEvent optC keyBlue ; then
+            SendCmd "Message -seconds 5 'Modul automatisch laden on/off'" || return $false
+        fi
+        if IsEvent optD keyBlue ; then
+            SendCmd "Message -seconds 5 'Modul automatisch laden on/off'" || return $false
+        fi
+        if IsEvent optE keyBlue ; then
+            SendCmd "Message -seconds 5 'Lirc-Port 1/2'" || return $false
+        fi
+        # close the submenu
+        if IsEvent menu close ; then
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+            return $true
+        fi
+    done
+}
+
+##### VDR-Setup Menu #####
+function VdrSetup() {
+    # directorys
+    videodir=$(  grep "^VIDEODIR="   $config | tail -n1 | sed -e "s/^VIDEODIR=//"   -e 's/"//g' -e 's/#.*//')
+    musicdir=$(  grep "^MUSICDIR="   $config | tail -n1 | sed -e "s/^MUSICDIR=//"   -e 's/"//g' -e 's/#.*//')
+    dvdisodir=$( grep "^DVDISODIR="  $config | tail -n1 | sed -e "s/^DVDISODIR=//"  -e 's/"//g' -e 's/#.*//')
+    picturedir=$(grep "^PICTUREDIR=" $config | tail -n1 | sed -e "s/^PICTUREDIR=//" -e 's/"//g' -e 's/#.*//')
+    divxdir=$(   grep "^DIVXDIR="    $config | tail -n1 | sed -e "s/^DIVXDIR=//"    -e 's/"//g' -e 's/#.*//')
+    vdrvardir=$( grep "^VDRVARDIR="  $config | tail -n1 | sed -e "s/^VDRVARDIR=//"  -e 's/"//g' -e 's/#.*//')
+    dvdburner=$( grep "^DVDBURNER="  $config | tail -n1 | sed -e "s/^DVDBURNER=//"  -e 's/"//g' -e 's/#.*//')
+
+    ls_dev=$(ls -r /dev/*)
+
+    # cd / dvd
+    all_dvd=$(echo "$ls_dev" | grep "^/dev/[c,d][d,v][r,d]" | sort -r)
+    if [ -n "$all_dvd" ] && [ $(echo $all_dvd | grep -cw "$dvdburner") -eq 0 ]; then
+        dvdburner_old="$dvdburner"
+        dvdburner=$(echo $all_dvd | cut -f 1 -d " ")
+        sed -i $config -e "/^DVDBURNER=/s?$dvdburner_old?$dvdburner?"
+        SendCmd "Message -seconds 5 \"Resetting DVDBURNER to $dvdburner\"" || return $false
+    fi
+
+    # vdr keyb tty
+    all_tty=$(echo "$ls_dev" | grep "^/dev/tty[0-9]$")
+    if [ $(echo $all_tty | grep -cw "$KEYB_TTY") -eq 0 ]; then
+        KEYB_TTY_OLD="$KEYB_TTY"
+        KEYB_TTY=""
+        sed -i $config -e "/^KEYB_TTY=/s/$KEYB_TTY_OLD/$KEYB_TTY/"
+        SendCmd "Message -seconds 5 \"Resetting KEYB_TTY to $KEYB_TTY\"" || return $false
+    fi
+
+    # vdr language
+    all_lang=$(locale -a | grep "_")
+    if [ $(echo $all_lang | grep -cw "$VDRLANG") -eq 0 ]; then
+        VDRLANG_OLD="$VDRLANG"
+        VDRLANG=$(echo $VDRLANG | cut -f 1 -d ".")
+        [ $(echo $all_lang | grep -cw "$VDRLANG") -eq 0 ] && VDRLANG=$(echo $all_lang | cut -f 1 -d " ")
+        sed -i $config -e "/^VDRLANG=/s/$VDRLANG_OLD/$VDRLANG/"
+        SendCmd "Message -seconds 5 \"Resetting VDRLANG to $VDRLANG\"" || return $false
+    fi
+
+    # Menu -------------------------------------------------------------------------------------------------------------->
+    SendCmd "enterlocal"                                                                                  || return $false
+    SendCmd "menu=New Menu                                          '$vdr_version'"                       || return $false
+    SendCmd      "menu.SetColorKeyText -blue 'Help'"                                                      || return $false
+    SendCmd      "menu.SetColumns 24"                                                                     || return $false
+    SendCmd      "menu.EnableEvent keyOk keyBlue close"                                                   || return $false
+    # List -------------------------------------------------------------------------------------------------------------->
+    SendCmd      "menu.AddNew OsdItem      -unselectable            '--- Einstellungen ---'"              || return $false
+    SendCmd "opt1=menu.AddNew EditListItem -selectname '$noad'      'Schnittmarken erkennen'      on off" || return $false
+    SendCmd "opt2=menu.AddNew EditListItem -selectname '$KEYB_TTY'  'KEYB TTY' \"\"     $(echo $all_tty)" || return $false
+    SendCmd "opt3=menu.AddNew EditListItem -selectname '$VDRLANG'   'Sprache (LANG)'   $(echo $all_lang)" || return $false
+    SendCmd "opt4=menu.AddNew EditIntItem                           'Watchdog Timeout (sec)' '$WATCHDOG'" || return $false
+    SendCmd "opt5=menu.AddNew EditIntItem                           'XV Display'           '$XV_DISPLAY'" || return $false
+    SendCmd      "menu.AddNew OsdItem      -unselectable            '--- Laufwerke & Verzeichnisse ---'"  || return $false
+    SendCmd "optA=menu.AddNew EditStrItem                           'Video'                  '$videodir'" || return $false
+    SendCmd "optB=menu.AddNew EditStrItem                           'Musik'                  '$musicdir'" || return $false
+    SendCmd "optC=menu.AddNew EditStrItem                           'DVD-Isos'              '$dvdisodir'" || return $false
+    SendCmd "optD=menu.AddNew EditStrItem                           'Bilder und Fotos'     '$picturedir'" || return $false
+    SendCmd "optE=menu.AddNew EditStrItem                           'DivX und Co'             '$divxdir'" || return $false
+    SendCmd "optF=menu.AddNew EditStrItem                           'EPG Daten'             '$vdrvardir'" || return $false
+    SendCmd "optG=menu.AddNew EditListItem -selectname '$dvdburner' 'DVD Brenner' \"\"  $(echo $all_dvd)" || return $false
+    # <-------------------------------------------------------------------------------------------------------------- List
+    SendCmd      "_focus.addsubmenu menu"                                                                 || return $false
+    SendCmd      "opt1.SetCurrent"                                                                        || return $false
+    SendCmd      "menu.show"                                                                              || return $false
+    # <-------------------------------------------------------------------------------------------------------------- Menu
+
+    while true; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk
+        if IsEvent menu keyOk ; then
+            # noad
+            SendCmd "opt1.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            value="${reply6xx[1]}"
+            if [ "$noad" != "$value" ]; then
+                DoLog "changing noad to $value"
+                sed -i $config -e "/^noad=/s/$noad/$value/"
+                noad="$value"
+            fi
+            # KEYB_TTY
+            SendCmd "opt2.GetValue -name" || return $false
+            if [ "${reply6xx[0]}" = 600 ]; then
+              value="${reply6xx[1]}"
+            elif [ "${reply2xx[0]}" = 200 ]; then
+              value=""
+            else
+              return $false
+            fi
+            if [ "$KEYB_TTY" != "$value" ]; then
+                DoLog "changing KEYB_TTY to \"$value\""
+                sed -i $config -e "/^KEYB_TTY=/s/\"//g" -e "s?^KEYB_TTY=$KEYB_TTY?KEYB_TTY=\"$value\"?"
+                KEYB_TTY="$value"
+            fi
+
+            # VDRLANG
+            SendCmd "opt3.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            value="${reply6xx[1]}"
+            if [ "$VDRLANG" != "$value" ]; then
+                DoLog "changing VDRLANG to $value"
+                sed -i $config -e "/^VDRLANG=/s/$VDRLANG/$value/"
+                VDRLANG="$value"
+            fi
+
+            # WATCHDOG
+            SendCmd "opt4.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            value="${reply6xx[1]}"
+            if [ "$WATCHDOG" != "$value" ]; then
+                DoLog "changing WATCHDOG to $value"
+                sed -i $config -e "/^WATCHDOG=/s/$WATCHDOG/$value/"
+                WATCHDOG="$value"
+            fi
+            # XV_DISPLAY
+            SendCmd "opt5.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            value="${reply6xx[1]}"
+            if [ "$XV_DISPLAY" != "$value" ]; then
+                DoLog "changing XV_DISPLAY to $value"
+                sed -i $config -e "/^XV_DISPLAY=/s/$XV_DISPLAY/$value/"
+                XV_DISPLAY="$value"
+            fi
+            # VIDEODIR
+            SendCmd "optA.GetValue -quoted" || return $false
+            [ "${reply5xx[0]}" != 500 ] && return $false
+            value="${reply5xx[1]}"
+            if [ "$videodir" != "$value" ]; then
+                [ ! -d "$value" ] && CreateDir "$value"
+                if [ -d "$value" ]; then
+                    DoLog "changing VIDEODIR to $value"
+                    sed -i $config -e "/^VIDEODIR=/s?$videodir?$value?"
+                else
+                    DoLog "error: directory \"$value\" does not exists"
+                fi
+            fi
+            # MUSICDIR
+            SendCmd "optB.GetValue -quoted" || return $false
+            [ "${reply5xx[0]}" != 500 ] && return $false
+            value="${reply5xx[1]}"
+            if [ "$musicdir" != "$value" ]; then
+                [ ! -d "$value" ] && CreateDir "$value"
+                if [ -d "$value" ]; then
+                    DoLog "changing MUSICDIR to $value"
+                    sed -i $config -e "/^MUSICDIR=/s?$musicdir?$value?"
+                else
+                    DoLog "error: directory \"$value\" does not exists"
+                fi
+            fi
+            # DVDISODIR
+            SendCmd "optC.GetValue -quoted" || return $false
+            [ "${reply5xx[0]}" != 500 ] && return $false
+            value="${reply5xx[1]}"
+            if [ "$dvdisodir" != "$value" ]; then
+                [ ! -d "$value" ] && CreateDir "$value"
+                if [ -d "$value" ]; then
+                    DoLog "changing DVDISODIR to $value"
+                    sed -i $config -e "/^DVDISODIR=/s?$dvdisodir?$value?"
+                else
+                    DoLog "error: directory \"$value\" does not exists"
+                fi
+            fi
+            # PICTUREDIR
+            SendCmd "optD.GetValue -quoted" || return $false
+            [ "${reply5xx[0]}" != 500 ] && return $false
+            value="${reply5xx[1]}"
+            if [ "$picturedir" != "$value" ]; then
+                [ ! -d "$value" ] && CreateDir "$value"
+                if [ -d "$value" ]; then
+                    DoLog "changing PICTUREDIR to $value"
+                    sed -i $config -e "/^PICTUREDIR=/s?$picturedir?$value?"
+                else
+                    DoLog "error: directory \"$value\" does not exists"
+                fi
+            fi
+            # DIVXDIR
+            SendCmd "optE.GetValue -quoted" || return $false
+            [ "${reply5xx[0]}" != 500 ] && return $false
+            value="${reply5xx[1]}"
+            if [ "$divxdir" != "$value" ]; then
+                [ ! -d "$value" ] && CreateDir "$value"
+                if [ -d "$value" ]; then
+                    DoLog "changing DIVXDIR to $value"
+                    sed -i $config -e "/^DIVXDIR=/s?$divxdir?$value?"
+                else
+                    DoLog "error: directory \"$value\" does not exists"
+                fi
+            fi
+            # VDRVARDIR
+            SendCmd "optF.GetValue -quoted" || return $false
+            [ "${reply5xx[0]}" != 500 ] && return $false
+            value="${reply5xx[1]}"
+            if [ "$vdrvardir" != "$value" ]; then
+                [ ! -d "$value" ] && CreateDir "$value"
+                if [ -d "$value" ]; then
+                    DoLog "changing VDRVARDIR to $value"
+                    sed -i $config -e "/^VDRVARDIR=/s?$vdrvardir?$value?"
+                else
+                    DoLog "error: directory \"$value\" does not exists"
+                fi
+            fi
+            # DVDBURNER
+            SendCmd "optG.GetValue -name" || return $false
+            if [ "${reply6xx[0]}" = 600 ]; then
+              value="${reply6xx[1]}"
+            elif [ "${reply2xx[0]}" = 200 ]; then
+              value=""
+            else
+              return $false
+            fi
+            if [ "$dvdburner" != "$value" ]; then
+                DoLog "changing DVDBURNER to \"$value\""
+                [ ! -e "$value" ] && DoLog "warning: \"$value\" is no valid"
+#                sed -i $config -e "/^DVDBURNER=/s?$dvdburner?$value?"
+                sed -i $config -e "/^DVDBURNER=/s/\"//g" -e "s?^DVDBURNER=$dvdburner?DVDBURNER=\"$value\"?"
+            fi
+            # close the submenu
+            if [ "$vdrsetup_ok_ends" = "on" ]; then
+                SendCmd "menu.SendState osBack" || return $false
+#                SendCmd "delete menu" || return $false
+#                SendCmd "leavelocal" || return $false
+#                return $true
+            fi
+        fi
+        # keyBlue (Help)
+        if IsEvent menu keyBlue ; then
+            SendCmd "Message -seconds 5 'Speichern mit Ok oder Menue verlassen mit Exit'" || return $false
+        fi
+        # close the submenu
+        if IsEvent menu close ; then
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+            return $true
+        fi
+    done
+}
+
+##### Plugin Menus #####
+function PluginSetup() {
+    plugin=$1
+    plugin_have_args=$(grep "^${plugin}_args=" $config | tail -n1)
+    plugin_version=$(grep "^${plugin}_desc=" /tmp/vdr-desc.cache | tail -n1 | sed -e "s/^${plugin}_desc=//" -e 's/[^)]*$//'  -e 's/"//g' -e 's/#.*//')
+    [ -n "$plugin_version" ] || plugin_version="$plugin"
+    # Menu -------------------------------------------------------------------------------------------------------------------->
+    SendCmd "enterlocal"                                                                                        || return $false
+    SendCmd "menu=New Menu                                          '$plugin_version'"                          || return $false
+    SendCmd      "menu.SetColorKeyText -green 'About' -blue 'Help'"                                             || return $false
+    SendCmd      "menu.SetColumns 14"                                                                           || return $false
+    SendCmd      "menu.EnableEvent keyOk keyGreen keyBlue close"                                                || return $false
+    # List -------------------------------------------------------------------------------------------------------------------->
+    SendCmd "opt1=menu.AddNew EditListItem -selectname '${!plugin}' 'Status'                            on off" || return $false
+    if [ "$plugin" = "remote" ]; then
+        SendCmd "optA=menu.AddNew EditStrItem                       'Remote Event'             '$remote_event'" || return $false
+    fi
+    if [ -n "$plugin_have_args" ]; then
+        plugin_args=$(echo "$plugin_have_args" | sed -e "s/^${plugin}_args=//" -e 's/"//g' -e 's/#.*//')
+        SendCmd "opt2=menu.AddNew EditStrItem                       'Argumente'                 '$plugin_args'" || return $false
+    else
+        SendCmd      "menu.AddNew OsdItem -unselectable             'Argumente:\tPlugin kennt keine Argumente'" || return $false
+    fi
+    # <-------------------------------------------------------------------------------------------------------------------- List
+    SendCmd      "_focus.addsubmenu menu"                                                                       || return $false
+    SendCmd      "opt1.SetCurrent"                                                                              || return $false
+    SendCmd      "menu.show"                                                                                    || return $false
+    # <-------------------------------------------------------------------------------------------------------------------- Menu
+
+    while true; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk
+        if IsEvent menu keyOk ; then
+            # plugin status
+            SendCmd "opt1.GetValue -name" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            value="${reply6xx[1]}"
+            if [ "${!plugin}" != "$value" ]; then
+                DoLog "changing $plugin to $value"
+                sed -i $config -e "/^$plugin=/s/${!plugin}/$value/"
+                eval $plugin="$value"
+            fi
+            # plugin arguments
+            if [ -n "$plugin_have_args" ]; then
+                SendCmd "opt2.GetValue -quoted" || return $false
+                if [ "${reply5xx[0]}" = 500 ] || [ "${reply2xx[0]}" = 200 ]; then
+                    value=$(echo " ${reply5xx[1]}" | sed -e 's/^ //g' -e 's/\\r//g')
+                    if [ "$plugin_args" != "$value" ]; then
+                        DoLog "changing arguments for $plugin to $value"
+                        sed -i $config -e "/^${plugin}_args=/s/\"//g" -e "s?^${plugin}_args=$plugin_args?${plugin}_args=\"$value\"?"
+                    fi
+                fi
+            fi
+            # remote_event for remote plugin
+            if [ "$plugin" = "remote" ]; then
+                SendCmd "optA.GetValue -quoted" || return $false
+                [ "${reply5xx[0]}" = 500 ] || return $false
+                value=$(echo " ${reply5xx[1]}" | sed -e 's/^ //g' -e 's/\\r//g')
+                if [ "$remote_event" != "$value" ]; then
+                    DoLog "changing arguments for remote_event to $value"
+                    sed -i $config -e "/^remote_event=/s?$remote_event?$value?"
+                fi
+            fi
+            # close the submenu
+            if [ "$vdrsetup_ok_ends" = "on" ]; then
+                SendCmd "menu.SendState osBack" || return $false
+#                SendCmd "delete menu" || return $false
+#                SendCmd "leavelocal" || return $false
+#                return $true
+            fi
+        fi
+        # keyGreen (About)
+        if IsEvent menu keyGreen ; then
+            desc=$(grep "^${plugin}_desc=" /tmp/vdr-desc.cache | tail -n1 | sed -e "s/^${plugin}_desc=\"${plugin} ([^)]*) - //" -e 's/"//g' -e 's/#.*//')
+            SendCmd "Message -seconds 5 \"$desc\"" || return $false
+        fi
+        # keyBlue (Help)
+        if IsEvent menu keyBlue ; then
+            SendCmd "Message -seconds 5 'Auswahl mit Links und Rechts, speichern mit Ok'" || return $false
+        fi
+        # close the submenu
+        if IsEvent menu close ; then
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+            return $true
+        fi
+    done
+}
+
+function PluginStatusList() {
+    # Menu ---------------------------------------------------------------------------------------------------->
+    SendCmd "enterlocal"                                                                        || return $false
+    SendCmd "menu=New Menu                   'Plugin Status Liste'"                             || return $false
+    SendCmd      "menu.SetColorKeyText -green 'About' -blue 'Help'"                             || return $false          # -red 'Edit'
+    SendCmd      "menu.SetColumns 24"                                                           || return $false
+    SendCmd      "menu.EnableEvent keyOk keyGreen keyBlue close"                                || return $false          # keyRed
+    # List ---------------------------------------------------------------------------------------------------->
+    SendCmd "Message -status 'Menu wird aufgebaut ...'" || return $false
+    files=$(ls "$VDRLIBDIR" | grep "^libvdr-" | grep "${plugin_api}$" | sed -e "s/^libvdr-//g" -e "s/.so.${plugin_api}$//g")
+    if [ -n "$files" ]; then
+        for p in $files ; do
+            plugin=$(echo $p | sed -e "s/-/_/g") # this is for streamdev-server ...
+            if [ -z "${!plugin}" ]; then
+                DoLog "creating $plugin=\"off\""
+                echo "" >> $config
+                echo "# $plugin" >> $config
+                echo "${plugin}=\"off\"" >> $config
+                eval ${plugin}="off"
+                # plugin args
+                nl=0; (( nl=$(grep -n "^$p " /tmp/vdr-help.tmp | cut -f 1 -d ":") +1 ))
+                [ $nl -gt 1 ] && [ $(sed -n "${nl}p" /tmp/vdr-help.tmp | grep -c "^-") -gt 0 ] && echo "${plugin}_args=\"\"" >> $config
+            fi
+            SendCmd "$plugin=menu.AddNew EditListItem -selectname \"${!plugin}\" \"$p\" on off" || return $false
+        done
+    fi
+    SendCmd "Message -statusclear" || return $false
+    # <---------------------------------------------------------------------------------------------------- List
+    SendCmd      "_focus.addsubmenu menu"                                                       || return $false
+    SendCmd      "menu.Show"                                                                    || return $false
+    # <---------------------------------------------------------------------------------------------------- Menu
+
+    while true ; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk (save settings and clsoe the submenu)
+        if IsEvent menu keyOk ; then
+            if [ -n "$files" ]; then
+                SendCmd "Message 'Einstellungen werden gespeichert'" || return $false
+                for p in $files ; do
+                    plugin=$(echo $p | sed -e "s/-/_/g") # this is for streamdev-server ...
+                    SendCmd "${plugin}.GetValue -name" || return $false
+                    [ "${reply6xx[0]}" != 600 ] && return $false
+                    if [ "${!plugin}" != "${reply6xx[1]}" ]; then
+                        DoLog "changing $plugin to ${reply6xx[1]}"
+                        sed -i $config -e "/^${plugin}=/s/${!plugin}/${reply6xx[1]}/"
+                        eval ${plugin}="${reply6xx[1]}"
+                    fi
+                done
+            fi
+            # close the submenu
+            if [ "$vdrsetup_ok_ends" = "on" ]; then
+                SendCmd "menu.SendState osBack" || return $false
+#                SendCmd "delete menu" || return $false
+#                SendCmd "leavelocal" || return $false
+#                return $true
+            fi
+        fi
+        # keyRed (Edit) !!! Bug Inside !!!
+        if IsEvent menu keyRed ; then
+            SendCmd "menu.GetCurrent"
+            [ "${reply3xx[0]}" != 302 ] && return $false
+            PluginSetup "${reply3xx[2]}" || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyGreen (About)
+        if IsEvent menu keyGreen ; then
+            SendCmd "menu.GetCurrent"
+            [ "${reply3xx[0]}" != 302 ] && return $false
+            desc=$(grep "^${reply3xx[2]}_desc=" /tmp/vdr-desc.cache | tail -n1 | sed -e "s/^${reply3xx[2]}_desc=\"${reply3xx[2]} ([^)]*) - //" -e 's/"//g' -e 's/#.*//')
+            SendCmd "Message -seconds 5 \"$desc\"" || return $false
+        fi
+        # keyBlue (Help)
+        if IsEvent menu keyBlue ; then
+            SendCmd "Message -seconds 5 'Auswahl mit Links und Rechts, speichern mit Ok'" || return $false
+        fi
+        # close the submenu
+        if IsEvent menu close ; then
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+            return $true
+        fi
+    done
+}
+
+function ListPlugins() {
+    # Menu ------------------------------------------------------------------------------------------>
+    SendCmd "enterlocal"                                                              || return $false
+    SendCmd "menu=New Menu                  'Installierte Plugins'"                   || return $false
+    SendCmd      "menu.SetColorKeyText -red 'Edit' -green 'Status' -blue 'Help'"      || return $false
+    SendCmd      "menu.SetColumns 4"                                                  || return $false
+    SendCmd      "menu.EnableEvent keyOk keyRed keyGreen keyBlue close"               || return $false
+    SendCmd      "menu.EnableEvent key1 key2 key3 key4 key5 key6 key7 key8 key9 key0" || return $false
+    # List------------------------------------------------------------------------------------------->
+    SendCmd "Message -status 'Menu wird aufgebaut ...'" || return $false
+    files=$(ls "$VDRLIBDIR" | grep "^libvdr-" | grep "${plugin_api}$" | sed -e "s/^libvdr-//g" -e "s/.so.${plugin_api}$//g")
+    if [ -n "$files" ]; then
+        n=0
+        for p in $files ; do
+            ((n=n+1))
+            plugin=$(echo $p | sed -e "s/-/_/g") # this is for streamdev-server ...
+            if [ -z "${!plugin}" ]; then
+                DoLog "creating $plugin=\"off\""
+                echo "" >> $config
+                echo "# $plugin" >> $config
+                echo "${plugin}=\"off\"" >> $config
+                eval ${plugin}="off"
+                # plugin args
+                nl=0; (( nl=$(grep -n "^$p " /tmp/vdr-help.tmp | cut -f 1 -d ":") +1 ))
+                [ $nl -gt 1 ] && [ $(sed -n "${nl}p" /tmp/vdr-help.tmp | grep -c "^-") -gt 0 ] && echo "${plugin}_args=\"\"" >> $config
+            fi
+            plugin_desc="${plugin}_desc"
+            desc="${!plugin_desc}"
+            [ -n "$(echo $n | grep "^[0-9][0-9][0-9]$")" ] && N="$n"
+            [ -n "$(echo $n | grep "^[0-9][0-9]$")" ] && N=" $n"
+            [ -n "$(echo $n | grep "^[0-9]$")" ] && N="  $n"
+            SendCmd "$plugin=menu.AddNew OsdItem \"$N \t$desc\""                      || return $false
+        done
+    fi
+    SendCmd "Message -statusclear" || return $false
+    # <------------------------------------------------------------------------------------------ List
+    SendCmd      "_focus.addsubmenu menu"                                             || return $false
+    SendCmd      "menu.Show"                                                          || return $false
+    # <------------------------------------------------------------------------------------------ Menu
+
+    while true ; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk and keyRed
+        if IsEvent menu keyOk || IsEvent menu keyRed; then
+            SendCmd "menu.GetCurrent"
+            [ "${reply3xx[0]}" != 302 ] && return $false
+            PluginSetup "${reply3xx[2]}" || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyGreen (Status)
+        if IsEvent menu keyGreen ; then
+            SendCmd "menu.GetCurrent"
+            [ "${reply3xx[0]}" != 302 ] && return $false
+            plugin="${reply3xx[2]}"
+            SendCmd "Message -seconds 5 'Status: ${!plugin}'" || return $false
+        fi
+        # keyBlue (Help)
+        if IsEvent menu keyBlue ; then
+            SendCmd "Message -seconds 5 'Auswahl mit OK oder Menue verlassen mit Exit'" || return $false
+        fi
+        # close the submenu
+        if IsEvent menu close ; then
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+            return $true
+        fi
+        # keyNr
+        if [ $n -gt 0 ]; then
+            mykey=;
+            k1=;
+            for k1 in 0 1 2 3 4 5 6 7 8 9 ; do
+                if IsEvent menu key$k1 ; then
+                    mykey=$k1
+                    [ $n -gt 9 ] || break
+                    SendCmd "menu.SleepEvent -timeoutms $vdrsetup_key_timeout" || return $false
+                    if IsEvent menu keyOk ; then break; fi
+                    k2=;
+                    for k2 in 0 1 2 3 4 5 6 7 8 9 ; do
+                        if IsEvent menu key$k2 ; then
+                            mykey=${k1}${k2}
+                            [ $n -gt 99 ] || break
+                            SendCmd "menu.SleepEvent -timeoutms $vdrsetup_key_timeout" || return $false
+                            if IsEvent menu keyOk ; then break; fi
+                            k3=;
+                            for k3 in 0 1 2 3 4 5 6 7 8 9 ; do
+                                if IsEvent menu key$k3 ; then
+                                    mykey=${k1}${k2}${k3}
+                                    break
+                                fi
+                            done
+                            break
+                        fi
+                    done
+                    break
+                fi
+            done
+
+            if [ -n "$mykey" ]; then
+                [ $mykey -gt $n ] && mykey=$n
+                ((mykey=mykey-1)) # we do this, because 0 is the first item
+                [ $mykey -lt 0 ] && mykey=0
+                SendCmd "menu.SetCurrent $mykey" || return $false
+#                SendCmd "menu.GetCurrent"
+#                [ "${reply3xx[0]}" != 302 ] && return $false
+#                PluginSetup "${reply3xx[2]}" || return $false
+                SendCmd "menu.Show" || return $false
+            fi
+        fi
+    done
+}
+
+##### Wakeup Menu #####
+function Wakeup() {
+    shutdown="$VDRCONFDIR/shutdown.conf"
+    . $shutdown
+
+    # settings
+#    WAKEUP_MODE=$(grep "^WAKEUP_MODE=" $shutdown | tail -n1 | sed -e "s/^WAKEUP_MODE=//" -e 's/"//g' -e 's/#.*//')
+    (( WAKEUP_MODE_T = $WAKEUP_MODE + 1 ))
+#    NVRAM_CONFIG=$(grep "^NVRAM_CONFIG=" $shutdown | tail -n1 | sed -e "s/^NVRAM_CONFIG=//" -e 's/"//g' -e 's/#.*//')
+#    NVRAM_IWNAME=$(grep "^NVRAM_IWNAME=" $shutdown | tail -n1 | sed -e "s/^NVRAM_IWNAME=//" -e 's/"//g' -e 's/#.*//')
+#    NVRAM_OPT=$(grep "^NVRAM_OPT=" $shutdown | tail -n1 | sed -e "s/^NVRAM_OPT=//" -e 's/"//g' -e 's/#.*//')
+#    NEED_REBOOT=$(grep "^NEED_REBOOT=" $shutdown | tail -n1 | sed -e "s/^NEED_REBOOT=//" -e 's/"//g' -e 's/#.*//')
+    (( NEED_REBOOT_T = $NEED_REBOOT + 1 ))
+#    LILO=$(grep "^LILO=" $shutdown | tail -n1 | sed -e "s/^LILO=//" -e 's/"//g' -e 's/#.*//')
+    (( LILO_T = $LILO + 1 ))
+
+#    WAKEUP_BEFORE=$(grep "^WAKEUP_BEFORE=" $shutdown | tail -n1 | sed -e "s/^WAKEUP_BEFORE=//" -e 's/"//g' -e 's/#.*//')
+#    MAX_POWEROFF_TIME=$(grep "^MAX_POWEROFF_TIME=" $shutdown | tail -n1 | sed -e "s/^MAX_POWEROFF_TIME=//" -e 's/"//g' -e 's/#.*//')
+#    INTERVAL=$(grep "^INTERVAL=" $shutdown | tail -n1 | sed -e "s/^INTERVAL=//" -e 's/"//g' -e 's/#.*//')
+#    DREAMTIME=$(grep "^DREAMTIME=" $shutdown | tail -n1 | sed -e "s/^DREAMTIME=//" -e 's/"//g' -e 's/#.*//')
+#    MIN_WAKEUP_VAR=$(grep "^MIN_WAKEUP_VAR=" $shutdown | tail -n1 | sed -e "s/^MIN_WAKEUP_VAR=//" -e 's/"//g' -e 's/#.*//')
+#    WAITING_PERIOD=$(grep "^WAITING_PERIOD=" $shutdown | tail -n1 | sed -e "s/^WAITING_PERIOD=//" -e 's/"//g' -e 's/#.*//')
+
+    # Menu --------------------------------------------------------------------------------------------------------------------------->
+    SendCmd "enterlocal"                                                                                                || return $false
+    SendCmd "menu=New Menu                                          'Wakeup'"                                           || return $false
+    SendCmd      "menu.SetColorKeyText -blue Help"                                                                      || return $false
+    SendCmd      "menu.SetColumns 24"                                                                                   || return $false
+    SendCmd      "menu.EnableEvent keyOk close"                                                                         || return $false
+    # List --------------------------------------------------------------------------------------------------------------------------->
+    SendCmd      "menu.AddNew OsdItem      -unselectable            '--- System ---'"                                   || return $false
+    SendCmd "opt1=menu.AddNew EditListItem -select '$WAKEUP_MODE_T' 'Aufwach Methode' keine acpi nvram extension-board" || return $false
+    SendCmd      "opt1.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd "opt2=menu.AddNew EditListItem -select '$NEED_REBOOT_T' 'Neustart erforderlich'              nein ja immer" || return $false
+    SendCmd      "opt2.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd "opt3=menu.AddNew EditListItem -select '$LILO_T'        'Bootmanger'                             grub lilo" || return $false
+    SendCmd      "opt3.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd      "menu.AddNew OsdItem      -unselectable            '--- Nvram ---'"                                    || return $false
+    SendCmd "opt4=menu.AddNew EditStrItem                           'Konfiguration'                    '$NVRAM_CONFIG'" || return $false
+    SendCmd      "opt4.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd "opt5=menu.AddNew EditStrItem                           'IW Name'                          '$NVRAM_IWNAME'" || return $false
+    SendCmd      "opt5.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd "opt6=menu.AddNew EditStrItem                           'Optionen'                            '$NVRAM_OPT'" || return $false
+    SendCmd      "opt6.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd "menu.AddNew OsdItem           -unselectable            '--- Nur fuer Experten ---'"                        || return $false
+    SendCmd "optA=menu.AddNew EditIntItem                           'Vorlauf in Minuten'              '$WAKEUP_BEFORE'" || return $false
+    SendCmd      "optA.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd "optB=menu.AddNew EditStrItem                           'Maximale Auszeit'            '$MAX_POWEROFF_TIME'" || return $false
+    SendCmd      "optB.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd "optC=menu.AddNew EditIntItem -max 31                   'Interval in Tagen'                    '$INTERVAL'" || return $false
+    SendCmd      "optC.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd "optD=menu.AddNew EditStrItem                           'Wunsch Aufwachzeit'                  '$DREAMTIME'" || return $false
+    SendCmd      "optD.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd "optE=menu.AddNew EditIntItem -max 3                    'Aktion'                         '$MIN_WAKEUP_VAR'" || return $false
+    SendCmd      "optE.EnableEvent keyBlue"                                                                             || return $false
+    SendCmd "optF=menu.AddNew EditIntItem                           'Warte Zeit'                     '$WAITING_PERIOD'" || return $false
+    SendCmd      "optF.EnableEvent keyBlue"                                                                             || return $false
+    # <---------------------------------------------------------------------------------------------------------------------------- List
+    SendCmd      "_focus.addsubmenu menu"                                                                               || return $false
+    SendCmd      "opt1.SetCurrent"                                                                                      || return $false
+    SendCmd      "menu.show"                                                                                            || return $false
+    # <---------------------------------------------------------------------------------------------------------------------------- Menu
+
+    while true; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk
+        if IsEvent menu keyOk ; then
+            # WAKEUP_MODE
+            SendCmd "opt1.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$WAKEUP_MODE_T" != "${reply6xx[1]}" ]; then
+                (( WAKEUP_MODE_N = ${reply6xx[1]} - 1 ))
+                (( WAKEUP_MODE = $WAKEUP_MODE_T - 1 ))
+                DoLog "changing WAKEUP_MODE to $WAKEUP_MODE_N"
+                sed -i $shutdown -e "/^WAKEUP_MODE=/s/$WAKEUP_MODE/$WAKEUP_MODE_N/"
+            fi
+            # NEED_REBOOT
+            SendCmd "opt2.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$NEED_REBOOT_T" != "${reply6xx[1]}" ]; then
+                (( NEED_REBOOT_N = ${reply6xx[1]} - 1 ))
+                (( NEED_REBOOT = $NEED_REBOOT_T - 1 ))
+                DoLog "changing NEED_REBOOT to $NEED_REBOOT_N"
+                sed -i $shutdown -e "/^NEED_REBOOT=/s/$NEED_REBOOT/$NEED_REBOOT_N/"
+            fi
+            # LILO
+            SendCmd "opt3.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$LILO_T" != "${reply6xx[1]}" ]; then
+                (( LILO_N = ${reply6xx[1]} - 1 ))
+                (( LILO = $LILO_T - 1 ))
+                DoLog "changing LILO to $LILO_N"
+                sed -i $shutdown -e "/^LILO=/s/$LILO/$LILO_N/"
+            fi
+            # NVRAM_CONFIG
+            SendCmd "opt4.GetValue -quoted" || return $false
+            if [ "${reply5xx[0]}" = 500 ] || [ "${reply2xx[0]}" = 200 ]; then
+                value=$(echo " ${reply5xx[1]}" | sed -e 's/^ //g' -e 's/\\r//g')
+                if [ "$NVRAM_CONFIG" != "$value" ]; then
+                    if [ -f "$value" ]; then
+                        DoLog "changing NVRAM_CONFIG to $value"
+                        sed -i $shutdown -e "/^NVRAM_CONFIG=/s/\"//g" -e "s?^NVRAM_CONFIG=$NVRAM_CONFIG?NVRAM_CONFIG=\"$value\"?"
+                    else
+                        DoLog "error: file \"$value\" for NVRAM_CONFIG does not exist"
+                    fi
+                fi
+            fi
+            # NVRAM_IWNAME
+            SendCmd "opt5.GetValue -quoted" || return $false
+            if [ "${reply5xx[0]}" = 500 ] || [ "${reply2xx[0]}" = 200 ]; then
+                value=$(echo " ${reply5xx[1]}" | sed -e 's/^ //g' -e 's/\\r//g')
+                if [ "$NVRAM_IWNAME" != "$value" ]; then
+                    DoLog "changing NVRAM_IWNAME to $value"
+                    sed -i $shutdown -e "/^NVRAM_IWNAME=/s/\"//g" -e "s?^NVRAM_IWNAME=$NVRAM_IWNAME?NVRAM_IWNAME=\"$value\"?"
+                 fi
+            fi
+            # NVRAM_OPT
+            SendCmd "opt6.GetValue -quoted" || return $false
+            if [ "${reply5xx[0]}" = 500 ] || [ "${reply2xx[0]}" = 200 ]; then
+                value=$(echo " ${reply5xx[1]}" | sed -e 's/^ //g' -e 's/\\r//g')
+                if [ "$NVRAM_OPT" != "$value" ]; then
+                    DoLog "changing NVRAM_OPT to $value"
+                    sed -i $shutdown -e "/^NVRAM_OPT=/s/\"//g" -e "s?^NVRAM_OPT=$NVRAM_OPT?NVRAM_OPT=\"$value\"?"
+                fi
+            fi
+            # WAKEUP_BEFORE
+            SendCmd "optA.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$WAKEUP_BEFORE" != "${reply6xx[1]}" ]; then
+                DoLog "changing WAKEUP_BEFORE to ${reply6xx[1]}"
+                sed -i $shutdown -e "/^WAKEUP_BEFORE=/s/$WAKEUP_BEFORE/${reply6xx[1]}/"
+            fi
+            # MAX_POWEROFF_TIME
+            SendCmd "optB.GetValue -quoted" || return $false
+            if [ "${reply5xx[0]}" = 500 ] || [ "${reply2xx[0]}" = 200 ]; then
+                value=$(echo " ${reply5xx[1]}" | sed -e 's/^ //g' -e 's/\\r//g')
+                if [ "$MAX_POWEROFF_TIME" != "$value" ]; then
+                    DoLog "changing MAX_POWEROFF_TIME to $value"
+                    sed -i $shutdown -e "/^MAX_POWEROFF_TIME=/s/\"//g" -e "s?^MAX_POWEROFF_TIME=$MAX_POWEROFF_TIME?MAX_POWEROFF_TIME=\"$value\"?"
+                fi
+            fi
+            # INTERVAL
+            SendCmd "optC.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$INTERVAL" != "${reply6xx[1]}" ]; then
+                DoLog "changing INTERVAL to ${reply6xx[1]}"
+                sed -i $shutdown -e "/^INTERVAL=/s/$INTERVAL/${reply6xx[1]}/"
+            fi
+            # DREAMTIME
+            SendCmd "optD.GetValue -quoted" || return $false
+            if [ "${reply5xx[0]}" = 500 ] || [ "${reply2xx[0]}" = 200 ]; then
+                value=$(echo " ${reply5xx[1]}" | sed -e 's/^ //g' -e 's/\\r//g')
+                if [ "$DREAMTIME" != "$value" ]; then
+                    [ -n "$(echo $value | grep '^[0-9]:[0-9][0-9]$')" ] && value="0${value}"
+                    if [ -n "$(echo $value | grep '^[0-9][0-9]:[0-9][0-9]$')" ]; then
+                        DoLog "changing DREAMTIME to $value"
+                        sed -i $shutdown -e "/^DREAMTIME=/s/\"//g" -e "s?^DREAMTIME=$DREAMTIME?DREAMTIME=\"$value\"?"
+                    else
+                        DoLog "error: value \"$value\" for DREAMTIME has bad format"
+                    fi
+                fi
+            fi
+            # MIN_WAKEUP_VAR
+            SendCmd "optE.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$MIN_WAKEUP_VAR" != "${reply6xx[1]}" ]; then
+                DoLog "changing MIN_WAKEUP_VAR to ${reply6xx[1]}"
+                sed -i $shutdown -e "/^MIN_WAKEUP_VAR=/s/$MIN_WAKEUP_VAR/${reply6xx[1]}/"
+            fi
+            # WAITING_PERIOD
+            SendCmd "optF.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "$WAITING_PERIOD" != "${reply6xx[1]}" ]; then
+                DoLog "changing WAITING_PERIOD to ${reply6xx[1]}"
+                sed -i $shutdown -e "/^WAITING_PERIOD=/s/$WAITING_PERIOD/${reply6xx[1]}/"
+            fi
+            # close the submenu
+            if [ "$vdrsetup_ok_ends" = "on" ]; then
+                SendCmd "menu.SendState osBack" || return $false
+#                SendCmd "delete menu" || return $false
+#                SendCmd "leavelocal" || return $false
+#                return $true
+            fi
+        fi
+        # keyBlue (Help)
+        if IsEvent opt1 keyBlue ; then
+            SendCmd "Message -seconds 5 'Optionen: keine, acpi, nvram, extension-board'" || return $false
+        fi
+        if IsEvent opt2 keyBlue ; then
+            SendCmd "Message -seconds 5 'Optionen: nein, ja, immer'" || return $false
+        fi
+        if IsEvent opt3 keyBlue ; then
+            SendCmd "Message -seconds 5 'Optionen: grub, lilo'" || return $false
+        fi
+        if IsEvent opt4 keyBlue ; then
+            SendCmd "Message -seconds 5 'Pfad zur nvram-wakeup Konfiguration'" || return $false
+        fi
+        if IsEvent opt5 keyBlue ; then
+            SendCmd "Message -seconds 5 'Specify the iw (infowriter) name (e.g: gigabyte_5aa)'" || return $false
+        fi
+        if IsEvent opt6 keyBlue ; then
+            SendCmd "Message -seconds 5 'Versuche \"nvram-wakeup --help\" auf einem Terminal'" || return $false
+        fi
+        if IsEvent optA keyBlue ; then
+            SendCmd "Message -seconds 5 'Optionen: 0, MAXIMAL, INTERVAL oder Zeit in Minuten'" || return $false
+        fi
+        if IsEvent optB keyBlue ; then
+            SendCmd "Message -seconds 5 'Gebe den Interval in Tagen an'" || return $false
+        fi
+        if IsEvent optC keyBlue ; then
+            SendCmd "Message -seconds 5 'Aufwachzeit in Stunden:Minuten zB 03:00'" || return $false
+        fi
+        if IsEvent optD keyBlue ; then
+            SendCmd "Message -seconds 5 'Aktion wenn \$MIN_WAKEUPTIME -gt \$WAKEUPTIME'" || return $false
+        fi
+        if IsEvent optE keyBlue ; then
+            SendCmd "Message -seconds 5 'Wartezeit bis zum erneuten Shutdown in Minuten'" || return $false
+        fi
+        # close the submenu
+        if IsEvent menu close ; then
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+            return $true
+        fi
+    done
+}
+
+##### DVB-Modul Menu #####
+function DVBModul() {
+    # dvb_ttpci parameter description
+    debug_desc="debug level (bitmask, default 0)"
+    vidmode_desc="analog video out: 0 off, 1 CVBS+RGB (default), 2 CVBS+YC, 3 YC"
+    pids_off_desc="clear video/audio/PCR PID filters when demux is closed"
+    adac_desc="audio DAC type: 0 TI, 1 CRYSTAL, 2 MSP (use if autodetection fails)"
+    hw_sections_desc="0 use software section filter, 1 use hardware"
+    rgb_on_desc="For Siemens DVB-C cards only: Enable RGB control signal on SCART pin 16 to switch SCART video mode from CVBS to RGB"
+    volume_desc="initial volume: default 255 (range 0-255)"
+    budgetpatch_desc="use budget-patch hardware modification: default 0 (0 no, 1 autodetect, 2 always)"
+    wss_cfg_4_3_desc="WSS 4:3 - default 0x4008 - bit 15: disable, 14: burst mode, 13..0: wss data"
+    wss_cfg_16_9_desc="WSS 16:9 - default 0x0007 - bit 15: disable, 14: burst mode, 13..0: wss data"
+    tv_standard_desc="TV standard: 0 PAL (default), 1 NTSC"
+
+
+#  { 0x7, "16:9" },
+#  { 0x8, "4:3" },
+#  { 0x1, "L14:9" },
+#  { 0xb, "L16:9" },
+#  { 0xd, "L>16:9" }
+
+
+    TT_PARAMETERS="options dvb_ttpci"
+    if [ -d /sys/module/dvb_ttpci/parameters ]; then
+        for p in $(ls /sys/module/dvb_ttpci/parameters); do
+            eval ${p}=`cat /sys/module/dvb_ttpci/parameters/${p}`
+        done
+    fi
+
+    # defaults and some tests
+    vidmode=$(echo $vidmode | grep '^[0,1,2,3]$')
+    [ -n "$vidmode" ] || vidmode=1
+    [ "$vidmode" = "0" ] && vidmode=4
+    tv_standard=$(echo $tv_standard | grep '^[0,1]$')
+    [ -n "$tv_standard" ] || tv_standard=0
+    (( tv_standard = $tv_standard + 1 ))
+    wss_cfg_16_9=$(echo $wss_cfg_16_9 | grep '^[[:digit:]]*$')
+    [ -n "$wss_cfg_16_9" ] || wss_cfg_16_9=7
+    wss_cfg_4_3=$(echo $wss_cfg_4_3 | grep '^[[:digit:]]*$')
+    [ -n "$wss_cfg_4_3" ] || wss_cfg_4_3=16392
+    debug=$(echo $debug | grep '^[[:digit:]]*$')
+    [ -n "$debug" ] || debug=0
+    ir_inversion=$(echo $ir_inversion | cut -f1 -d ',' | grep '^[0,1]$')
+    [ -n "$ir_inversion" ] || ir_inversion=0
+    (( ir_inversion = $ir_inversion + 1 ))
+    volume=$(echo $volume | grep '^[[:digit:]]*$')
+    [ -n "$volume" ] || volume=255
+
+
+    SendCmd "enterlocal" || return $false # Preserve global variable space, so we can re-use 'menu'
+    SendCmd "menu=New Menu 'DVB Module'" || return $false
+    SendCmd "menu.SetColorKeyText -blue Help" || return $false
+    SendCmd "menu.SetColumns 24" || return $false
+    SendCmd "menu.EnableEvent keyOk close" || return $false
+    # List ->
+    SendCmd "menu.AddNew OsdItem -unselectable '--- Video ---'" || return $false 
+    SendCmd "opt1=menu.AddNew EditListItem -select '$vidmode' 'Video Ausgang' RGB/Composite S-Video/Composite S-Video off" || return $false
+    SendCmd "opt1.EnableEvent keyBlue" || return $false
+    SendCmd "opt2=menu.AddNew EditListItem -select '$tv_standard' 'TV Standard' PAL NTSC" || return $false
+    SendCmd "opt2.EnableEvent keyBlue" || return $false
+    SendCmd "opt3=menu.AddNew EditIntItem 'WSS 16:9' '$wss_cfg_16_9'" || return $false
+#    SendCmd "opt3=menu.AddNew EditListItem -select '$wss_cfg_16_9' 'WSS 16:9' 16:9 1 2 " || return $false
+    SendCmd "opt3.EnableEvent keyBlue" || return $false
+    SendCmd "opt4=menu.AddNew EditIntItem 'WSS 4:3' '$wss_cfg_4_3'" || return $false
+    SendCmd "opt4.EnableEvent keyBlue" || return $false
+    SendCmd "menu.AddNew OsdItem -unselectable ''" || return $false
+    SendCmd "menu.AddNew OsdItem -unselectable '--- Sonstiges ---'" || return $false
+    SendCmd "opt5=menu.AddNew EditIntItem 'Debug Level' '$debug'" || return $false
+    SendCmd "opt5.EnableEvent keyBlue" || return $false
+    SendCmd "opt6=menu.AddNew EditListItem -select '$ir_inversion' 'IR invertieren' off on" || return $false
+    SendCmd "opt6.EnableEvent keyBlue" || return $false
+    SendCmd "opt7=menu.AddNew EditIntItem -max 255  'Lautstaerke' '$volume'" || return $false
+    SendCmd "opt7.EnableEvent keyBlue" || return $false
+    # <- List
+    SendCmd "_focus.addsubmenu menu" || return $false
+    SendCmd "opt1.SetCurrent" || return $false
+    SendCmd "menu.show" || return $false
+
+    while true; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk
+        if IsEvent menu keyOk ; then
+            # vidmode
+            SendCmd "opt1.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "1" != "${reply6xx[1]}" ]; then
+                vidmode="${reply6xx[1]}"
+                [ "$vidmode" = "4" ] && vidmode=0
+                DoLog "adding vidmode=${reply6xx[1]} to TT_PARAMETERS"
+                TT_PARAMETERS="$TT_PARAMETERS vidmode=${reply6xx[1]}"
+            fi
+            # tv_standard
+            SendCmd "opt2.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "1" != "${reply6xx[1]}" ]; then
+                (( tv_standard = ${reply6xx[1]} - 1 ))
+                DoLog "adding tv_standard=$tv_standard to TT_PARAMETERS"
+                TT_PARAMETERS="$TT_PARAMETERS tv_standard=$tv_standard"
+            fi
+            # wss_cfg_16_9
+            SendCmd "opt3.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "7" != "${reply6xx[1]}" ]; then
+                DoLog "adding wss_cfg_16_9=${reply6xx[1]} to TT_PARAMETERS"
+                TT_PARAMETERS="$TT_PARAMETERS wss_cfg_16_9=${reply6xx[1]}"
+            fi
+            # wss_cfg_4_3
+            SendCmd "opt4.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "16392" != "${reply6xx[1]}" ]; then
+                DoLog "adding wss_cfg_4_3=${reply6xx[1]} to TT_PARAMETERS"
+                TT_PARAMETERS="$TT_PARAMETERS wss_cfg_4_3=${reply6xx[1]}"
+            fi
+            # debug
+            SendCmd "opt5.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "0" != "${reply6xx[1]}" ]; then
+                DoLog "adding debug=${reply6xx[1]} to TT_PARAMETERS"
+                TT_PARAMETERS="$TT_PARAMETERS debug=${reply6xx[1]}"
+            fi
+            # ir_inversion
+            SendCmd "opt6.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "1" != "${reply6xx[1]}" ]; then
+                (( ir_inversion = ${reply6xx[1]} - 1 ))
+                DoLog "adding tv_standard=$ir_inversion to TT_PARAMETERS"
+                TT_PARAMETERS="$TT_PARAMETERS tv_standard=$ir_inversion"
+            fi
+            # volume
+            SendCmd "opt7.GetValue" || return $false
+            [ "${reply6xx[0]}" != 600 ] && return $false
+            if [ "255" != "${reply6xx[1]}" ]; then
+                DoLog "adding volume=${reply6xx[1]} to TT_PARAMETERS"
+                TT_PARAMETERS="$TT_PARAMETERS volume=${reply6xx[1]}"
+            fi
+
+            # write config to /etc/modprobe.d/dvb
+            echo $TT_PARAMETERS > /etc/modprobe.d/dvb
+
+            # close the submenu
+            if [ "$vdrsetup_ok_ends" = "on" ]; then
+                SendCmd "menu.SendState osBack" || return $false
+#                SendCmd "delete menu" || return $false
+#                SendCmd "leavelocal" || return $false
+#                return $true
+            fi
+        fi
+        # keyBlue (Help)
+        if IsEvent opt1 keyBlue ; then
+            SendCmd "Message -seconds 5 'Video Modus des J2 - default RGB'" || return $false
+        fi
+        if IsEvent opt2 keyBlue ; then
+            SendCmd "Message -seconds 5 'TV Standard - default Pal'" || return $false
+        fi
+        if IsEvent opt3 keyBlue ; then
+            SendCmd "Message -seconds 5 'WSS 16/9 - default 7'" || return $false
+        fi
+        if IsEvent opt4 keyBlue ; then
+            SendCmd "Message -seconds 5 'WSS 4/3 - default 16392'" || return $false
+        fi
+        if IsEvent opt5 keyBlue ; then
+            SendCmd "Message -seconds 5 'Debug Level - default 0'" || return $false
+        fi
+        if IsEvent opt6 keyBlue ; then
+            SendCmd "Message -seconds 5 'IR-Signal invertieren - default off'" || return $false
+        fi
+        if IsEvent opt7 keyBlue ; then
+            SendCmd "Message -seconds 5 'Start Lautstaerke von 0-255 - default 255'" || return $false
+        fi
+        # close the submenu
+        if IsEvent menu close ; then
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+            return $true
+        fi
+    done
+}
+
+
+##### x-vdr #############
+function InstallPlugins {
+    [ "$have_xvdr" = "on" ] || return $false
+    xdir=/usr/local/src/x-vdr
+    cmd=$1
+    # Menu -------------------------------------------------------------------------------------------------------->
+    SendCmd "enterlocal"                                                                            || return $false
+    if [ "$cmd" = "installed" ]; then
+        SendCmd "menu=New Menu                  'Installierte Plugins'"                             || return $false
+        SendCmd "menu.SetColorKeyText -red 'Edit' -green 'Reinstall' -yellow 'Remove' -blue 'Help'" || return $false
+        SendCmd "menu.SetColumns 4"                                                                 || return $false
+    elif [ "$cmd" = "standby" ]; then
+        SendCmd "menu=New Menu                  'Installierbare Plugins'"                           || return $false
+        SendCmd "menu.SetColorKeyText -red 'Edit' -green 'Install' -blue 'Help'"   || return $false
+        SendCmd "menu.SetColumns 4 16"                                                              || return $false
+    else
+        SendCmd "menu=New Menu                  'Alle Plugins'"                                     || return $false
+        SendCmd "menu.SetColorKeyText -red 'Edit' -green 'Install' -yellow 'Remove' -blue 'Help'"   || return $false
+        SendCmd "menu.SetColumns 4 16"                                                              || return $false
+    fi
+
+    SendCmd     "menu.EnableEvent keyOk keyRed keyGreen keyYellow keyBlue close"                    || return $false
+    SendCmd     "menu.EnableEvent key1 key2 key3 key4 key5 key6 key7 key8 key9 key0"                || return $false
+    # List--------------------------------------------------------------------------------------------------------->
+    SendCmd "Message -status 'Menu wird aufgebaut ...'"                                             || return $false
+    plugs=$(ls -B "$xdir/plugins")
+    if [ -n "$plugs" ]; then
+        n=0
+        for plug in $plugs ; do
+#            eval local $(grep -r -m1 "^${plug}=" $xdir/setup.conf) # status
+#            if [ "x${!plug}" = "xon" ] || [ "x${!plug}" = "xoff" ]; then
+#            fi
+            ins_status="nicht installiert"
+            if [ "$plug" = "streamdev" ]; then
+                [  -f "${VDRLIBDIR}/libvdr-streamdev-server.so.${plugin_api}" ] && ins_status="installiert"
+                [  -f "${VDRLIBDIR}/libvdr-streamdev-client.so.${plugin_api}" ] && ins_status="installiert"
+                plugin_desc="streamdev_server_desc"
+                desc="${!plugin_desc}"
+                [ -n "$desc" ] || {
+                    plugin_desc="streamdev_client_desc"
+                    desc="${!plugin_desc}"
+                }
+                [ -n "$desc" ] || desc="$plug"
+            else
+                [  -f "${VDRLIBDIR}/libvdr-${plug}.so.${plugin_api}" ] && ins_status="installiert"
+                plugin_desc="${plug}_desc"
+                desc="${!plugin_desc}"
+                [ -n "$desc" ] || desc="$plug"
+            fi
+            if [ "$cmd" = "installed" ]; then
+                if [ "$ins_status" = "installiert" ]; then
+                    ((n=n+1))
+                    [ -n "$(echo $n | grep "^[0-9][0-9][0-9]$")" ] && N="$n"
+                    [ -n "$(echo $n | grep "^[0-9][0-9]$")" ] && N=" $n"
+                    [ -n "$(echo $n | grep "^[0-9]$")" ] && N="  $n"
+                    SendCmd "$plug=menu.AddNew OsdItem '$N \t$desc'"                                || return $false
+                fi
+            elif [ "$cmd" = "standby" ]; then
+                if [ "$ins_status" != "installiert" ]; then
+                    ((n=n+1))
+                    [ -n "$(echo $n | grep "^[0-9][0-9][0-9]$")" ] && N="$n"
+                    [ -n "$(echo $n | grep "^[0-9][0-9]$")" ] && N=" $n"
+                    [ -n "$(echo $n | grep "^[0-9]$")" ] && N="  $n"
+                    SendCmd "$plug=menu.AddNew OsdItem '$N \t$plug \t$ins_status'"                  || return $false
+                fi
+            else # all
+                ((n=n+1))
+                [ -n "$(echo $n | grep "^[0-9][0-9][0-9]$")" ] && N="$n"
+                [ -n "$(echo $n | grep "^[0-9][0-9]$")" ] && N=" $n"
+                [ -n "$(echo $n | grep "^[0-9]$")" ] && N="  $n"
+                SendCmd "$plug=menu.AddNew OsdItem '$N \t$plug \t$ins_status'"                      || return $false
+            fi
+        done
+    fi
+    SendCmd "Message -statusclear"                                                                  || return $false
+    # <-------------------------------------------------------------------------------------------------------- List
+    SendCmd      "_focus.addsubmenu menu"                                                           || return $false
+    SendCmd      "menu.Show"                                                                        || return $false
+    # <-------------------------------------------------------------------------------------------------------- Menu
+
+    while true ; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk and keyRed
+ #       if IsEvent menu keyOk || IsEvent menu keyRed; then
+        # keyRed (Edit)
+        if IsEvent menu keyRed; then
+            SendCmd "menu.GetCurrent"
+            [ "${reply3xx[0]}" != 302 ] && return $false
+            PluginSetup "${reply3xx[2]}" || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyGreen (Install)
+        if IsEvent menu keyGreen ; then
+            SendCmd "menu.GetCurrent"
+            [ "${reply3xx[0]}" != 302 ] && return $false
+            n="${reply3xx[1]}"; N=;
+            [ -n "$(echo $n | grep "^[0-9][0-9][0-9]$")" ] && N="$n"
+            [ -n "$(echo $n | grep "^[0-9][0-9]$")" ] && N=" $n"
+            [ -n "$(echo $n | grep "^[0-9]$")" ] && N="  $n"
+            plugin="${reply3xx[2]}"
+            if [ "$cmd" = "installed" ]; then
+                SendCmd "Message -warn -seconds 10 '$plugin neu installieren?'" || return $false
+            else
+                SendCmd "Message -warn -seconds 10 '$plugin installieren?'" || return $false
+            fi
+            if IsEvent Message keyOk ; then
+                SendCmd "Message -status 'Installiere $plugin ...'" || return $false
+                cd $xdir/plugins/$plugin
+                plugin_status=$(./plugin.sh -s)
+                case $plugin_status in
+                    0 ) ./plugin.sh -m && {
+                        $VDRPRG --version | sed -e 's/\(^[^ ]*\)\(.*$\)/\1_desc="\1\2"/' -e '/^streamdev/s/-/_/' -e 's/^\[.*//' | sort > /tmp/vdr-desc.cache
+                        . /tmp/vdr-desc.cache
+                        } ;;
+                    * ) ./plugin.sh -r ;;
+                esac
+                SendCmd "Message -statusclear" || return $false
+                SendCmd "$plugin.SETTEXT '$N \t$plugin \tinstalliert'"
+                SendCmd "menu.Show" || return $false
+            fi
+        fi
+        # keyYellow (Remove)
+        if [ "$cmd" != "standby" ]; then
+            if IsEvent menu keyYellow ; then
+                SendCmd "menu.GetCurrent"
+                [ "${reply3xx[0]}" != 302 ] && return $false
+                n="${reply3xx[1]}"; N=;
+                [ -n "$(echo $n | grep "^[0-9][0-9][0-9]$")" ] && N="$n"
+                [ -n "$(echo $n | grep "^[0-9][0-9]$")" ] && N=" $n"
+                [ -n "$(echo $n | grep "^[0-9]$")" ] && N="  $n"
+                plugin="${reply3xx[2]}"
+                cd $xdir/plugins/$plugin
+                plugin_status=$(./plugin.sh -s)
+                case $plugin_status in
+                    0 ) SendCmd "Message -seconds 5 '$plugin ist nicht installiert'" || return $false ;;
+                    * ) SendCmd "Message -warn -seconds 10 'Soll $plugin entfernt werden?'" || return $false
+                        if IsEvent Message keyOk ; then
+                            SendCmd "Message -status 'Entferne $plugin ...'" || return $false
+                            ./plugin.sh -c
+                            SendCmd "Message -statusclear" || return $false
+                            SendCmd "$plugin.SETTEXT '$N \t$plugin'"
+                            SendCmd "menu.Show" || return $false
+                        fi ;;
+                esac
+            fi
+        fi
+        # keyBlue (Help)
+        if IsEvent menu keyBlue ; then
+            SendCmd "Message -seconds 5 'Auswahl mit Farbtasten oder Menue verlassen mit Exit'" || return $false
+        fi
+        # close the submenu
+        if IsEvent menu close ; then
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+            return $true
+        fi
+        # keyNr
+        if [ $n -gt 0 ]; then
+            mykey=;
+            k1=;
+            for k1 in 0 1 2 3 4 5 6 7 8 9 ; do
+                if IsEvent menu key$k1 ; then
+                    mykey=$k1
+                    [ $n -gt 9 ] || break
+                    SendCmd "menu.SleepEvent -timeoutms $vdrsetup_key_timeout" || return $false
+                    if IsEvent menu keyOk ; then break; fi
+                    k2=;
+                    for k2 in 0 1 2 3 4 5 6 7 8 9 ; do
+                        if IsEvent menu key$k2 ; then
+                            mykey=${k1}${k2}
+                            [ $n -gt 99 ] || break
+                            SendCmd "menu.SleepEvent -timeoutms $vdrsetup_key_timeout" || return $false
+                            if IsEvent menu keyOk ; then break; fi
+                            k3=;
+                            for k3 in 0 1 2 3 4 5 6 7 8 9 ; do
+                                if IsEvent menu key$k3 ; then
+                                    mykey=${k1}${k2}${k3}
+                                    break
+                                fi
+                            done
+                            break
+                        fi
+                    done
+                    break
+                fi
+            done
+
+            if [ -n "$mykey" ]; then
+                [ $mykey -gt $n ] && mykey=$n
+                ((mykey=mykey-1)) # we do this, because 0 is the first item
+                [ $mykey -lt 0 ] && mykey=0
+                SendCmd "menu.SetCurrent $mykey" || return $false
+#                SendCmd "menu.GetCurrent"
+#                [ "${reply3xx[0]}" != 302 ] && return $false
+#                PluginSetup "${reply3xx[2]}" || return $false
+                SendCmd "menu.Show" || return $false
+            fi
+        fi
+    done
+}
+
+function BackupVdrConf() {
+  [ "$have_xvdr" = "on" ] || return $false
+  xdir=/usr/local/src/x-vdr
+  SendCmd "Message -status 'Backup wird erstellt ...'" || return $false
+  BACKUPDIR="/tmp/vdr-backup"
+  BACKUPPATH="$xdir/backup"
+  [ ! -d $BACKUPPATH ] && mkdir -p $BACKUPPATH
+  [ -d $BACKUPDIR ] && rm -rf $BACKUPDIR
+  mkdir -p $BACKUPDIR
+  cp -pfR --parents $VDRCONFDIR $BACKUPDIR
+  cp -pfR --parents $VDRSCRIPTDIR $BACKUPDIR
+  cp -pf --parents $VDRBINDIR/runvdr $BACKUPDIR
+  cp -pf --parents /etc/default/vdr $BACKUPDIR
+  cp -pf --parents /etc/init.d/vdr $BACKUPDIR
+  BACKUPFILE=$BACKUPPATH/`date +%y%m%d-%H%M`-vdr-conf.tar.gz
+  cd $BACKUPDIR
+  tar -zcf $BACKUPFILE * && SendCmd "Message -seconds 5 'Backup erstellt'" || return $false
+  cd ..
+  rm -rf $BACKUPDIR
+  SendCmd "Message -statusclear" || return $false
+}
+
+function Xvdr() {
+    [ "$have_xvdr" = "on" ] || return $false
+    xdir=/usr/local/src/x-vdr
+    # Menu --------------------------------------------------------------------------------------------------------------->
+    SendCmd "enterlocal"                                                                                   || return $false
+    SendCmd "menu=New Menu                                                'x-vdr'"                         || return $false
+    SendCmd      "menu.SetColorKeyText -red 'Reboot' -green 'Shutdown' -yellow 'VDR Restart' -blue 'Help'" || return $false
+    SendCmd      "menu.SetColumns 1 2"                                                                     || return $false
+    SendCmd      "menu.EnableEvent keyRed keyGreen keyYellow close"                                        || return $false
+    SendCmd      "menu.EnableEvent key1 key2 key3 key4 key5 key6 key7 key8 key9 key0"                      || return $false
+    # List --------------------------------------------------------------------------------------------------------------->
+    SendCmd      "menu.AddNew OsdItem      -unselectable                  '--- Plugins ---'"               || return $false
+    SendCmd "optP1=menu.AddNew OsdItem   '\t1\tAlle Plugins'"                                              || return $false
+    SendCmd      "optP1.EnableEvent keyOk keyBlue"                                                         || return $false
+    SendCmd "optP2=menu.AddNew OsdItem   '\t2\tInstallierte Plugins'"                                      || return $false
+    SendCmd      "optP2.EnableEvent keyOk keyBlue"                                                         || return $false
+    SendCmd "optP3=menu.AddNew OsdItem   '\t3\tInstallierbare Plugins'"                                    || return $false
+    SendCmd      "optP3.EnableEvent keyOk keyBlue"
+
+    SendCmd      "menu.AddNew OsdItem      -unselectable                  '--- Backup ---'"                || return $false
+    SendCmd "optB1=menu.AddNew OsdItem   '\t3\tKonfiguration und Skripte'"                                 || return $false
+    SendCmd      "optB1.EnableEvent keyOk keyBlue"                                                         || return $false
+    # <--------------------------------------------------------------------------------------------------------------- List
+    SendCmd      "_focus.addsubmenu menu"                                                                  || return $false
+    SendCmd      "opt1.SetCurrent"                                                                         || return $false
+    SendCmd      "menu.show"                                                                               || return $false
+    # <--------------------------------------------------------------------------------------------------------------- Menu
+
+    while true; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk (SubMenu InstallPlugins)
+        if IsEvent optP1 keyOk || IsEvent menu key1 ; then
+            InstallPlugins all || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        if IsEvent optP2 keyOk || IsEvent menu key2 ; then
+            InstallPlugins installed || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        if IsEvent optP3 keyOk || IsEvent menu key2 ; then
+            InstallPlugins standby || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyOk (Backup)
+        if IsEvent optB1 keyOk || IsEvent menu key3 ; then
+            BackupVdrConf || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyRed (Reboot)
+        if IsEvent menu keyRed ; then
+            SendCmd "Message -warn -seconds 10 'System jetzt neustarten?'" || return $false
+            if IsEvent Message keyOk ; then
+                SendCmd "Message 'System wird neugestartet...'" || return $false
+                SendCmd "menu.SendState osEnd" || return $false
+                shutdown -r now
+            fi
+        fi
+        # keyGreen (Shutdown)
+        if IsEvent menu keyGreen ; then
+            SendCmd "Message -warn -seconds 10 'System jetzt ausschalten?'" || return $false
+            if IsEvent Message keyOk ; then
+#                SendCmd "Message 'System wird ausgeschaltet...'" || return $false
+                SendCmd "menu.SendState osEnd" || return $false
+#                shutdown -h now
+                /usr/bin/svdrpsend.pl HITK Power
+                return $true
+            fi
+        fi
+        # keyYellow (Restart)
+        if IsEvent menu keyYellow ; then
+            SendCmd "Message -warn -seconds 10 'VDR jetzt neustarten?'" || return $false
+            if IsEvent Message keyOk ; then
+                SendCmd "Message 'VDR wird neugestartet...'" || return $false
+                SendCmd "menu.SendState osEnd" || return $false
+                sleep 1
+                killall -9 vdr
+            fi
+        fi
+        # keyBlue (Help)
+        if IsEvent optP1 keyBlue ; then
+            SendCmd "Message -seconds 5 'Zeigt alle verfuegbaren Plugins'" || return $false
+        fi
+        if IsEvent optP2 keyBlue ; then
+            SendCmd "Message -seconds 5 'Zeigt nur die installierten Plugins'" || return $false
+        fi
+        if IsEvent optP3 keyBlue ; then
+            SendCmd "Message -seconds 5 'Zeigt nur die nicht installierten Plugins'" || return $false
+        fi
+        if IsEvent optB1 keyBlue ; then
+            SendCmd "Message -seconds 5 'Erstellt ein Backup von Konfiguration und Skripten'" || return $false
+        fi
+
+        # close the submenu
+        if IsEvent menu close ; then
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+            return $true
+        fi
+    done
+}
+
+
+##### Main Menu #####
+function MainMenu() {
+    # Menu --------------------------------------------------------------------------------------------------------------->
+    SendCmd "menu=New Menu                  'vdrsetup'"                                                    || return $false
+    SendCmd      "menu.SetColorKeyText -red 'Reboot' -green 'Shutdown' -yellow 'VDR Restart' -blue 'Help'" || return $false
+    SendCmd      "menu.SetColumns 1 2"                                                                     || return $false
+    SendCmd      "menu.EnableEvent keyRed keyGreen keyYellow keyBlue close"                                || return $false
+    SendCmd      "menu.EnableEvent key1 key2 key3 key4 key5 key6 key7 key8 key9 key0"                      || return $false
+    # List --------------------------------------------------------------------------------------------------------------->
+    SendCmd "opt1=menu.AddNew OsdItem       '\t1\tVDR Einstellungen'"                                      || return $false
+    SendCmd      "opt1.EnableEvent keyOk"                                                                  || return $false
+    SendCmd "opt2=menu.AddNew OsdItem       '\t2\tInstallierte Plugins'"                                   || return $false
+    SendCmd      "opt2.EnableEvent keyOk"                                                                  || return $false
+    SendCmd "opt3=menu.AddNew OsdItem       '\t3\tPlugin Status Liste'"                                    || return $false
+    SendCmd      "opt3.EnableEvent keyOk"                                                                  || return $false
+    SendCmd "opt4=menu.AddNew OsdItem       '\t4\tSystemstart'"                                            || return $false
+    SendCmd      "opt4.EnableEvent keyOk"                                                                  || return $false
+    SendCmd "opt5=menu.AddNew OsdItem       '\t5\tWakeup'"                                                 || return $false
+    SendCmd      "opt5.EnableEvent keyOk"                                                                  || return $false
+    SendCmd "opt6=menu.AddNew OsdItem       '\t6\tSkript Intern'"                                          || return $false
+    SendCmd      "opt6.EnableEvent keyOk"                                                                  || return $false
+    SendCmd "opt7=menu.AddNew OsdItem       '\t7\tDVB Modul'"                                              || return $false
+    SendCmd      "opt7.EnableEvent keyOk"                                                                  || return $false
+    if [ "$have_xvdr" = "on" ]; then
+        SendCmd "opt8=menu.AddNew OsdItem   '\t8\tX-VDR'"                                                  || return $false
+        SendCmd  "opt8.EnableEvent keyOk"                                                                  || return $false
+    fi
+    # <--------------------------------------------------------------------------------------------------------------- List
+    SendCmd      "opt1.SetCurrent"                                                                         || return $false
+    SendCmd      "menu.Show"                                                                               || return $false
+    # <--------------------------------------------------------------------------------------------------------------- Menu
+
+    while true ; do
+        SendCmd "menu.SleepEvent" || return $false
+        # keyOk (SubMenu VdrSetup)
+        if IsEvent opt1 keyOk || IsEvent menu key1 ; then
+            VdrSetup || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyOk (SubMenu ListPlugins)
+        if IsEvent opt2 keyOk || IsEvent menu key2 ; then
+            ListPlugins || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyOk (SubMenu PluginStatusList)
+        if IsEvent opt3 keyOk || IsEvent menu key3 ; then
+            PluginStatusList || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyOk (SubMenu SystemStart)
+        if IsEvent opt4 keyOk || IsEvent menu key4 ; then
+            SystemStart || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyOk (SubMenu Wakeup)
+        if IsEvent opt5 keyOk || IsEvent menu key5 ; then
+            Wakeup || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyOk (SubMenu ScriptSetup)
+        if IsEvent opt6 keyOk || IsEvent menu key6 ; then
+#            SendCmd "Message -seconds 5 'Einstellungen gelten nur fuer diese Sitzung'" || return $false
+            ScriptSetup || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyOk (SubMenu DVB)
+        if IsEvent opt7 keyOk || IsEvent menu key7 ; then
+            DVBModul || return $false
+            SendCmd "menu.Show" || return $false
+        fi
+        # keyOk (SubMenu Xvdr)
+        if [ "$have_xvdr" = "on" ]; then
+            if IsEvent opt8 keyOk || IsEvent menu key8 ; then
+                Xvdr || return $false
+                SendCmd "menu.Show" || return $false
+            fi
+        fi
+        # keyRed (Reboot)
+        if IsEvent menu keyRed ; then
+            SendCmd "Message -warn -seconds 10 'System jetzt neustarten?'" || return $false
+            if IsEvent Message keyOk ; then
+                SendCmd "Message 'System wird neugestartet...'" || return $false
+                SendCmd "menu.SendState osEnd" || return $false
+                shutdown -r now
+            fi
+        fi
+        # keyGreen (Shutdown)
+        if IsEvent menu keyGreen ; then
+            SendCmd "Message -warn -seconds 10 'System jetzt ausschalten?'" || return $false
+            if IsEvent Message keyOk ; then
+#                SendCmd "Message 'System wird ausgeschaltet...'" || return $false
+                SendCmd "menu.SendState osEnd" || return $false
+#                shutdown -h now
+                /usr/bin/svdrpsend.pl HITK Power
+                return $true
+            fi
+        fi
+        # keyYellow (Restart)
+        if IsEvent menu keyYellow ; then
+            SendCmd "Message -warn -seconds 10 'VDR jetzt neustarten?'" || return $false
+            if IsEvent Message keyOk ; then
+                SendCmd "Message 'VDR wird neugestartet...'" || return $false
+                SendCmd "menu.SendState osEnd" || return $false
+                sleep 1
+                killall -9 vdr
+            fi
+        fi
+        # keyBlue (Help)
+        if IsEvent menu keyBlue ; then
+            SendCmd "Message -seconds 5 'Auswahl mit OK oder Menue verlassen mit Exit'" || return $false
+        fi
+        # close the menu
+        if IsEvent menu close ; then
+            SendCmd "menu.SendState osEnd" || return $false
+            return $true
+        fi
+    done
+}
+
+
+###############
+#  Main Code  #
+###############
+
+
+ConnectServer localhost 2010
+# Connect to the server process
+
+ReadReply || error
+# Read server welcome
+
+SendCmd "Version 0.1" || error
+# Identify to server with protocol version
+
+MainMenu || error
+# Do vdrsetup
+
+SendCmd Quit
+DoLog "disconnecting from OSDServer"
+# ... and good bye
+
+exec 3>&-
+exec 4>&-
+# close FIFOs
+

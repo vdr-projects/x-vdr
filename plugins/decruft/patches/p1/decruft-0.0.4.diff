@@ -1,0 +1,85 @@
+diff -Nur decruft-0.0.4/cruft.c decruft-0.0.4-n/cruft.c
+--- decruft-0.0.4/cruft.c	2005-02-20 19:34:01.000000000 +0100
++++ decruft-0.0.4-n/cruft.c	2006-11-12 00:28:30.000000000 +0100
+@@ -535,8 +535,10 @@
+         /* Not defined, so define it */
+         if ( !groupSep ) {
+             groupSep = new cChannel();
+-            groupSep->SetName(settings->group_name,"","");
+-            groupSep->SetGroupSep(true);
++            char* groupSepString;
++            asprintf(&groupSepString, ":%s", settings->group_name);
++            groupSep->Parse(groupSepString);
++            free(groupSepString);
+             Channels.Add(groupSep);
+         }
+         /* Move the channel to the end of the group */
+diff -Nur decruft-0.0.4/CVS/Entries decruft-0.0.4-n/CVS/Entries
+--- decruft-0.0.4/CVS/Entries	2005-03-11 19:47:45.000000000 +0100
++++ decruft-0.0.4-n/CVS/Entries	1970-01-01 01:00:00.000000000 +0100
+@@ -1,11 +0,0 @@
+-/COPYING/1.1.1.1/Sun Feb 20 17:06:47 2005//
+-/cruft.h/1.1.1.1/Sun Feb 20 17:06:47 2005//
+-D/examples////
+-D/patches////
+-/Makefile/1.2/Sun Feb 20 18:34:01 2005//
+-/cruft.c/1.4/Sun Feb 20 18:34:01 2005//
+-/HISTORY/1.3/Fri Mar 11 18:46:43 2005//
+-/README/1.3/Fri Mar 11 18:47:26 2005//
+-/cleanthread.c/1.3/Fri Mar 11 18:49:11 2005//
+-/cleanthread.h/1.2/Fri Mar 11 18:41:39 2005//
+-/decruft.c/1.3/Fri Mar 11 18:49:11 2005//
+diff -Nur decruft-0.0.4/CVS/Repository decruft-0.0.4-n/CVS/Repository
+--- decruft-0.0.4/CVS/Repository	2005-02-20 18:06:28.000000000 +0100
++++ decruft-0.0.4-n/CVS/Repository	1970-01-01 01:00:00.000000000 +0100
+@@ -1 +0,0 @@
+-decruft
+diff -Nur decruft-0.0.4/CVS/Root decruft-0.0.4-n/CVS/Root
+--- decruft-0.0.4/CVS/Root	2005-02-20 18:06:28.000000000 +0100
++++ decruft-0.0.4-n/CVS/Root	1970-01-01 01:00:00.000000000 +0100
+@@ -1 +0,0 @@
+-dom@sugarcube:/home/cvsroot
+diff -Nur decruft-0.0.4/examples/CVS/Entries decruft-0.0.4-n/examples/CVS/Entries
+--- decruft-0.0.4/examples/CVS/Entries	2005-02-20 18:28:00.000000000 +0100
++++ decruft-0.0.4-n/examples/CVS/Entries	1970-01-01 01:00:00.000000000 +0100
+@@ -1,2 +0,0 @@
+-/decruft.conf/1.3/Sun Feb 20 17:27:51 2005//
+-D
+diff -Nur decruft-0.0.4/examples/CVS/Repository decruft-0.0.4-n/examples/CVS/Repository
+--- decruft-0.0.4/examples/CVS/Repository	2005-02-20 18:06:28.000000000 +0100
++++ decruft-0.0.4-n/examples/CVS/Repository	1970-01-01 01:00:00.000000000 +0100
+@@ -1 +0,0 @@
+-decruft/examples
+diff -Nur decruft-0.0.4/examples/CVS/Root decruft-0.0.4-n/examples/CVS/Root
+--- decruft-0.0.4/examples/CVS/Root	2005-02-20 18:06:28.000000000 +0100
++++ decruft-0.0.4-n/examples/CVS/Root	1970-01-01 01:00:00.000000000 +0100
+@@ -1 +0,0 @@
+-dom@sugarcube:/home/cvsroot
+diff -Nur decruft-0.0.4/Makefile decruft-0.0.4-n/Makefile
+--- decruft-0.0.4/Makefile	2005-02-20 19:34:01.000000000 +0100
++++ decruft-0.0.4-n/Makefile	2006-11-12 00:28:30.000000000 +0100
+@@ -16,7 +16,7 @@
+ ### The C++ compiler and options:
+ 
+ CXX      ?= g++
+-CXXFLAGS ?= -O2 -Wall -Woverloaded-virtual -g
++CXXFLAGS ?= -fPIC -O2 -Wall -Woverloaded-virtual -g
+ 
+ ### The directory environment:
+ 
+diff -Nur decruft-0.0.4/patches/CVS/Entries decruft-0.0.4-n/patches/CVS/Entries
+--- decruft-0.0.4/patches/CVS/Entries	2005-02-20 18:06:28.000000000 +0100
++++ decruft-0.0.4-n/patches/CVS/Entries	1970-01-01 01:00:00.000000000 +0100
+@@ -1,2 +0,0 @@
+-/vdr-1.3.20-SetGroupSep.diff/1.1.1.1/Sun Feb 20 17:06:47 2005//
+-D
+diff -Nur decruft-0.0.4/patches/CVS/Repository decruft-0.0.4-n/patches/CVS/Repository
+--- decruft-0.0.4/patches/CVS/Repository	2005-02-20 18:06:28.000000000 +0100
++++ decruft-0.0.4-n/patches/CVS/Repository	1970-01-01 01:00:00.000000000 +0100
+@@ -1 +0,0 @@
+-decruft/patches
+diff -Nur decruft-0.0.4/patches/CVS/Root decruft-0.0.4-n/patches/CVS/Root
+--- decruft-0.0.4/patches/CVS/Root	2005-02-20 18:06:28.000000000 +0100
++++ decruft-0.0.4-n/patches/CVS/Root	1970-01-01 01:00:00.000000000 +0100
+@@ -1 +0,0 @@
+-dom@sugarcube:/home/cvsroot

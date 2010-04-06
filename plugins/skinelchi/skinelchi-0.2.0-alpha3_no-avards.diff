@@ -1,0 +1,11 @@
+--- Makefile~	2008-04-06 11:43:00.000000000 +0200
++++ Makefile	2008-04-17 23:32:23.000000000 +0200
+@@ -21,7 +21,7 @@
+ #SKINELCHI_DEBUG = 1 # for syslog commandline-options, thread in DisplayMenu.c, screenshot-display of video-window, epgimages, and several calls
+ #uncomment DEBUG only when you really need it -> many log-entrys will be created
+ 
+-SKINELCHI_USE_AVARDS_PLUGIN = 1     # use Avards plugin for video info
++#SKINELCHI_USE_AVARDS_PLUGIN = 1     # use Avards plugin for video info
+ SKINELCHI_USE_EPGSEARCH_PLUGIN = 1  # use EPGSearch plugin for time conflict checking
+ #SKINELCHI_USE_MAILBOX_PLUGIN = 1    # use Mailbox plugin to show mail symbol if mail is available
+ 

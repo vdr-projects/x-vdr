@@ -1,0 +1,1656 @@
+diff -Naur sleeptimer-0.7.old/Makefile sleeptimer-0.7/Makefile
+--- sleeptimer-0.7.old/Makefile	2006-06-07 18:16:07.000000000 +0200
++++ sleeptimer-0.7/Makefile	2008-03-29 11:03:08.000000000 +0100
+@@ -66,9 +66,34 @@
+ 
+ -include $(DEPFILE)
+ 
++### Internationalization (I18N):
++
++PODIR     = po
++LOCALEDIR = $(VDRDIR)/locale
++I18Npo    = $(wildcard $(PODIR)/*.po)
++I18Nmsgs  = $(addprefix $(LOCALEDIR)/, $(addsuffix /LC_MESSAGES/vdr-$(PLUGIN).mo, $(notdir $(foreach file, $(I18Npo), $(basename $(file))))))
++I18Npot   = $(PODIR)/$(PLUGIN).pot
++
++%.mo: %.po
++	msgfmt -c -o $@ $<
++
++$(I18Npot): $(wildcard *.c)
++	xgettext -C -cTRANSLATORS --no-wrap --no-location -k -ktr -ktrNOOP --msgid-bugs-address='<freex@free-x.de>' -o $@ $^
++
++%.po: $(I18Npot)
++	msgmerge -U --no-wrap --no-location --backup=none -q $@ $<
++	@touch $@
++
++$(I18Nmsgs): $(LOCALEDIR)/%/LC_MESSAGES/vdr-$(PLUGIN).mo: $(PODIR)/%.mo
++	@mkdir -p $(dir $@)
++	cp $< $@
++
++.PHONY: i18n
++i18n: $(I18Nmsgs)
++
+ ### Targets:
+ 
+-all: libvdr-$(PLUGIN).so
++all: libvdr-$(PLUGIN).so i18n
+ 
+ libvdr-$(PLUGIN).so: $(OBJS)
+ 	$(CXX) $(CXXFLAGS) -shared $(OBJS) -o $@
+@@ -83,4 +108,5 @@
+ 	@echo Distribution package created as $(PACKAGE).tgz
+ 
+ clean:
++	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
+ 	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
+diff -Naur sleeptimer-0.7.old/po/ca_ES.po sleeptimer-0.7/po/ca_ES.po
+--- sleeptimer-0.7.old/po/ca_ES.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/ca_ES.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,73 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Marc Rovira Vall <tm05462@salleURL.edu>, 2003
++# Ramon Roca <ramon.roca@xcombo.com>, 2003
++# Jordi Vil� <jvila@tinet.org>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Jordi Vil� <jvila@tinet.org>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/cs_CZ.po sleeptimer-0.7/po/cs_CZ.po
+--- sleeptimer-0.7.old/po/cs_CZ.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/cs_CZ.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,71 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Vladim�r B�rta <vladimir.barta@k2atmitec.cz>, 2006
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Vladim�r B�rta <vladimir.barta@k2atmitec.cz>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/da_DK.po sleeptimer-0.7/po/da_DK.po
+--- sleeptimer-0.7.old/po/da_DK.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/da_DK.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,71 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Mogens Elneff <mogens@elneff.dk>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Mogens Elneff <mogens@elneff.dk>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/de_DE.po sleeptimer-0.7/po/de_DE.po
+--- sleeptimer-0.7.old/po/de_DE.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/de_DE.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,71 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Klaus Schmidinger <kls@cadsoft.de>, 2000
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Klaus Schmidinger <kls@cadsoft.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr "Sleep-Timer"
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr "Aktion"
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr "Sleep-Timer in einer Minute"
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr "Nicht aktiv"
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr "Sleep-Timer in %d Minuten abbrechen"
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr "Shutdown-Zeit"
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr "Shutdown-Minuten"
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr "Sleep-Timer abbrechen?"
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr "Sleep-Timer um %i:%0.2i aktivieren?"
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr "Sleep-Timer in %d Minuten aktivieren?"
+diff -Naur sleeptimer-0.7.old/po/el_GR.po sleeptimer-0.7/po/el_GR.po
+--- sleeptimer-0.7.old/po/el_GR.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/el_GR.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,71 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Dimitrios Dimitrakos <mail@dimitrios.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Dimitrios Dimitrakos <mail@dimitrios.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-7\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/es_ES.po sleeptimer-0.7/po/es_ES.po
+--- sleeptimer-0.7.old/po/es_ES.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/es_ES.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,71 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Ruben Nunez Francisco <ruben.nunez@tang-it.com>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Ruben Nunez Francisco <ruben.nunez@tang-it.com>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/et_EE.po sleeptimer-0.7/po/et_EE.po
+--- sleeptimer-0.7.old/po/et_EE.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/et_EE.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,71 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Arthur Konovalov <kasjas@hot.ee>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Arthur Konovalov <kasjas@hot.ee>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-13\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/fi_FI.po sleeptimer-0.7/po/fi_FI.po
+--- sleeptimer-0.7.old/po/fi_FI.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/fi_FI.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,74 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Hannu Savolainen <hannu@opensound.com>, 2002
++# Jaakko Hyv�tti <jaakko@hyvatti.iki.fi>, 2002
++# Niko Tarnanen <niko.tarnanen@hut.fi>, 2003
++# Rolf Ahrenberg <rahrenbe@cc.hut.fi>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Rolf Ahrenberg <rahrenbe@cc.hut.fi>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr "Ajastin"
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr "Toiminto"
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr "Ajastin aktivoituu noin minuutin kuluttua"
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr "Ei aktiivinen"
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr "Peruuta %d minuutin ajastin?"
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr "Sammutusaika"
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr "Sammutus minuutteina"
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr "Keskeyt� ajastin"
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr "Aktivoi ajastin %i:%0.2i?"
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr "Aktivoi %d minuutin ajastin?"
+diff -Naur sleeptimer-0.7.old/po/fr_FR.po sleeptimer-0.7/po/fr_FR.po
+--- sleeptimer-0.7.old/po/fr_FR.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/fr_FR.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,74 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Jean-Claude Repetto <jc@repetto.org>, 2001
++# Olivier Jacques <jacquesolivier@hotmail.com>, 2003
++# Gregoire Favre <greg@magma.unil.ch>, 2003
++# Nicolas Huillard <nhuillard@e-dition.fr>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Nicolas Huillard <nhuillard@e-dition.fr>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/hr_HR.po sleeptimer-0.7/po/hr_HR.po
+--- sleeptimer-0.7.old/po/hr_HR.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/hr_HR.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,72 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Drazen Dupor <drazen.dupor@dupor.com>, 2004
++# Dino Ravnic <dino.ravnic@fer.hr>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Drazen Dupor <drazen.dupor@dupor.com>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/hu_HU.po sleeptimer-0.7/po/hu_HU.po
+--- sleeptimer-0.7.old/po/hu_HU.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/hu_HU.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,72 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Istvan Koenigsberger <istvnko@hotmail.com>, 2002
++# Guido Josten <guido.josten@t-online.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Istvan Koenigsberger <istvnko@hotmail.com>, Guido Josten <guido.josten@t-online.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/it_IT.po sleeptimer-0.7/po/it_IT.po
+--- sleeptimer-0.7.old/po/it_IT.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/it_IT.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,73 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Alberto Carraro <bertocar@tin.it>, 2001
++# Antonio Ospite <ospite@studenti.unina.it>, 2003
++# Sean Carlos <seanc@libero.it>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Sean Carlos <seanc@libero.it>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/nl_NL.po sleeptimer-0.7/po/nl_NL.po
+--- sleeptimer-0.7.old/po/nl_NL.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/nl_NL.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,73 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Arnold Niessen <niessen@iae.nl> <arnold.niessen@philips.com>, 2001
++# Hans Dingemans <hans.dingemans@tacticalops.nl>, 2003
++# Maarten Wisse <Maarten.Wisse@urz.uni-hd.de>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Maarten Wisse <Maarten.Wisse@urz.uni-hd.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/nn_NO.po sleeptimer-0.7/po/nn_NO.po
+--- sleeptimer-0.7.old/po/nn_NO.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/nn_NO.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,72 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# J�rgen Tvedt <pjtvedt@online.no>, 2001
++# Truls Slevigen <truls@slevigen.no>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Truls Slevigen <truls@slevigen.no>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/pl_PL.po sleeptimer-0.7/po/pl_PL.po
+--- sleeptimer-0.7.old/po/pl_PL.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/pl_PL.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,71 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Michael Rakowski <mrak@gmx.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Michael Rakowski <mrak@gmx.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/pt_PT.po sleeptimer-0.7/po/pt_PT.po
+--- sleeptimer-0.7.old/po/pt_PT.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/pt_PT.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,71 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Paulo Lopes <pmml@netvita.pt>, 2001
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Paulo Lopes <pmml@netvita.pt>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/ro_RO.po sleeptimer-0.7/po/ro_RO.po
+--- sleeptimer-0.7.old/po/ro_RO.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/ro_RO.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,72 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Paul Lacatus <paul@campina.iiruc.ro>, 2002
++# Lucian Muresan <lucianm@users.sourceforge.net>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Lucian Muresan <lucianm@users.sourceforge.net>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/ru_RU.po sleeptimer-0.7/po/ru_RU.po
+--- sleeptimer-0.7.old/po/ru_RU.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/ru_RU.po	2008-04-03 20:41:34.000000000 +0200
+@@ -0,0 +1,75 @@
++# translation of sleeptimer-UTF8-ru_RU.po to Russian
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++#
++# Vyacheslav Dikonov <sdiconov@mail.ru>, 2004.
++# Alexander Gross <Bikalexander@gmail.com>, 2008.
++msgid ""
++msgstr ""
++"Project-Id-Version: sleeptimer-UTF8-ru_RU\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-04-02 00:59+0200\n"
++"Last-Translator: Alexander Gross <Bikalexander@gmail.com>\n"
++"Language-Team: Russian <de@li.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=UTF-8\n"
++"Content-Transfer-Encoding: 8bit\n"
++"X-Generator: KBabel 1.11.4\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr "Выключение VDR по таймеру"
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr "Таймер автовыключения"
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr "Действие"
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr "выключить звук"
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr "выключить компьютер"
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr "Таймер автовыключения примерно через одну минуту"
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr "Неактивен"
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr "Отменить автовыключение через %d минут"
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr "Время выключения"
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr "Минут до выключения"
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr "Прервать таймер автовыключения?"
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr "Активировать таймер в %i:%0.2i?"
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr "Активировать таймер через %d минут?"
++
+diff -Naur sleeptimer-0.7.old/po/sl_SI.po sleeptimer-0.7/po/sl_SI.po
+--- sleeptimer-0.7.old/po/sl_SI.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/sl_SI.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,72 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Miha Setina <mihasetina@softhome.net>, 2000
++# Matjaz Thaler <matjaz.thaler@guest.arnes.si>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Matjaz Thaler <matjaz.thaler@guest.arnes.si>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/sv_SE.po sleeptimer-0.7/po/sv_SE.po
+--- sleeptimer-0.7.old/po/sv_SE.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/sv_SE.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,72 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Tomas Prybil <tomas@prybil.se>, 2002
++# Jan Ekholm <chakie@infa.abo.fi>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Tomas Prybil <tomas@prybil.se>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/po/tr_TR.po sleeptimer-0.7/po/tr_TR.po
+--- sleeptimer-0.7.old/po/tr_TR.po	1970-01-01 01:00:00.000000000 +0100
++++ sleeptimer-0.7/po/tr_TR.po	2008-03-29 11:03:08.000000000 +0100
+@@ -0,0 +1,71 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Oktay Yolge�en <oktay_73@yahoo.de>, 2007
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: freex@free-x.de\n"
++"POT-Creation-Date: 2008-03-28 10:03+0100\n"
++"PO-Revision-Date: 2008-03-28 10:03+0100\n"
++"Last-Translator: Oktay Yolge�en <oktay_73@yahoo.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-9\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: sleeptimer.c:15
++msgid "Sleep-Timer for VDR"
++msgstr ""
++
++#: sleeptimer.c:16
++msgid "Sleep-Timer"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Action"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Mute"
++msgstr ""
++
++#: sleeptimer.c:86
++msgid "Shutdown"
++msgstr ""
++
++#: sleeptimer.c:136
++msgid "Going to sleep in about one minute"
++msgstr ""
++
++#: sleeptimer.c:230
++msgid "Not active"
++msgstr ""
++
++#: sleeptimer.c:232
++#, c-format
++msgid "Disable Sleep-Timer in %d minutes"
++msgstr ""
++
++#: sleeptimer.c:245
++msgid "Shutdown-Time"
++msgstr ""
++
++#: sleeptimer.c:246
++msgid "Shutdown-Minutes"
++msgstr ""
++
++#: sleeptimer.c:258
++msgid "Abort Sleep-Timer?"
++msgstr ""
++
++#: sleeptimer.c:266
++#, c-format
++msgid "Activate Sleep-Timer at %i:%0.2i?"
++msgstr ""
++
++#: sleeptimer.c:275
++#, c-format
++msgid "Activate Sleep-Timer in %d minutes?"
++msgstr ""
+diff -Naur sleeptimer-0.7.old/sleeptimer.c sleeptimer-0.7/sleeptimer.c
+--- sleeptimer-0.7.old/sleeptimer.c	2006-06-07 18:18:12.000000000 +0200
++++ sleeptimer-0.7/sleeptimer.c	2008-03-29 11:03:08.000000000 +0100
+@@ -12,8 +12,8 @@
+ #include "i18n.h"
+ 
+ static const char *VERSION        = "0.7";
+-static const char *DESCRIPTION    = "Sleep-Timer for VDR";
+-static const char *MAINMENUENTRY  = "Sleep-Timer";
++static const char *DESCRIPTION    = trNOOP("Sleep-Timer for VDR");
++static const char *MAINMENUENTRY  = trNOOP("Sleep-Timer");
+ int multi = 15;
+ int max_minute = 360;
+ int sleepat = 0;

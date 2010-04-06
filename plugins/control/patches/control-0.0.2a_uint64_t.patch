@@ -1,0 +1,69 @@
+diff -ruN control-0.0.2a-old/gateway.c control-0.0.2a/gateway.c
+--- control-0.0.2a-old/gateway.c	2008-04-29 00:24:07.000000000 +0200
++++ control-0.0.2a/gateway.c	2008-04-29 00:21:16.000000000 +0200
+@@ -100,7 +100,7 @@
+ 
+     if (_stack.poll(100)) {
+ 
+-      uint64 Command = 0;
++      uint64_t Command = 0;
+       uint i = 0;
+ #if VDRVERSNUM >= 10318
+       cTimeMs timeout;
+diff -ruN control-0.0.2a-old/keyboard.c control-0.0.2a/keyboard.c
+--- control-0.0.2a-old/keyboard.c	2004-07-02 21:24:22.000000000 +0200
++++ control-0.0.2a/keyboard.c	2008-04-29 00:21:32.000000000 +0200
+@@ -18,7 +18,7 @@
+ 
+ struct tKbdMap {
+   eKbdFunc func;
+-  uint64 code;
++  uint64_t code;
+ };
+ 
+ 
+@@ -117,7 +117,7 @@
+ 
+ 
+ 
+-bool cCtrlKeyboard::intPut(uint64 Command, bool Repeat, bool Release) {
++bool cCtrlKeyboard::intPut(uint64_t Command, bool Repeat, bool Release) {
+ 
+   bool ret = cRemote::Put(Command, Repeat, Release);
+ conLOG_KEYB("%s cKbdRemoteForControl::intPut(0x%016LX)", ret ? "true" : "false", Command);
+@@ -126,7 +126,7 @@
+ 
+ 
+ 
+-bool cCtrlKeyboard::Put(uint64 Command, bool Repeat, bool Release) {
++bool cCtrlKeyboard::Put(uint64_t Command, bool Repeat, bool Release) {
+ 
+   if (! _pRemote)
+     _pRemote = new cCtrlKeyboard();
+@@ -136,7 +136,7 @@
+ 
+ 
+ 
+-int cCtrlKeyboard::MapCodeToFunc(uint64 Code) {
++int cCtrlKeyboard::MapCodeToFunc(uint64_t Code) {
+ 
+   for (const tKbdMap *p = keyboardKbdMap; p->func != kfNone; p++) {
+     if (p->code == Code)
+diff -ruN control-0.0.2a-old/keyboard.h control-0.0.2a/keyboard.h
+--- control-0.0.2a-old/keyboard.h	2004-07-02 21:24:22.000000000 +0200
++++ control-0.0.2a/keyboard.h	2008-04-29 00:21:37.000000000 +0200
+@@ -30,11 +30,11 @@
+   cCtrlKeyboard();
+   virtual ~cCtrlKeyboard();
+ 
+-  bool intPut(uint64 Command, bool Repeat, bool Release);
++  bool intPut(uint64_t Command, bool Repeat, bool Release);
+ 
+ public:
+-  static bool Put(uint64 Command, bool Repeat = false, bool Release = false);
+-  static int MapCodeToFunc(uint64 Code);
++  static bool Put(uint64_t Command, bool Repeat = false, bool Release = false);
++  static int MapCodeToFunc(uint64_t Code);
+ };
+ 
+ 

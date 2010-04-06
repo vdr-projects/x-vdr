@@ -1,0 +1,45 @@
+//
+// ChannelMap for TVM2VDR-Plugin
+// --------------------------
+//
+// TVM2VDR ChannelID = VDR ChannelID (Src-NID-TID-SID)
+//
+// see /usr/share/doc/vdr-plugin-tvm2vdr/examples/
+//
+// e.g.:
+//
+// 1    = C-41985-1101-28106  // ARD
+// 2    = C-1-1079-28006:y  // ZDF
+//
+//
+// multi-id's are by separated by ","
+//
+// e.g.:
+// 4 = C-1-1089-12003,C-1-1091-28800   // RTL Television,RTL Austria
+//
+// VPS enabled by ":" and one of "1yYjJ" after channel-id
+//
+// e.g.:
+// 1    = C-1-1101-28106:y  // ARD
+//
+//
+001 = C-41985-1101-28106   // Das Erste
+002 = C-1-1079-28006   // ZDF
+028 = C-41985-1201-28307,C-41985-1201-28308,C-41985-1201-28309,C-41985-1101-28111,C-41985-1201-28306,C-41985-1201-28311,C-41985-1201-28310   // WDR Dortmund, WDR Düsseldorf, WDR Essen, WDR Köln, WDR Bielefeld, WDR Siegen, WDR Münster
+010 = C-41985-1051-28724   // arte
+206 = C-41985-1051-28725   // Phoenix
+513 = C-41985-1051-28723   // EinsPlus
+512 = C-41985-1051-28722   // EinsFestival
+551 = C-41985-1051-28721   // EinsExtra
+553 = C-1-1079-28014   // ZDFdokukanal
+570 = C-1-1079-28011   // ZDFinfokanal
+552 = C-1-1079-28016   // ZDFtheaterkanal
+063 = C-1-1079-28008   // KiKa
+118 = C-1-1079-28007   // 3sat
+057 = C-41985-1051-28487   // BR-alpha
+018 = C-41985-1101-28107,C-41985-1101-28110   // Bayerisches FS, Bayerisches FS Nord
+026 = C-41985-1101-28108   // hr-fernsehen
+032 = C-41985-1073-28228,C-41985-1073-28229,C-41985-1073-28230   // MDR Sachsen, MDR S-Anhalt, MDR Thüringen
+019 = C-41985-1073-28224,C-41985-1073-28225,C-41985-1073-28226,C-41985-1073-28227   // NDR FS MV, NDR FS HH, NDR FS NDS, NDR FS SH
+027 = C-41985-1073-28206,C-41985-1073-28205   // rbb Berlin, rbb Brandenburg
+029 = C-41985-1101-28113,C-41985-1073-28231   // SWR Fernsehen BW, SWR Fernsehen RP

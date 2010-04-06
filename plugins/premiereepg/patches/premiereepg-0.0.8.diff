@@ -1,0 +1,10 @@
+--- premiereepg.c.orig	2007-08-27 17:22:38.000000000 +0200
++++ premiereepg.c	2007-10-23 14:24:10.000000000 +0200
+@@ -626,6 +626,7 @@
+ 	      else if(tid==0x03 && sid==0xf5) { tid=0x03; sid=0xdc; }
+ 	      else if(tid==0x04 && sid==0xd2) { tid=0x11; sid=0xe2; }
+ 	      else if(tid==0x11 && sid==0xd3) { tid=0x11; sid=0xe3; }
++	      else if(tid==0x01 && sid==0xd4) { tid=0x04; sid=0xe4; }
+               }
+             }
+           tChannelID channelID(Source(),nid,tid,sid);

@@ -1,0 +1,142 @@
+# Zum starten diverser Programme kann irexec benutzt werden:  irexec -d
+# "remote" muss mit "name" in lircd.conf übereinstimmen
+#
+#
+#
+
+
+begin
+        remote = TTS35AI
+        button = Power
+        prog   = irexec
+        repeat = 0
+        config = mplayer -vo xv -ao oss dvd://1
+end
+
+begin
+	remote = TTS35AI
+	prog = xmms
+	button = One
+	repeat = 0
+	config = PLAY
+
+end
+
+begin
+	remote = TTS35AI
+	prog = xmms
+	button = Stop
+	repeat = 0
+	config = STOP
+
+end
+
+begin
+	remote = TTS35AI
+	prog = xmms
+	button = VolU
+	repeat = 0
+	config = VOL_UP 5
+
+end
+
+begin
+	remote = TTS35AI
+	prog = xmms
+	button = VolD
+	repeat = 0
+	config = VOL_DOWN 5
+
+end
+
+begin
+	remote = TTS35AI
+	prog = xmms
+	button = ProgU
+	repeat = 0
+	config = PREV
+
+end
+
+begin
+	remote = TTS35AI
+	prog = xmms
+	button = ProgD
+	repeat = 0
+	config = NEXT
+
+end
+
+begin
+	remote = TTS35AI
+	prog = xmms
+	button = Forward
+	repeat = 1
+	config = FWD 5
+
+end
+
+begin
+	remote = TTS35AI
+	prog = xmms
+	button = Rewind
+	repeat = 1
+	config = BWD 5
+
+end
+
+begin
+	remote = TTS35AI
+	button = Volume+
+	prog = mplayer
+	config = volume 1
+	repeat = 1
+end
+
+begin
+	remote = TTS35AI
+	button =  Volume+
+	prog = mplayer
+	config = volume -1
+	repeat = 1
+end
+
+begin
+	remote = TTS35AI
+	button = Up
+	prog = mplayer
+	config = pause
+	repeat = 0
+end
+
+begin
+	remote = TTS35AI
+	button = Down
+	prog = mplayer
+	config = quit
+	repeat = 0
+end
+
+begin
+	remote = TTS35AI
+	button = OK
+	prog = mplayer
+	config = vo_fullscreen
+	repeat = 0
+end
+
+begin
+	remote = TTS35AI
+	button = Left
+	prog = mplayer
+	config = seek -50
+	repeat = 1
+end
+
+begin
+	remote = TTS35AI
+	button = Right
+	prog = mplayer
+	config = seek 50
+	repeat = 1
+end

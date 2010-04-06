@@ -1,0 +1,206 @@
+diff -Nur ./dvdselect-0.7a/config.c /usr/src/VDR/PLUGINS/src/dvdselect/config.c
+--- ./dvdselect-0.7a/config.c	2004-05-21 02:17:06.000000000 +0200
++++ /usr/src/VDR/PLUGINS/src/dvdselect/config.c	2005-04-24 19:37:37.607017176 +0200
+@@ -26,6 +26,7 @@
+     strcpy(DVDOutputDir, "/video/dvd");
+     strcpy(DVDReadScript, "/video/config/plugins/dvdselect_readdvd.sh");
+     strcpy(DVDWriteScript, "/video/config/plugins/dvdselect_writedvd.sh");
++    ResetDVDLink = true;
+ }
+ 
+ bool cDVDSelectSetup::SetupParse(const char *Name, const char *Value)
+@@ -37,6 +38,7 @@
+   else if (!strcasecmp(Name, "DVDOutputDir"))        strn0cpy(DVDOutputDir, Value , MaxFileName);
+   else if (!strcasecmp(Name, "DVDReadScript"))              strn0cpy(DVDReadScript, Value , MaxFileName);
+   else if (!strcasecmp(Name, "DVDWriteScript"))              strn0cpy(DVDWriteScript, Value , MaxFileName);
++  else if (!strcasecmp(Name, "ResetDVDLink"))	     ResetDVDLink = atoi(Value);
+   else
+     return false;
+   return true;
+@@ -79,6 +81,9 @@
+         MaxFileName,
+         tr(" abcdefghijklmnopqrstuvwxyz0123456789-./")
+       ));
++  Add(new cMenuEditBoolItem( tr("Reset DVD Link by Start/Stop VDR"),
++	&data.ResetDVDLink
++      ));
+ }
+ 
+ void cMenuSetupDVDSelect::Store(void)
+@@ -89,4 +95,6 @@
+   SetupStore( "ImageDir",   data.ImageDir );
+   SetupStore( "DVDReadScript",   data.DVDReadScript );
+   SetupStore( "DVDWriteScript",   data.DVDWriteScript );
++  SetupStore( "ResetDVDLink",   data.ResetDVDLink );
++  SetupStore( "DVDOutputDir",   data.DVDOutputDir );
+ }
+diff -Nur ./dvdselect-0.7a/config.h /usr/src/VDR/PLUGINS/src/dvdselect/config.h
+--- ./dvdselect-0.7a/config.h	2004-05-21 02:12:19.000000000 +0200
++++ /usr/src/VDR/PLUGINS/src/dvdselect/config.h	2005-04-24 19:29:14.390517712 +0200
+@@ -11,6 +11,17 @@
+ 
+ #include <vdr/menuitems.h>
+ 
++#define ISOEXT       "*.ISO"
++//#define FINDCMD      "cd '%s' && find '%s' -follow -type f -iname '%s' 2> /dev/null"
++#define TSDIR        "video_ts"
++#define FINDCMD      "cd '%s' && find '%s' -follow -iname '%s' -printf '%%p\n' -o -iname '%s' -printf '%%h\n' | sort -d 2> /dev/null"
++
++#define SCRIPT_DVDWRITE_CMD      "%s '%s'"
++#define SCRIPT_DVDREAD_CMD      "%s '%s' '%s' '%s'"
++#define RMCMD      "rm '%s' 2> /dev/null"
++#define MOUNTCMD      "sudo ln -nfs '%s' '%s' 2> /dev/null"
++#define RESETCMD      "sudo ln -nfs '%s' '%s' 2> /dev/null"
++
+ class cDVDSelectSetup {
+  public:
+   char NameDevice[MaxFileName];
+@@ -19,7 +30,8 @@
+   char DVDReadScript[MaxFileName];
+   char DVDWriteScript[MaxFileName];
+   char DVDOutputDir[MaxFileName];
+-  
++  int ResetDVDLink;  
++
+  public:
+   cDVDSelectSetup(void);
+   bool SetupParse(const char *Name, const char *Value);
+diff -Nur ./dvdselect-0.7a/dvdselect.c /usr/src/VDR/PLUGINS/src/dvdselect/dvdselect.c
+--- ./dvdselect-0.7a/dvdselect.c	2004-05-22 23:57:53.000000000 +0200
++++ /usr/src/VDR/PLUGINS/src/dvdselect/dvdselect.c	2005-04-24 19:50:12.998180264 +0200
+@@ -21,6 +21,7 @@
+ class cPluginDVDSelect : public cPlugin {
+  private:
+   // Add any member variables or functions you may need here.
++  void Reset(void);
+  public:
+   cPluginDVDSelect(void);
+   virtual ~cPluginDVDSelect();
+@@ -29,6 +30,7 @@
+   virtual const char *CommandLineHelp(void);
+   virtual bool ProcessArgs(int argc, char *argv[]);
+   virtual bool Start(void);
++  virtual void Stop(void);
+   virtual bool Initialize(void);
+   virtual void Housekeeping(void);
+   virtual const char *MainMenuEntry(void) { return tr(MAINMENUENTRY); }
+@@ -75,9 +77,17 @@
+ {
+   // Start any background activities the plugin shall perform.
+   // none needed
++  if (DVDSelectSetup.ResetDVDLink)
++    Reset();
+   return true;
+ }
+ 
++void cPluginDVDSelect::Stop(void)
++{
++  if (DVDSelectSetup.ResetDVDLink)
++    Reset();
++}
++
+ void cPluginDVDSelect::Housekeeping(void)
+ {
+   // Perform any cleanup or other regular tasks.
+@@ -100,4 +110,18 @@
+     return DVDSelectSetup.SetupParse(Name, Value);
+ }
+ 
++void cPluginDVDSelect::Reset(void)
++{
++  char *device = NULL;
++  char *orgDevice = NULL;
++  char *cmd = NULL;
++
++  asprintf(&device, "%s",DVDSelectSetup.NameDevice);
++  asprintf(&orgDevice, "%s",DVDSelectSetup.NameOrgDevice);
++  asprintf(&cmd, RESETCMD, orgDevice, device);
++
++  esyslog(cmd);
++  system(cmd);
++}
++
+ VDRPLUGINCREATOR(cPluginDVDSelect); // Don't touch this!
+diff -Nur ./dvdselect-0.7a/i18n.c /usr/src/VDR/PLUGINS/src/dvdselect/i18n.c
+--- ./dvdselect-0.7a/i18n.c	2004-05-21 02:23:52.000000000 +0200
++++ /usr/src/VDR/PLUGINS/src/dvdselect/i18n.c	2005-04-24 19:35:22.540550400 +0200
+@@ -282,5 +282,21 @@
+     "",// TODO
+     "",// TODO
+   },
++  { "Reset DVD Link by Start/Stop VDR",
++    "DVD-Link bei Start/Stop VDR zurücksetzen",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++  },
+   { NULL }
+   };
+diff -Nur ./dvdselect-0.7a/menu.c /usr/src/VDR/PLUGINS/src/dvdselect/menu.c
+--- ./dvdselect-0.7a/menu.c	2004-05-23 00:04:37.000000000 +0200
++++ /usr/src/VDR/PLUGINS/src/dvdselect/menu.c	2005-04-24 19:07:50.300729032 +0200
+@@ -11,22 +11,10 @@
+ #include "config.h"
+ #include "menuitem.h"
+ 
+-#define ISOEXT       "*.ISO"
+-//#define FINDCMD      "cd '%s' && find '%s' -follow -type f -iname '%s' 2> /dev/null"
+-#define TSDIR        "video_ts"
+-#define FINDCMD      "cd '%s' && find '%s' -follow -iname '%s' -printf '%%p\n' -o -iname '%s' -printf '%%h\n' 2> /dev/null"
+-
+-#define SCRIPT_DVDWRITE_CMD      "%s '%s'"
+-#define SCRIPT_DVDREAD_CMD      "%s '%s' '%s' '%s'"
+-#define RMCMD      "rm '%s' 2> /dev/null"
+-#define MOUNTCMD      "ln -nfs '%s' '%s' 2> /dev/null"
+-#define RESETCMD      "ln -nfs '%s' '%s' 2> /dev/null"
+-
+-
+ // --- cDVDList -------------------------------------------------------------
+ cDVDList::cDVDList(void) : cOsdMenu(tr("DVDSelect"), 12, 6)
+ {
+-  int i;
++  int i = 0;
+   char *cmd = NULL;
+   
+   SetHelp();
+@@ -34,9 +22,15 @@
+   asprintf(&cmd, FINDCMD, DVDSelectSetup.ImageDir, DVDSelectSetup.ImageDir, ISOEXT,TSDIR);
+   FILE *p = popen(cmd, "r");
+   if (p) {
++    cReadLine ReadLine;
+     char *s;
+-    while ((s = readline(p)) != NULL) {
+-      Add(new cMenuDVDItem(s,DVDSelectSetup.ImageDir), &i);
++    while ((s = ReadLine.Read(p)) != NULL) {
++      i++;
++      //Add(new cMenuDVDItem(s,DVDSelectSetup.ImageDir), &i);
++      if (i == 1)
++        Add(new cMenuDVDItem(s,DVDSelectSetup.ImageDir), true);
++      else
++        Add(new cMenuDVDItem(s,DVDSelectSetup.ImageDir), false);
+     }//while
+     pclose(p);
+     Sort();
+diff -Nur ./dvdselect-0.7a/menuitem.c /usr/src/VDR/PLUGINS/src/dvdselect/menuitem.c
+--- ./dvdselect-0.7a/menuitem.c	2003-12-12 17:24:32.000000000 +0100
++++ /usr/src/VDR/PLUGINS/src/dvdselect/menuitem.c	2005-04-24 19:07:50.300729032 +0200
+@@ -25,7 +25,8 @@
+ cMenuDVDItem::cMenuDVDItem(char *name,char *dir) {
+ 
+   asprintf(&dateiname,"%s", name);
+-  SetText(substring(name,strlen(dir)+1,strlen(name)-1), true);
++  //SetText(substring(name,strlen(dir)+1,strlen(name)-1), true);
++  SetText(substring(name,strlen(dir)+1,strlen(name)-5), true);
+ }
+ 
+ 

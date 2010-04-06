@@ -1,0 +1,72 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 94_playlist-0.0.2-1.7.3.dpatch by Thomas Günther <tom@toms-cafe.de>
+## http://toms-cafe.de/vdr/download/playlist-0.0.2-1.7.3.diff
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Changes for VDR >= 1.7.3.
+
+@DPATCH@
+--- playlist-0.0.2/dataplaylist.c
++++ playlist-0.0.2/dataplaylist.c
+@@ -125,6 +125,7 @@ void cPlaylistRecord::SetDefaults(cRecor
+   isdel = false;
+   isnew = false;
+   isedited = false;
++  isPesRecording = false;
+   start = 0;
+   title = NULL;
+   summary = NULL;
+@@ -139,6 +140,9 @@ bool cPlaylistRecord::CopyFromRecording(
+   if (recording)
+   {
+     isedited = recording->IsEdited();
++#if VDRVERSNUM >= 10703
++    isPesRecording = recording->IsPesRecording();
++#endif
+     isnew = recording->IsNew();
+     start = recording->start;
+     title = strdup(recording->Title('\t', true, recording->HierarchyLevels()));
+--- playlist-0.0.2/dataplaylist.h
++++ playlist-0.0.2/dataplaylist.h
+@@ -43,6 +43,7 @@ private:
+   time_t start;    // copy from cRecording
+   char   *title;   // copy from cRecording
+   bool   isedited; // copy from cRecording
++  bool   isPesRecording; // copy from cRecording
+   char   *summary; // copy from cRecording
+   int    options[Option_max];
+   cPlaylistRecord *parent;
+@@ -66,6 +67,7 @@ public:
+   char *Filename(void)      { return filename; }
+   bool IsNew(void)          { return isnew; }
+   bool IsEdited(void)       { return isedited; }
++  bool IsPesRecording(void) const { return isPesRecording; }
+   bool IsDir(void)          { return isdir; }
+   bool IsDel(void)          { return isdel; }
+   bool IsDirOrDel(void)     { return isdir || isdel; }
+--- playlist-0.0.2/menucontrol.c
++++ playlist-0.0.2/menucontrol.c
+@@ -188,7 +188,11 @@ eOSState cControlPlaylist::PlayRecording
+   {
+     if (PlaylistRecord->IsNew() && !PlaylistRecord->IsEdited() && PlaylistRecord->Option(Option_jumpmark))
+     {
++#if VDRVERSNUM >= 10703
++      cResumeFile *resume = new cResumeFile(PlaylistRecord->Filename(), PlaylistRecord->IsPesRecording());
++#else
+       cResumeFile *resume = new cResumeFile(PlaylistRecord->Filename());
++#endif
+       int res = resume->Read();
+       delete resume;
+       if (res < 0) // new file
+@@ -205,7 +209,11 @@ eOSState cControlPlaylist::PlayRecording
+               mark = marks->GetNext(mark)->position;
+               mark = marks->GetNext(mark)->position;
+             }
++#if VDRVERSNUM >= 10703
++            cResumeFile *resume = new cResumeFile(PlaylistRecord->Filename(), PlaylistRecord->IsPesRecording());
++#else
+             cResumeFile *resume = new cResumeFile(PlaylistRecord->Filename());
++#endif
+             if (mark > 0 && resume)
+             {
+               resume->Save(mark);

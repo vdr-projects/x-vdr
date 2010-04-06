@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# x-vdr (Installations-Skript fuer einen VDR mit Debian als Basis)
+# von Marc Wernecke - www.zulu-entertainment.de
+# 23.12.2006
+
+# /etc/init.d/dvb-bootsplash
+[ -r /etc/default/vdr ] || exit 1
+. /etc/default/vdr
+[ -r $VDRSCRIPTDIR/mplayer.sh.conf ] || exit 1
+. $VDRSCRIPTDIR/mplayer.sh.conf
+
+case "$1" in
+  start)
+    /usr/bin/mplayer -vo $VO $DIVXDIR/VDRboot.mpeg >/dev/null &
+    ;;
+  stop)
+    killall -q -9 mplayer
+    ;;
+  *)
+    echo "Usage: /etc/init.d/dvb-bootsplash {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0

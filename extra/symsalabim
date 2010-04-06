@@ -1,0 +1,82 @@
+#!/bin/sh
+# x-vdr (vdr-installer für kanotix)
+# von Marc Wernecke - www.zulu-entertainment.de
+# 20.07.2006
+
+# workingdir
+if [ $# -eq 0 ]; then 
+  DIR="`pwd`/vdrsyms"
+else
+  DIR="$*"
+fi
+[ ! -d "$DIR" ] && mkdir -p "$DIR"
+
+# load settings
+SOURCEDIR=/usr/local/src
+XVDRCONF=`dirname $0`/../x-vdr.conf
+[ -f $XVDRCONF ] && . $XVDRCONF && echo "x-vdr.conf - found"
+. /etc/default/vdr && echo "/etc/default/vdr - found"
+
+## VDRCONFIG
+# symlink to $VDRCONFDIR
+_VDRCONFDIR="$DIR/`basename $VDRCONFDIR`"
+[ -L $_VDRCONFDIR ] && rm -f $_VDRCONFDIR
+[ ! -d $_VDRCONFDIR ] && ln -vnfs $VDRCONFDIR $_VDRCONFDIR
+
+# symlink to $VDRSCRIPTDIR
+_VDRSCRIPTDIR="$DIR/`basename $VDRSCRIPTDIR`"
+[ -L $_VDRSCRIPTDIR ] && rm -f $_VDRSCRIPTDIR
+[ ! -d $_VDRSCRIPTDIR ] && ln -vnfs $VDRSCRIPTDIR $_VDRSCRIPTDIR
+
+# symlink to $VDRLIBDIR
+_VDRLIBDIR="$DIR/`basename $VDRLIBDIR`"
+[ -L $_VDRLIBDIR ] && rm -f $_VDRLIBDIR
+[ ! -d $_VDRLIBDIR ] && ln -vnfs $VDRLIBDIR $_VDRLIBDIR
+
+# symlink to $VDRVARDIR
+_VDRVARDIR="$DIR/`basename $VDRVARDIR`"
+[ -L $_VDRVARDIR ] && rm -f $_VDRVARDIR
+[ ! -d $_VDRVARDIR ] && ln -vnfs $VDRVARDIR $_VDRVARDIR
+
+# symlink to $SOURCEDIR
+_SOURCEDIR="$DIR/`basename $SOURCEDIR`"
+[ -L $_SOURCEDIR ] && rm -f $_SOURCEDIR
+[ ! -d $_SOURCEDIR ] && ln -vnfs $SOURCEDIR $_SOURCEDIR
+
+# symlink to /etc/default/vdr
+_VDRDEFAULT="$DIR/vdr-default"
+[ -L $_VDRDEFAULT ] && rm -f $_VDRDEFAULT
+[ ! -d $_VDRDEFAULT ] && ln -vnfs /etc/default/vdr $_VDRDEFAULT
+
+## VDRMEDIA
+# symlink to $MEDIADIR
+_MEDIADIR="$DIR/`basename $MEDIADIR`"
+[ -L $_MEDIADIR ] && rm -f $_MEDIADIR 
+[ ! -d $_MEDIADIR ] && ln -vnfs $MEDIADIR $_MEDIADIR
+
+# symlink to $VIDEODIR
+_VIDEODIR="$DIR/`basename $VIDEODIR`"
+[ -L $_VIDEODIR ] && rm -f $_VIDEODIR
+[ ! -d $_VIDEODIR ] && ln -vnfs $VIDEODIR $_VIDEODIR
+
+# symlink to $MUSICDIR
+_MUSICDIR="$DIR/`basename $MUSICDIR`"
+[ -L $_MUSICDIR ] && rm -f $_MUSICDIR
+[ ! -d $_MUSICDIR ] && ln -vnfs $MUSICDIR $_MUSICDIR
+
+# symlink to $DIVXDIR
+_DIVXDIR="$DIR/`basename $DIVXDIR`"
+[ -L $_DIVXDIR ] && rm -f $_DIVXDIR
+[ ! -d $_DIVXDIR ] && ln -vnfs $DIVXDIR $_DIVXDIR
+
+# symlink to $PICTUREDIR
+_PICTUREDIR="$DIR/`basename $PICTUREDIR`"
+[ -L $_PICTUREDIR ] && rm -f $_PICTUREDIR
+[ ! -d $_PICTUREDIR ] && ln -vnfs $PICTUREDIR $_PICTUREDIR
+
+# symlink to $DVDISODIR
+_DVDISODIR="$DIR/`basename $DVDISODIR`"
+[ -L $_DVDISODIR ] && rm -f $_DVDISODIR 
+[ ! -d $_DVDISODIR ] && ln -vnfs $DVDISODIR $_DVDISODIR
+
+exit 0

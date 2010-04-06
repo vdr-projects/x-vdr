@@ -1,0 +1,10 @@
+--- ./linux/include/linux/dvb/video.h.orig	2009-03-03 09:54:58.000000000 +0100
++++ ./linux/include/linux/dvb/video.h	2009-03-03 09:45:30.000000000 +0100
+@@ -28,6 +28,7 @@
+ #ifdef __KERNEL__
+ #include <linux/compiler.h>
+ #else
++#include <linux/compiler.h>
+ #include <stdint.h>
+ #include <time.h>
+ #endif

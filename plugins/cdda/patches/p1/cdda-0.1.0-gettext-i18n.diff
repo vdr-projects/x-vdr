@@ -1,0 +1,5132 @@
+diff -Nru cdda-0.1.0/cdda.c cdda-0.1.0-gettext-i18n/cdda.c
+--- cdda-0.1.0/cdda.c	2005-12-17 15:39:27.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/cdda.c	2008-03-30 16:43:05.000000000 +0200
+@@ -17,8 +17,8 @@
+ #include "cdda_cddb.h"
+ 
+ static const char *VERSION        = "0.1.0";
+-static const char *DESCRIPTION    = "music cd player";
+-static const char *MAINMENUENTRY  = "CD Player";
++static const char *DESCRIPTION    = trNOOP("music cd player");
++static const char *MAINMENUENTRY  = tr("CD Player");
+ 
+ class cPluginCdda : public cPlugin {
+ private:
+diff -Nru cdda-0.1.0/cdda_i18n.c cdda-0.1.0-gettext-i18n/cdda_i18n.c
+--- cdda-0.1.0/cdda_i18n.c	2008-03-30 16:42:34.000000000 +0200
++++ cdda-0.1.0-gettext-i18n/cdda_i18n.c	2008-03-30 16:42:56.000000000 +0200
+@@ -6,6 +6,7 @@
+  * $Id: cdda_i18n.c,v 1.12 2005/12/19 10:37:20 cm Exp $
+  */
+ 
++#if APIVERSNUM < 10507
+ #include "cdda_i18n.h"
+ 
+ const tI18nPhrase tlPhrases[] = {
+@@ -843,3 +844,4 @@
+   },
+   { NULL }
+ };
++#endif
+diff -Nru cdda-0.1.0/Makefile cdda-0.1.0-gettext-i18n/Makefile
+--- cdda-0.1.0/Makefile	2008-03-30 16:42:29.000000000 +0200
++++ cdda-0.1.0-gettext-i18n/Makefile	2008-03-30 16:42:56.000000000 +0200
+@@ -71,9 +71,34 @@
+ 
+ -include $(DEPFILE)
+ 
++### Internationalization (I18N):
++
++PODIR     = po
++LOCALEDIR = $(VDRDIR)/locale
++I18Npo    = $(wildcard $(PODIR)/*.po)
++I18Nmsgs  = $(addprefix $(LOCALEDIR)/, $(addsuffix /LC_MESSAGES/vdr-$(PLUGIN).mo, $(notdir $(foreach file, $(I18Npo), $(basename $(file))))))
++I18Npot   = $(PODIR)/$(PLUGIN).pot
++
++%.mo: %.po
++	msgfmt -c -o $@ $<
++
++$(I18Npot): $(wildcard *.c)
++	xgettext -C -cTRANSLATORS --no-wrap --no-location -k -ktr -ktrNOOP --msgid-bugs-address='<micky979@free.fr>' -o $@ $^
++
++%.po: $(I18Npot)
++	msgmerge -U --no-wrap --no-location --backup=none -q $@ $<
++	@touch $@
++
++$(I18Nmsgs): $(LOCALEDIR)/%/LC_MESSAGES/vdr-$(PLUGIN).mo: $(PODIR)/%.mo
++	@mkdir -p $(dir $@)
++	cp $< $@
++
++.PHONY: i18n
++i18n: $(I18Nmsgs)
++
+ ### Targets:
+ 
+-all: libvdr-$(PLUGIN).so
++all: libvdr-$(PLUGIN).so i18n
+ 
+ libvdr-$(PLUGIN).so: $(OBJS)
+ 	$(CXX) $(CXXFLAGS) -shared $(LIBS) $(OBJS) -o $@
+@@ -88,4 +113,5 @@
+ 	@echo Distribution package created as $(PACKAGE).tgz
+ 
+ clean:
++	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
+ 	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
+diff -Nru cdda-0.1.0/po/ca_ES.po cdda-0.1.0-gettext-i18n/po/ca_ES.po
+--- cdda-0.1.0/po/ca_ES.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/ca_ES.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,227 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Marc Rovira Vall <tm05462@salleURL.edu>, 2003
++# Ramon Roca <ramon.roca@xcombo.com>, 2003
++# Jordi Vilà <jvila@tinet.org>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Jordi Vilà <jvila@tinet.org>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/cdda.pot cdda-0.1.0-gettext-i18n/po/cdda.pot
+--- cdda-0.1.0/po/cdda.pot	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/cdda.pot	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,226 @@
++# SOME DESCRIPTIVE TITLE.
++# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the PACKAGE package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++#, fuzzy
++msgid ""
++msgstr ""
++"Project-Id-Version: PACKAGE VERSION\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: LANGUAGE <LL@li.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=CHARSET\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/cs_CZ.po cdda-0.1.0-gettext-i18n/po/cs_CZ.po
+--- cdda-0.1.0/po/cs_CZ.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/cs_CZ.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,225 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Vladimír Bárta <vladimir.barta@k2atmitec.cz>, 2006
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Vladimír Bárta <vladimir.barta@k2atmitec.cz>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/da_DK.po cdda-0.1.0-gettext-i18n/po/da_DK.po
+--- cdda-0.1.0/po/da_DK.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/da_DK.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,225 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Mogens Elneff <mogens@elneff.dk>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Mogens Elneff <mogens@elneff.dk>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/de_DE.po cdda-0.1.0-gettext-i18n/po/de_DE.po
+--- cdda-0.1.0/po/de_DE.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/de_DE.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,225 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Klaus Schmidinger <kls@cadsoft.de>, 2000
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Klaus Schmidinger <kls@cadsoft.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr "Disk"
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr "Album"
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr "Interpret"
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr "Titel"
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr "Springe zu Titel"
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr "Spielliste"
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr "Musik CD Player"
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr "CD Player"
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr "Lade Disk Informationen"
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr "Titel"
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr "Befehle"
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr "Alle"
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr "Programm"
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr "Auswerfen"
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr "Keine Musik CD eingelegt"
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr "Aktualisieren"
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr "Disk kann nicht ausgeworfen werden"
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr "Hinzufügen zur Spielliste"
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr "Entfernen von der Spielliste"
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr "Nächstes Disk/Track-Tag"
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr "Aktuelles Tag löschen"
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr "Nur ein Disk/Track-Tag verfügbar"
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr "Aktuelles Tag kann nicht gelöscht werden"
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr "Disk Informationen"
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr "Disk ID"
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr "Titel Informationen"
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr "Bearbeiter"
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr "Komponist"
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr "Textdichter"
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr "Zusatztext"
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr "aus"
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr "kein CD-Text"
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr "nur Cache"
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr "immer"
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr "Menüeintrag"
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr "verstecken"
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr "anzeigen"
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr "Informationsansicht"
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr "Sprungweite (s)"
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr "Sprunggrenze (s)"
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr "Hintergrund"
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr "schwarz"
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr "Wiedergabe automatisch starten"
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr "CDDB Priorität"
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr "CDDB Server FQDN"
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr "CDDB Server Port"
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr "an"
+diff -Nru cdda-0.1.0/po/el_GR.po cdda-0.1.0-gettext-i18n/po/el_GR.po
+--- cdda-0.1.0/po/el_GR.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/el_GR.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,225 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Dimitrios Dimitrakos <mail@dimitrios.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Dimitrios Dimitrakos <mail@dimitrios.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-7\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/es_ES.po cdda-0.1.0-gettext-i18n/po/es_ES.po
+--- cdda-0.1.0/po/es_ES.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/es_ES.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,225 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Ruben Nunez Francisco <ruben.nunez@tang-it.com>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Ruben Nunez Francisco <ruben.nunez@tang-it.com>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/et_EE.po cdda-0.1.0-gettext-i18n/po/et_EE.po
+--- cdda-0.1.0/po/et_EE.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/et_EE.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,225 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Arthur Konovalov <kasjas@hot.ee>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Arthur Konovalov <kasjas@hot.ee>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-13\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/fi_FI.po cdda-0.1.0-gettext-i18n/po/fi_FI.po
+--- cdda-0.1.0/po/fi_FI.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/fi_FI.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,228 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Hannu Savolainen <hannu@opensound.com>, 2002
++# Jaakko Hyvätti <jaakko@hyvatti.iki.fi>, 2002
++# Niko Tarnanen <niko.tarnanen@hut.fi>, 2003
++# Rolf Ahrenberg <rahrenbe@cc.hut.fi>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Rolf Ahrenberg <rahrenbe@cc.hut.fi>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr "Levy"
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr "Albumi"
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr "Esittäjä"
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr "Nimi"
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr "Siirry"
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr "Soittolista"
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr "CD-soitin"
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr "CD-soitin"
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr "Ladataan levyn tietoja"
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr "Kappale"
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr "Komennot"
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr "Kaikki"
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr "Ohjelmoidut"
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr "Valittu"
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr "Avaa"
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr "Tiedot"
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr "Asemassa ei ole CD-levyä"
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr "Päivitä"
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr "Asemaa ei voida avata soitettaessa"
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr "Lisää soittolistalle"
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr "Poista soittolistalta"
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr "Vaihda levyn/kappaleen tiedot"
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr "Poista nykyiset tiedot"
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr "Vain yhdet levyn/kappaleen tiedot saatavilla"
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr "Nykyisiä tietoja ei voida poistaa"
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr "Levyn tiedot"
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr "Levyn tunniste"
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr "Kappaleen tiedot"
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr "Tuottaja"
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr "Säveltäjä"
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr "Sanoittaja"
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr "Tyylilaji"
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr "Lisätiedot"
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr "ei"
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr "ei CD-tekstiä"
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr "vain välimuisti"
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr "aina"
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr "Valinta päävalikossa"
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr "piilota"
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr "näytä"
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr "Näytä oletuksena seuraavat tiedot"
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr "Hypyn pituus (s)"
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr "Hyppy kappaleen alkuun (s)"
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr "Tausta"
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr "musta"
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr "live-kuva"
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr "Automaattinen toisto"
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr "Käytä CDDB-tietoja"
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr "CDDB-palvelimen osoite"
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr "CDDB-palvelimen portti"
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr "Käytä CDDB-välimuistia"
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr "kyllä"
+diff -Nru cdda-0.1.0/po/fr_FR.po cdda-0.1.0-gettext-i18n/po/fr_FR.po
+--- cdda-0.1.0/po/fr_FR.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/fr_FR.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,228 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Jean-Claude Repetto <jc@repetto.org>, 2001
++# Olivier Jacques <jacquesolivier@hotmail.com>, 2003
++# Gregoire Favre <greg@magma.unil.ch>, 2003
++# Nicolas Huillard <nhuillard@e-dition.fr>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Nicolas Huillard <nhuillard@e-dition.fr>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr "Disque"
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr "Album"
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr "Artiste"
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr "Titre"
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr "Aller a"
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr "Liste de lecture"
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr "Lecteur de CD Audio"
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr "Lecteur de CD"
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr "Chargement des informations du disque"
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr "Piste"
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr "Commandes"
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr "Toutes"
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr "Programme"
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr "Simple"
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr "Ejecter"
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr "Information"
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr "Pas de CD Audio dans le lecteur"
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr "Rafraichir"
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr "Ejection du disque impossible pendant la lecture"
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr "Ajouter à la liste de lecture"
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr "Supprimer de la liste de lecture"
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr "Prochain tag disque/piste"
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr "Supprimer tag courant"
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr "Seulement un tag disque/piste disponible"
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr "Ne peut pas supprimer tag courant"
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr "Information du disque"
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr "ID du disque"
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr "Information de la piste"
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr "Arrangeur"
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr "Compositeur"
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr "Parolier"
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr "Genre"
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr "Message"
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr "éteint"
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr "Pas de CD-Text"
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr "Cache seulement"
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr "toujours"
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr "Menu Principal"
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr "cacher"
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr "voir"
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr "Visualisation des informations"
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr "Longueur de saut (s)"
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr "Marge saut arrière (s)"
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr "Arrière Plan"
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr "noir"
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr "vidéo"
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr "Lecture automatique"
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr "Priorité du serveur CDDB"
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr "Adresse du serveur CDDB"
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr "Port du serveur CDDB"
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr "Cache du serveur CDDB"
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr "allumé"
+diff -Nru cdda-0.1.0/po/hr_HR.po cdda-0.1.0-gettext-i18n/po/hr_HR.po
+--- cdda-0.1.0/po/hr_HR.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/hr_HR.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,226 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Drazen Dupor <drazen.dupor@dupor.com>, 2004
++# Dino Ravnic <dino.ravnic@fer.hr>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Drazen Dupor <drazen.dupor@dupor.com>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/hu_HU.po cdda-0.1.0-gettext-i18n/po/hu_HU.po
+--- cdda-0.1.0/po/hu_HU.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/hu_HU.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,226 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Istvan Koenigsberger <istvnko@hotmail.com>, 2002
++# Guido Josten <guido.josten@t-online.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Istvan Koenigsberger <istvnko@hotmail.com>, Guido Josten <guido.josten@t-online.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/it_IT.po cdda-0.1.0-gettext-i18n/po/it_IT.po
+--- cdda-0.1.0/po/it_IT.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/it_IT.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,227 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Alberto Carraro <bertocar@tin.it>, 2001
++# Antonio Ospite <ospite@studenti.unina.it>, 2003
++# Sean Carlos <seanc@libero.it>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Sean Carlos <seanc@libero.it>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/nl_NL.po cdda-0.1.0-gettext-i18n/po/nl_NL.po
+--- cdda-0.1.0/po/nl_NL.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/nl_NL.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,227 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Arnold Niessen <niessen@iae.nl> <arnold.niessen@philips.com>, 2001
++# Hans Dingemans <hans.dingemans@tacticalops.nl>, 2003
++# Maarten Wisse <Maarten.Wisse@urz.uni-hd.de>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Maarten Wisse <Maarten.Wisse@urz.uni-hd.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/nn_NO.po cdda-0.1.0-gettext-i18n/po/nn_NO.po
+--- cdda-0.1.0/po/nn_NO.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/nn_NO.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,226 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Jørgen Tvedt <pjtvedt@online.no>, 2001
++# Truls Slevigen <truls@slevigen.no>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Truls Slevigen <truls@slevigen.no>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/pl_PL.po cdda-0.1.0-gettext-i18n/po/pl_PL.po
+--- cdda-0.1.0/po/pl_PL.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/pl_PL.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,225 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Michael Rakowski <mrak@gmx.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Michael Rakowski <mrak@gmx.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/pt_PT.po cdda-0.1.0-gettext-i18n/po/pt_PT.po
+--- cdda-0.1.0/po/pt_PT.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/pt_PT.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,225 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Paulo Lopes <pmml@netvita.pt>, 2001
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Paulo Lopes <pmml@netvita.pt>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/ro_RO.po cdda-0.1.0-gettext-i18n/po/ro_RO.po
+--- cdda-0.1.0/po/ro_RO.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/ro_RO.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,226 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Paul Lacatus <paul@campina.iiruc.ro>, 2002
++# Lucian Muresan <lucianm@users.sourceforge.net>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Lucian Muresan <lucianm@users.sourceforge.net>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/ru_RU.po cdda-0.1.0-gettext-i18n/po/ru_RU.po
+--- cdda-0.1.0/po/ru_RU.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/ru_RU.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,225 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Vyacheslav Dikonov <sdiconov@mail.ru>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Vyacheslav Dikonov <sdiconov@mail.ru>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-5\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/sl_SI.po cdda-0.1.0-gettext-i18n/po/sl_SI.po
+--- cdda-0.1.0/po/sl_SI.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/sl_SI.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,226 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Miha Setina <mihasetina@softhome.net>, 2000
++# Matjaz Thaler <matjaz.thaler@guest.arnes.si>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Matjaz Thaler <matjaz.thaler@guest.arnes.si>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/sv_SE.po cdda-0.1.0-gettext-i18n/po/sv_SE.po
+--- cdda-0.1.0/po/sv_SE.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/sv_SE.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,226 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Tomas Prybil <tomas@prybil.se>, 2002
++# Jan Ekholm <chakie@infa.abo.fi>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Tomas Prybil <tomas@prybil.se>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""
+diff -Nru cdda-0.1.0/po/tr_TR.po cdda-0.1.0-gettext-i18n/po/tr_TR.po
+--- cdda-0.1.0/po/tr_TR.po	1970-01-01 01:00:00.000000000 +0100
++++ cdda-0.1.0-gettext-i18n/po/tr_TR.po	2008-03-30 16:42:56.000000000 +0200
+@@ -0,0 +1,225 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Oktay Yolgeçen <oktay_73@yahoo.de>, 2007
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-03-30 15:55+0200\n"
++"PO-Revision-Date: 2008-03-30 15:55+0200\n"
++"Last-Translator: Oktay Yolgeçen <oktay_73@yahoo.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-9\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: audio_player.c:441 audio_player.c:551
++msgid "Disc"
++msgstr ""
++
++#: audio_player.c:443 audio_player.c:553 cdda_menu.c:320
++msgid "Album"
++msgstr ""
++
++#: audio_player.c:445 audio_player.c:555 cdda_menu.c:87 cdda_menu.c:318
++#: cdda_menu.c:333
++msgid "Artist"
++msgstr ""
++
++#: audio_player.c:447 audio_player.c:557 cdda_menu.c:335
++msgid "Title"
++msgstr ""
++
++#: audio_player.c:455 audio_player.c:467 cdda_menu.c:159
++msgid "Jump to title"
++msgstr ""
++
++#: audio_player.c:512
++msgid "Playlist"
++msgstr ""
++
++#: cdda.c:20
++msgid "music cd player"
++msgstr ""
++
++#: cdda.c:21 cdda_menu.c:17
++msgid "CD Player"
++msgstr ""
++
++#: cdda_menu.c:35
++msgid "Loading disc information"
++msgstr ""
++
++#: cdda_menu.c:88 cdda_menu.c:364
++msgid "Track"
++msgstr ""
++
++#: cdda_menu.c:95 cdda_menu.c:217
++msgid "Commands"
++msgstr ""
++
++#: cdda_menu.c:96 cdda_menu.c:364
++msgid "All"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Program"
++msgstr ""
++
++#: cdda_menu.c:96
++msgid "Single"
++msgstr ""
++
++#: cdda_menu.c:97
++msgid "Eject"
++msgstr ""
++
++#: cdda_menu.c:98 cdda_menu.c:151
++msgid "Information"
++msgstr ""
++
++#: cdda_menu.c:100
++msgid "No music cd in your drive"
++msgstr ""
++
++#: cdda_menu.c:103
++msgid "Refresh"
++msgstr ""
++
++#: cdda_menu.c:198
++msgid "Cannot eject disc while playing"
++msgstr ""
++
++#: cdda_menu.c:230
++msgid "Add to playlist"
++msgstr ""
++
++#: cdda_menu.c:232
++msgid "Remove from playlist"
++msgstr ""
++
++#: cdda_menu.c:235
++msgid "Next disc/track tag"
++msgstr ""
++
++#: cdda_menu.c:239
++msgid "Delete current tag"
++msgstr ""
++
++#: cdda_menu.c:267
++msgid "Only one disc/track tag available"
++msgstr ""
++
++#: cdda_menu.c:285
++msgid "Cannot delete current tag"
++msgstr ""
++
++#: cdda_menu.c:316
++msgid "Disc information"
++msgstr ""
++
++#: cdda_menu.c:322
++msgid "Disc ID"
++msgstr ""
++
++#: cdda_menu.c:325
++msgid "Track information"
++msgstr ""
++
++#: cdda_menu.c:327
++msgid "Arranger"
++msgstr ""
++
++#: cdda_menu.c:329
++msgid "Composer"
++msgstr ""
++
++#: cdda_menu.c:331
++msgid "Songwriter"
++msgstr ""
++
++#: cdda_menu.c:337
++msgid "Genre"
++msgstr ""
++
++#: cdda_menu.c:339
++msgid "Message"
++msgstr ""
++
++#: cdda_menu.c:358 cdda_menu.c:372
++msgid "off"
++msgstr ""
++
++#: cdda_menu.c:359
++msgid "no cd-text"
++msgstr ""
++
++#: cdda_menu.c:360
++msgid "cache only"
++msgstr ""
++
++#: cdda_menu.c:361
++msgid "always"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "Mainmenu entry"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "hide"
++msgstr ""
++
++#: cdda_menu.c:363
++msgid "show"
++msgstr ""
++
++#: cdda_menu.c:364
++msgid "Information view"
++msgstr ""
++
++#: cdda_menu.c:365
++msgid "Skip length (s)"
++msgstr ""
++
++#: cdda_menu.c:366
++msgid "Skip back margin (s)"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "Background"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "black"
++msgstr ""
++
++#: cdda_menu.c:367
++msgid "live"
++msgstr ""
++
++#: cdda_menu.c:368
++msgid "Autostart replay"
++msgstr ""
++
++#: cdda_menu.c:369
++msgid "CDDB Priority"
++msgstr ""
++
++#: cdda_menu.c:370
++msgid "CDDB Server FQDN"
++msgstr ""
++
++#: cdda_menu.c:371
++msgid "CDDB Server Port"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "CDDB Cache"
++msgstr ""
++
++#: cdda_menu.c:372
++msgid "on"
++msgstr ""

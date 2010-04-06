@@ -1,0 +1,36 @@
+diff -pruN vdr-plugin-reelchannelscan-0.4.3~r2.org/csmenu.c vdr-plugin-reelchannelscan-0.4.3~r2/csmenu.c
+--- vdr-plugin-reelchannelscan-0.4.3~r2.org/csmenu.c	2007-05-04 19:19:45.000000000 +0200
++++ vdr-plugin-reelchannelscan-0.4.3~r2/csmenu.c	2008-06-11 14:05:24.000000000 +0200
+@@ -648,7 +648,7 @@ void cMenuScanActive::Setup()
+ 
+   if (cMenuChannelscan::scanState <= ssGetChannels)
+   {
+-     char *txts[3]={"TV only","Radio only","Radio + TV"};
++     const char *txts[3]={"TV only","Radio only","Radio + TV"};
+ 
+      if (cMenuChannelscan::scanState == ssGetTransponders)
+      {
+diff -pruN vdr-plugin-reelchannelscan-0.4.3~r2.org/filter.h vdr-plugin-reelchannelscan-0.4.3~r2/filter.h
+--- vdr-plugin-reelchannelscan-0.4.3~r2.org/filter.h	2007-05-04 19:19:45.000000000 +0200
++++ vdr-plugin-reelchannelscan-0.4.3~r2/filter.h	2008-06-11 14:04:44.000000000 +0200
+@@ -90,7 +90,7 @@ public:
+ #ifdef REELVDR 
+ #define MAXNITS 256
+ #endif
+-#define MAXNETWORKNAME 256
++//#define MAXNETWORKNAME 256
+ 
+ 
+ class NitFilter : public cFilter {
+diff -pruN vdr-plugin-reelchannelscan-0.4.3~r2.org/transponders.h vdr-plugin-reelchannelscan-0.4.3~r2/transponders.h
+--- vdr-plugin-reelchannelscan-0.4.3~r2.org/transponders.h	2007-05-04 19:19:45.000000000 +0200
++++ vdr-plugin-reelchannelscan-0.4.3~r2/transponders.h	2008-06-11 14:04:44.000000000 +0200
+@@ -19,6 +19,7 @@
+ #include <sstream> 
+ #include <string>
+ #include <vector>
++#include <memory> //definition of auto_ptr
+ 
+ #include <assert.h>
+ #include <dirent.h>
+

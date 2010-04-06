@@ -1,0 +1,838 @@
+#! /bin/bash
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+script="burn-bc"                                                                                        #
+version="burn background creator 0.0.5"                                                                 #
+# written by Marc Wernecke                                                                              #
+# date: 2007-07-01                                                                                      #
+# use: script [-argument value]                                                                         #
+# optional arguments are:                                                                               #
+# -f | -filter crop                                                                                     #
+#              zoom-center|zoom-left|zoom-right|                                                        #
+#              zoom-center-16x9|zoom-left-16x9|zoom-right-16x9|letterbox-16x9                           #
+#              resize                                                                                   #
+#              comp-atop|comp-blend|draw-bigsize|draw-normal|draw-storke|draw-user                      #
+#              serial-foto|serial-movie                                                                 #
+#              tux                                                                                      #
+#              sharpen                                                                                  #
+#              depth                                                                                    #
+# -i | -image /path/to/image.ext                                                                        #
+# -t | -target /path/to/plugins/burn/menu-bg.png                                                        #
+# -T | -template /path/to/template.png                                                                  #
+# -o | -osd on|off                                                                                      #
+# -w | -watermark ?|default|"some text"                                                                 #
+# -W | -width 720|768                                                                                   #
+# -x | -showfile on|off                                                                                 #
+# -d | -dialog                                                                                          #
+# -h | -help                                                                                            #
+# -v | -version                                                                                         #
+#                                                                                                       #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                                                                       #
+# defaults:                                                                                             #
+FILTER=""                                       # filter1 filter2                                       #
+IMAGE=""                                        # /path/file                                            #
+INFO="off"                                      # on|off                                                #
+OSDMSG="on"                                     # on|off                                                #
+TARGET="$HOME/plugins/burn/menu-bg.png"         # /path/file.ext                                        #
+TEMPLATE="template.png"                         # /path/file.ext                                        #
+WATERMARK="off"                                 # on|off                                                #
+WIDTH="768"                                     # 720|768                                               #
+WMTEXT="   powered by VDR"                      # "some text"                                           #
+SHOWFILE="off"                                  # on|off                                                #
+TMPDIR="/tmp"                                   # /path                                                 #
+SVDRPSEND="svdrpsend.pl"                        # /path/file.ext                                        #
+#                                                                                                       #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+args="$*"
+language="deu"
+
+# svdrpsend.pl
+TEST=$(which $SVDRPSEND)
+if [ ! "$TEST" ]; then
+  SVDRPSEND="$(grep "^VDRBINDIR=" /etc/default/vdr | cut -d "=" -f 2 | sed -e 's/\"//g')/svdrpsend.pl"
+  if [ ! -x "$SVDRPSEND" ]; then
+    echo "svdrpsend.pl not found"
+    exit 2
+  fi
+fi
+
+## FUNCTIONS
+function start_action() {
+  # target directory
+  test "${TARGET:0:1}" = "/"
+  if [ "x$?" != "x0" ]; then
+    echo "$script: TARGET must be an absolute path ..."
+    [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: TARGET must be an absolute path"
+    exit 3
+  fi
+  targetdir="$(dirname $TARGET)"
+  if [ ! -d "$targetdir/$script" ]; then
+    mkdir -p "$targetdir/$script"
+    if [ ! -d "$targetdir/$script" ]; then
+      echo "$script: Could not create $targetdir/$script ..."
+      [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: Could not create $targetdir/$script"
+      exit 3
+    fi
+  fi
+  
+  # temp directory
+  test "${TMPDIR:0:1}" = "/"
+  if [ "x$?" != "x0" ]; then
+    echo "$script: TMPDIR must be an absolute path ..."
+    [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: TMPDIR must be an absolute path"
+    exit 4
+  fi
+  if [ ! -d "$TMPDIR" ]; then
+    echo "$script: $TMPDIR not found ..."
+    [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: $TMPDIR not found"
+    exit 4
+  fi
+  tmpdir="$TMPDIR/$$$script"
+  mkdir -p "$tmpdir"
+  
+  # image
+  if [ -f "$IMAGE" ]; then
+    image=$(basename "$IMAGE")
+    convert -extent $(identify -format "%wx%h" "$IMAGE") "$IMAGE" "$tmpdir/$image"
+  else
+    image="burn-bg_$(date '+%F_%T').jpg"
+    IMAGE="$image" # this is for logging only
+    $SVDRPSEND grab - 100 $WIDTH 576 | \
+    sed -n -e 's/^216-//p' -e '1ibegin-base64 644 -' -e '$a====' | \
+    uudecode -o "$tmpdir/$image" # <- was passiert hier bei sed mit dem image?
+    BYTES=$(ls -l "$tmpdir/$image" | tr -s " " | cut -d " " -f 5)
+    if [ "$BYTES" = "0" ]; then
+      echo "$script: Snapshot is empty ..."
+    [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: Snapshot is empty"
+      exit 5
+    fi
+  fi
+  
+  # check if temp image exists
+  if [ ! -f "$tmpdir/$image" ]; then
+    echo "$script: Image not found ..."
+    [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: Image not found"
+    exit 6
+  fi
+
+  # resize temp image to 720x576 if necessary
+  f_resize
+}
+
+# filter functions
+function f_comp() {
+  # template.png
+  if [ -f "$TEMPLATE" ]; then
+    template="$TEMPLATE"
+  elif [ -f "$targetdir/$TEMPLATE" ]; then
+    template="$targetdir/$TEMPLATE"
+  else
+    template="$targetdir/template.png"
+  fi
+  if [ ! -f "$template" ]; then
+    echo "$script: $template not found ..."
+    [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: $template not found"
+    exit 7
+  fi
+
+  if [ "$WATERMARK" = "on" ]; then
+    convert -font helvetica -fill black -pointsize 32 -draw "text 250,460 '$WMTEXT'" "$template" "$tmpdir/template.png"
+    template="$tmpdir/template.png"
+  fi
+
+  case $1 in
+    atop)
+      composite -gravity center -compose atop -quality 100 "$template" "$tmpdir/$image" "$tmpdir/tmp_$image"
+      ;;
+    blend)
+      image_s=$(identify -format "%wx%h" "$template")
+      composite -gravity center -blend $image_s -quality 100 "$template" "$tmpdir/$image" "$tmpdir/tmp_$image"
+      ;;
+  esac
+  cp -f "$tmpdir/tmp_$image" "$tmpdir/$image"
+}
+
+function f_crop() {
+  array=($(identify -format "%w %h" "$tmpdir/$image"))
+  image_w=${array[0]}
+  image_h=${array[1]}
+  crop_w=$(($image_w / 36))
+  crop_h=$(($image_h / 36))
+  new_w=$(($image_w - $crop_w * 2))
+  new_h=$(($image_h - $crop_h * 2))
+  new_s=$(echo "$new_w x $new_h" | sed -e 's/ //g')
+  mogrify -crop $new_s+$crop_w+$crop_h "$tmpdir/$image"
+  mogrify -extent $new_s "$tmpdir/$image"
+}
+
+function f_depth() {
+  mogrify -depth 8 "$tmpdir/$image" # 8 or 16
+}
+
+function f_draw() {
+  template="$tmpdir/template.png"
+  # create template.png
+  case $1 in
+    bigsize)
+      convert -size 720x576 xc:transparent -fill "#000000" \
+      -stroke "#ffffff" -strokewidth 2 \
+      -draw 'rectangle 60,35 660,95' \
+      -draw 'rectangle 60,105 660,475' "$tmpdir/tmp.png"
+      tux_align="right"
+      ;;
+    normal)
+      convert -size 720x576 xc:transparent -fill "#000000" \
+      -draw 'roundRectangle 70,35 650,95 10,10' \
+      -draw 'roundRectangle 70,105 550,475 10,10' "$tmpdir/tmp.png"
+      ;;
+    storke)
+      convert -size 720x576 xc:transparent -fill "#000000" \
+      -stroke "#ffffff" -strokewidth 2 \
+      -draw 'roundRectangle 70,35 650,95 10,10' \
+      -draw 'roundRectangle 70,105 550,475 10,10' "$tmpdir/tmp.png"
+      ;;
+    user)
+      convert -size 720x576 xc:transparent -fill "#000000" \
+      -stroke "#303030" -strokewidth 5 \
+      -draw 'polygon 70,35 650,35 650,95 550,95 550,475 70,475' "$tmpdir/tmp.png"
+      ;;
+  esac
+
+  # reduce alphachannel about 50% and create the watermark
+  if [ "$WATERMARK" = "on" ]; then
+    convert -font helvetica -fill "#303030" -pointsize 32 -draw "text 250,460 '$WMTEXT'" -channel Alpha -fx 'u/2.0' "$tmpdir/tmp.png" "$template"
+  else
+    convert -channel Alpha -fx 'u/2.0' "$tmpdir/tmp.png" "$template"
+  fi
+  # composite
+  composite -gravity center -compose atop -quality 100 "$template" "$tmpdir/$image" "$tmpdir/tmp_$image"
+  cp -f "$tmpdir/tmp_$image" "$tmpdir/$image"
+}
+
+function f_resize() {
+  image_h=$(identify -format "%h" "$tmpdir/$image")
+  (($image_h != 576)) && mogrify -resize x576 "$tmpdir/$image"
+  image_w=$(identify -format "%w" "$tmpdir/$image")
+  if (($image_w > 720)); then
+    crop_w=$((($image_w - 720) / 2))
+    mogrify -crop 720x576+${crop_w}+0 "$tmpdir/$image"
+  elif (($image_w < 720)); then
+    mogrify -resize 720 "$tmpdir/$image"
+    image_h=$(identify -format "%h" "$tmpdir/$image")
+    crop_h=$((($image_h - 576) / 2))
+    (($image_h > 576)) && mogrify -crop 720x576+0+$crop_h "$tmpdir/$image"
+  fi
+  mogrify -extent 720x576 "$tmpdir/$image"
+}
+
+function f_serial_foto() {
+  aspect="4x3"
+  sec=1
+  images=""
+  x=130
+  while [ $sec -le 4 ]; do
+    sleep 5
+    $SVDRPSEND grab - 100 $WIDTH 576 | \
+    sed -n -e 's/^216-//p' -e '1ibegin-base64 644 -' -e '$a====' | \
+    uudecode -o "$tmpdir/serial-$sec.jpg"
+    BYTES=$(ls -l "$tmpdir/serial-$sec.jpg" | tr -s " " | cut -d " " -f 5)
+    if [ "$BYTES" = "0" ]; then
+      echo "$script: Snapshot is empty ..."
+      [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: Snapshot is empty"
+      return 1
+    fi
+    [ "$WIDTH" = "768" ] && mogrify -crop 720x576+24+0 "$tmpdir/serial-$sec.jpg"
+
+    # autodetect blackbars
+    if [ "$aspect" != "16x9" ] && [ ! -f "$tmpdir/blackbar.jpg" ]; then
+      cp -f "$tmpdir/serial-$sec.jpg" "$tmpdir/blackbar.jpg"
+      mogrify -crop 720x5+0+566 "$tmpdir/blackbar.jpg"
+      colors=$(identify -verbose "$tmpdir/blackbar.jpg" | grep Type: | cut -d ":" -f2 | sed -e 's/ //g')
+      [ "$colors" = "Grayscale" ] && aspect="16x9"
+    fi
+    case $aspect in
+      4x3)
+        mogrify -crop 680x544+20+16 "$tmpdir/serial-$sec.jpg"
+        ;;
+      16x9)
+        mogrify -crop 680x382+20+97 "$tmpdir/serial-$sec.jpg"
+        ;;
+    esac
+
+    mogrify -resize 90x "$tmpdir/serial-$sec.jpg"
+    composite -compose atop -geometry +560+$x -quality 100 "$tmpdir/serial-$sec.jpg" "$tmpdir/$image" "$tmpdir/tmp_$image"
+    cp -f "$tmpdir/tmp_$image" "$tmpdir/$image"
+    sec=$(($sec+1))
+    ((x=$x+82))
+  done
+  tux_align="center"
+}
+
+function f_serial_movie() {
+  aspect="4x3"
+  sec=1
+  images=""
+  while [ $sec -le 5 ]; do
+    sleep 5
+    $SVDRPSEND grab - 100 $WIDTH 576 | \
+    sed -n -e 's/^216-//p' -e '1ibegin-base64 644 -' -e '$a====' | \
+    uudecode -o "$tmpdir/serial-$sec.jpg"
+    BYTES=$(ls -l "$tmpdir/serial-$sec.jpg" | tr -s " " | cut -d " " -f 5)
+    if [ "$BYTES" = "0" ]; then
+      echo "$script: Snapshot is empty ..."
+      [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: Snapshot is empty"
+      return 1
+    fi
+    images="$images $tmpdir/serial-$sec.jpg"
+    [ "$WIDTH" = "768" ] && mogrify -crop 720x576+24+0 "$tmpdir/serial-$sec.jpg"
+#    mogrify -crop 680x544+20+16 "$tmpdir/serial-$sec.jpg"
+    # autodetect blackbars
+    if [ "$aspect" != "16x9" ] && [ ! -f "$tmpdir/blackbar.jpg" ]; then
+      cp -f "$tmpdir/serial-$sec.jpg" "$tmpdir/blackbar.jpg"
+      mogrify -crop 720x5+0+566 "$tmpdir/blackbar.jpg"
+      colors=$(identify -verbose "$tmpdir/blackbar.jpg" | grep Type: | cut -d ":" -f2 | sed -e 's/ //g')
+      [ "$colors" = "Grayscale" ] && aspect="16x9"
+    fi
+    case $aspect in
+      4x3)
+        mogrify -crop 680x544+20+16 "$tmpdir/serial-$sec.jpg"
+        ;;
+      16x9)
+        mogrify -crop 680x382+20+97 "$tmpdir/serial-$sec.jpg"
+        ;;
+    esac
+    sec=$(($sec+1))
+  done
+  montage -background "#000000" -tile 5x1 -geometry +10+60 -rotate -90 $images "$tmpdir/montage.jpg"
+  mogrify -fill "#ffffff" \
+  -draw 'rectangle    10,10    50,50' \
+  -draw 'rectangle    70,10   110,50' \
+  -draw 'rectangle   130,10   170,50' \
+  -draw 'rectangle   190,10   230,50' \
+  -draw 'rectangle   250,10   290,50' \
+  -draw 'rectangle   310,10   350,50' \
+  -draw 'rectangle   370,10   410,50' \
+  -draw 'rectangle   430,10   470,50' \
+  -draw 'rectangle   490,10   530,50' \
+  -draw 'rectangle   550,10   590,50' \
+  -draw 'rectangle   610,10   650,50' \
+  -draw 'rectangle   670,10   710,50' \
+  -draw 'rectangle   730,10   770,50' \
+  -draw 'rectangle   790,10   830,50' \
+  -draw 'rectangle   850,10   890,50' \
+  -draw 'rectangle   910,10   950,50' \
+  -draw 'rectangle   970,10  1010,50' \
+  -draw 'rectangle  1030,10  1070,50' \
+  -draw 'rectangle  1090,10  1130,50' \
+  -draw 'rectangle  1150,10  1190,50' \
+  -draw 'rectangle  1210,10  1250,50' \
+  -draw 'rectangle  1270,10  1310,50' \
+  -draw 'rectangle  1330,10  1370,50' \
+  -draw 'rectangle  1390,10  1430,50' \
+  -draw 'rectangle  1450,10  1490,50' \
+  -draw 'rectangle  1510,10  1550,50' \
+  -draw 'rectangle  1570,10  1610,50' \
+  -draw 'rectangle  1630,10  1670,50' \
+  -draw 'rectangle  1690,10  1730,50' \
+  -draw 'rectangle  1750,10  1790,50' \
+  -draw 'rectangle  1810,10  1850,50' \
+  -draw 'rectangle  1870,10  1910,50' \
+  -draw 'rectangle  1930,10  1970,50' \
+  -draw 'rectangle  1990,10  2030,50' \
+  -draw 'rectangle  2050,10  2090,50' \
+  -draw 'rectangle  2110,10  2150,50' \
+  -draw 'rectangle  2170,10  2210,50' \
+  -draw 'rectangle  2230,10  2270,50' \
+  -draw 'rectangle  2290,10  2330,50' \
+  -draw 'rectangle  2350,10  2390,50' \
+  -draw 'rectangle  2410,10  2450,50' \
+  -draw 'rectangle  2470,10  2510,50' \
+  -draw 'rectangle  2530,10  2570,50' \
+  -draw 'rectangle  2590,10  2630,50' \
+  -draw 'rectangle  2650,10  2690,50' \
+  -draw 'rectangle  2710,10  2750,50' \
+  -draw 'rectangle  2770,10  2810,50' \
+  -draw 'rectangle   10,750   50,790' \
+  -draw 'rectangle   70,750  110,790' \
+  -draw 'rectangle  130,750  170,790' \
+  -draw 'rectangle  190,750  230,790' \
+  -draw 'rectangle  250,750  290,790' \
+  -draw 'rectangle  310,750  350,790' \
+  -draw 'rectangle  370,750  410,790' \
+  -draw 'rectangle  430,750  470,790' \
+  -draw 'rectangle  490,750  530,790' \
+  -draw 'rectangle  550,750  590,790' \
+  -draw 'rectangle  610,750  650,790' \
+  -draw 'rectangle  670,750  710,790' \
+  -draw 'rectangle  730,750  770,790' \
+  -draw 'rectangle  790,750  830,790' \
+  -draw 'rectangle  850,750  890,790' \
+  -draw 'rectangle  910,750  950,790' \
+  -draw 'rectangle  970,750 1010,790' \
+  -draw 'rectangle 1030,750 1070,790' \
+  -draw 'rectangle 1090,750 1130,790' \
+  -draw 'rectangle 1150,750 1190,790' \
+  -draw 'rectangle 1210,750 1250,790' \
+  -draw 'rectangle 1270,750 1310,790' \
+  -draw 'rectangle 1330,750 1370,790' \
+  -draw 'rectangle 1390,750 1430,790' \
+  -draw 'rectangle 1450,750 1490,790' \
+  -draw 'rectangle 1510,750 1550,790' \
+  -draw 'rectangle 1570,750 1610,790' \
+  -draw 'rectangle 1630,750 1670,790' \
+  -draw 'rectangle 1690,750 1730,790' \
+  -draw 'rectangle 1750,750 1790,790' \
+  -draw 'rectangle 1810,750 1850,790' \
+  -draw 'rectangle 1870,750 1910,790' \
+  -draw 'rectangle 1930,750 1970,790' \
+  -draw 'rectangle 1990,750 2030,790' \
+  -draw 'rectangle 2050,750 2090,790' \
+  -draw 'rectangle 2110,750 2150,790' \
+  -draw 'rectangle 2170,750 2210,790' \
+  -draw 'rectangle 2230,750 2270,790' \
+  -draw 'rectangle 2290,750 2330,790' \
+  -draw 'rectangle 2350,750 2390,790' \
+  -draw 'rectangle 2410,750 2450,790' \
+  -draw 'rectangle 2470,750 2510,790' \
+  -draw 'rectangle 2530,750 2570,790' \
+  -draw 'rectangle 2590,750 2630,790' \
+  -draw 'rectangle 2650,750 2690,790' \
+  -draw 'rectangle 2710,750 2750,790' \
+  -draw 'rectangle 2770,750 2810,790' \
+  "$tmpdir/montage.jpg"
+  mogrify -rotate 90 -resize 90x "$tmpdir/montage.jpg"
+  composite -compose atop -geometry +560+130 -quality 100 "$tmpdir/montage.jpg" "$tmpdir/$image" "$tmpdir/tmp_$image"
+  cp -f "$tmpdir/tmp_$image" "$tmpdir/$image"
+  tux_align="center"
+}
+
+function f_sharpen() {
+  mogrify -unsharp 0 "$tmpdir/$image"
+}
+
+function f_tux() {
+  # template
+  template="$targetdir/tux.png"
+  if [ ! -f "$template" ]; then
+    echo "$script: $template not found ..."
+    [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: $template not found"
+    return 1
+  fi
+  array=($(identify -format "%w %h" "$template"))
+  image_w=${array[0]}
+  image_h=${array[1]}
+  new_w=$((550 - $image_w))
+  new_h=$((475 - $image_h))
+  [ "$tux_align" = "right" ] && new_w=$((660 - $image_w))
+  [ "$WATERMARK" = "on" ] && new_h=$((440 - $image_w))
+  tux_align="center"
+  convert -channel Alpha -fx 'u/4.0' "$template" "$tmpdir/tmp.png"
+  composite -compose atop -geometry +$new_w+$new_h -quality 100 "$tmpdir/tmp.png" "$tmpdir/$image" "$tmpdir/tmp_$image"
+  cp -f "$tmpdir/tmp_$image" "$tmpdir/$image"
+}
+
+function f_zoom_center() {
+  array=($(identify -format "%w %h" "$tmpdir/$image"))
+  image_w=${array[0]}
+  image_h=${array[1]}
+  new_w=$(($image_w * 3 / 4))
+  new_h=$(($image_h * 3 / 4))
+  crop_w=$((($image_w - $new_w) / 2))
+  crop_h=$((($image_h - $new_h) / 2))
+  new_s=$(echo "$new_w x $new_h" | sed -e 's/ //g')
+  mogrify -crop $new_s+$crop_w+$crop_h "$tmpdir/$image"
+  mogrify -extent $new_s "$tmpdir/$image"
+}
+
+function f_zoom_left() {
+  array=($(identify -format "%w %h" "$tmpdir/$image"))
+  image_w=${array[0]}
+  image_h=${array[1]}
+  new_w=$(($image_w * 3 / 4))
+  new_h=$(($image_h * 3 / 4))
+  crop_w=0
+  crop_h=$((($image_h - $new_h) / 2))
+  new_s=$(echo "$new_w x $new_h" | sed -e 's/ //g')
+  mogrify -crop $new_s+$crop_w+$crop_h "$tmpdir/$image"
+  mogrify -extent $new_s "$tmpdir/$image"
+}
+
+function f_zoom_right() {
+  array=($(identify -format "%w %h" "$tmpdir/$image"))
+  image_w=${array[0]}
+  image_h=${array[1]}
+  new_w=$(($image_w * 3 / 4))
+  new_h=$(($image_h * 3 / 4))
+  crop_w=$(($image_w - $new_w))
+  crop_h=$((($image_h - $new_h) / 2))
+  new_s=$(echo "$new_w x $new_h" | sed -e 's/ //g')
+  mogrify -crop $new_s+$crop_w+$crop_h "$tmpdir/$image"
+  mogrify -extent $new_s "$tmpdir/$image"
+}
+
+function f_zoom_center_16x9() {
+  array=($(identify -format "%wx%h %w %h" "$tmpdir/$image"))
+  image_s=${array[0]}
+  image_w=${array[1]}
+  image_h=${array[2]}
+  new_w=$(($image_h * 16 / 9))
+  crop_w=$((($new_w - $image_w) / 2))
+  new_s=$(echo "$new_w x $image_h" | sed -e 's/ //g')
+  mogrify -resize $new_s\! -crop $image_s+$crop_w+0 "$tmpdir/$image"
+  mogrify -extent $image_s "$tmpdir/$image"
+}
+
+function f_zoom_left_16x9() {
+  array=($(identify -format "%wx%h %w %h" "$tmpdir/$image"))
+  image_s=${array[0]}
+  image_w=${array[1]}
+  image_h=${array[2]}
+  new_w=$(($image_h * 16 / 9))
+  crop_w=0
+  new_s=$(echo "$new_w x $image_h" | sed -e 's/ //g')
+  mogrify -resize $new_s\! -crop $image_s+$crop_w+0 "$tmpdir/$image"
+  mogrify -extent $image_s "$tmpdir/$image"
+}
+
+function f_zoom_right_16x9() {
+  array=($(identify -format "%wx%h %w %h" "$tmpdir/$image"))
+  image_s=${array[0]}
+  image_w=${array[1]}
+  image_h=${array[2]}
+  new_w=$(($image_h * 16 / 9))
+  crop_w=$(($new_w - $image_w))
+  new_s=$(echo "$new_w x $image_h" | sed -e 's/ //g')
+  mogrify -resize $new_s\! -crop $image_s+$crop_w+0 "$tmpdir/$image"
+  mogrify -extent $image_s "$tmpdir/$image"
+}
+
+function f_letterbox_16x9() {
+  array=($(identify -format "%wx%h %w %h" "$tmpdir/$image"))
+  image_s=${array[0]}
+  image_w=${array[1]}
+  image_h=${array[2]}
+  new_w=$(($image_h * 16 / 9))
+  new_h=$(($new_w * 4 / 5))
+  (( new_h == 819 )) && new_h=820
+  bar=$((($new_h - $image_h) / 2))
+  new_h1=$(($image_h + $bar))
+  new_h2=$(($image_h + $bar + $bar))
+  new_s1=$(echo "$image_w x $new_h1" | sed -e 's/ //g')
+  new_s2=$(echo "$image_w x $new_h2" | sed -e 's/ //g')
+  mogrify -rotate 180 -extent $new_s1 -rotate 180 -extent $new_s2 -resize $image_s\! "$tmpdir/$image"
+}
+
+function filter_select() {
+  for f in $FILTER; do
+    case $f in
+      comp-atop)
+        f_comp atop
+        ;;
+      comp-blend)
+        f_comp blend
+        ;;
+      crop)
+        f_crop
+        ;;
+      depth)
+        f_depth
+        ;;
+      draw-bigsize)
+        f_draw bigsize
+        ;;
+      draw-normal)
+        f_draw normal
+        ;;
+      draw-storke)
+        f_draw storke
+        ;;
+      draw-user)
+        f_draw user
+        ;;
+      resize)
+        f_resize
+        ;;
+      serial-foto)
+        f_serial_foto
+        ;;
+      serial-movie)
+        f_serial_movie
+        ;;
+      sharpen)
+        f_sharpen
+        ;;
+      tux)
+        f_tux right
+        ;;
+      zoom-center)
+        f_zoom_center
+        ;;
+      zoom-left)
+        f_zoom_left
+        ;;
+      zoom-right)
+        f_zoom_right
+        ;;
+      zoom-center-16x9)
+        f_zoom_center_16x9
+        ;;
+      zoom-left-16x9)
+        f_zoom_left_16x9
+        ;;
+      zoom-right-16x9)
+        f_zoom_right_16x9
+        ;;
+      letterbox-16x9)
+        f_letterbox_16x9
+        ;;
+    esac
+  done
+}
+
+function final_action() {
+  # install the new image
+  image_name=$(echo "$image" | cut -f1 -d "." - )
+  convert -comment "$version" "$tmpdir/$image" "$targetdir/$script/$image_name.png"
+  ln -fs "$targetdir/$script/$image_name.png" "$TARGET"
+  
+  # clean up
+  rm -rf "$tmpdir"
+  
+  # messages
+  [ "$OSDMSG" = "on" ] && $SVDRPSEND "MESG $script: Image created"
+  
+  if [ "$INFO" = "on" ]; then
+    echo "$script: $(date '+%F %T')"
+    echo "image: $IMAGE"
+    echo "filter: $FILTER"
+    echo -n "target:"; identify -format "%f %wx%h" "$targetdir/$script/$image_name.png"
+    echo "template: $template"
+    echo "tmpdir: $tmpdir"
+  fi
+  
+  [ "$SHOWFILE" = "on" ] && display "$targetdir/$script/$image_name.png" &
+}
+
+## PROG
+# arguments
+for i in $args; do
+  case $1 in
+    -showfile|-x)
+      shift 1
+      SHOWFILE="$1"
+      [ "$SHOWFILE" != "on" ] && SHOWFILE="off"
+      ;;
+    -filter|-f)
+      shift 1
+      FILTER="$FILTER $1"
+      ;;
+    -image|-i)
+      shift 1
+      IMAGE="$1"
+      ;;
+    -target|-t)
+      shift 1
+      TARGET="$1"
+      ;;
+    -template|-T)
+      shift 1
+      TEMPLATE="$1"
+      ;;
+    -osd|-o)
+      shift 1
+      OSDMSG="$1"
+      [ "$OSDMSG" != "on" ] && OSDMSG="off"
+      ;;
+    -watermark|-w)
+      shift 1
+      [ "$1" != "default" ] && WMTEXT="$1"
+      WATERMARK="on"
+      ;;
+    -width|-W)
+      shift 1
+      if [ "$1" = "768" ]; then
+        WIDTH="768"
+      else
+        WIDTH="720"
+      fi
+      ;;
+    -dialog|-d)
+      use_dialog="true"
+      ;;
+    -help|-h)
+      echo "$script ($version)"
+      echo "use: $script [-argument value]"
+      echo "optional arguments are:"
+      echo "-f | -filter crop"
+      echo "-f | -filter zoom-center|zoom-left|zoom-right|zoom-center-16x9|zoom-left-16x9|zoom-right-16x9|letterbox-16x9"
+      echo "-f | -filter resize"
+      echo "-f | -filter comp-atop|comp-blend|draw-bigsize|draw-normal|draw-storke|draw-user"
+      echo "-f | -filter serial-foto|serial-movie"
+      echo "-f | -filter tux"
+      echo "-f | -filter unsharp"
+      echo "-f | -filter depth"
+      echo "-i | -image /path/to/image.ext"
+      echo "-o | -osd on|off"
+      echo "-t | -target /path/to/plugins/burn/menu-bg.png"
+      echo "-T | -template /path/to/template.png"
+      echo "-w | -watermark ?|default|\"some text\""
+      echo "-W | -width 768|720"
+      echo "-x | -showfile on|off"
+      echo "-d | -dialog"
+      echo "-h | -help"
+      echo "-v | -version"
+      echo ""
+      exit 0
+      ;;
+    -version|-v)
+      echo "$script ($version)"
+      echo ""
+      exit 0
+      ;;
+  esac
+  shift 1
+done
+
+# MAIN PROG
+if [ ! "$args" ] || [ "$use_dialog" = "true" ]; then # DIALOG
+  # filter defaults
+  crop="on"
+  zoomcenter="off"
+  zoomleft="off"
+  zoomright="off"
+  resize="on"
+  drawbigsize="off"
+  drawnormal="off"
+  drawstorke="off"
+  drawuser="off"
+  serialfoto="off"
+  serialmovie="off"
+  tux="off"
+  sharpen="off"
+  depth="off"
+  SHOWFILE="on"
+  OSDMSG="off"
+
+  #WATERMARK="on"
+  # watermark text input
+  if [ "$WMTEXT" = "?" ]; then
+    WMTEXT_DEF="   powered by VDR"
+    case $language in
+      deu) menutext="Text fuer das Wasserzeichen" ;;
+      eng) menutext="Text for the watermark" ;;
+      fra) menutext="Watermark" ;;
+    esac
+    TMP_WMTEXT=`Xdialog --left --wrap --title " $version " --inputbox "$menutext" 0 0 "$WMTEXT_DEF" 3>&1 1>&2 2>&3`
+    if [ $? = 0 ]; then
+      WMTEXT="$TMP_WMTEXT"
+    else
+      WMTEXT="$WMTEXT_DEF"
+    fi
+  fi
+
+  # language
+  case $language in
+    deu)
+      # menutext
+      menutext="Von den Filtern mit zoom-*, draw-* oder serial-*\nsollte jeweils nur einer ausgewaehlt werden."
+      # helptext
+      text_crop="Raender abschneiden"
+      text_zoomcenter="Zoom auf die Mitte des Bildes"
+      text_zoomleft="Zoom auf die linke Seite des Bildes"
+      text_zoomright="Zoom auf die rechte Seite des Bildes"
+      text_resize="Skaliert das bearbeitete Bild wieder auf 720x576. Dieser Filter muss aktiviert werden, wenn crop oder zoom* benutzt werden"
+      text_drawbigsize="Zeichnet zwei grosse, transparente Textfelder mit Rahmen ueber das Bild"
+      text_drawnormal="Zeichnet zwei transparente Textfelder mit runde Ecken ueber das Bild"
+      text_drawstorke="Zeichnet zwei transparente Textfelder mit runde Ecken und Rahmen ueber das Bild"
+      text_drawuser="Zeichnet ueber das Bild"
+      text_watermark="Blendet ein Wasserzeichen in das Textfeld. Text: \"$WMTEXT\""
+      text_serialfoto="Legt eine Serie von vier verkleinerten Screenshots ueber das Bild"
+      text_serialmovie="Montiert eine Serie von fuenf Screenshots zu einem Filmstreifen und legt diesen ueber das Bild"
+      text_tux="Blendet einen Tux in das Bild"
+      text_sharpen="Leichtes anheben der Bildschaerfe"
+      text_depth="Reduziert die Farbtiefe auf 24bpp (damit das Bild mit dem Image-Plugin angezeigt werden kann)"
+      text_showfile="Fertiges Bild anzeigen"
+      ;;
+    eng)
+      ;;
+    fra)
+      ;;
+  esac
+
+  while true; do
+    options=`Xdialog --item-help --no-tags --left --wrap --separate-output --cancel-label "Exit" --title " $version " \
+      --checklist "$menutext" 0 0 17 \
+      "1"  "crop"         "$crop"        "$text_crop" \
+      "2"  "zoom-center"  "$zoomcenter"  "$text_zoomcenter" \
+      "3"  "zoom-left"    "$zoomleft"    "$text_zoomleft" \
+      "4"  "zoom-right"   "$zoomright"   "$text_zoomright" \
+      "5"  "resize"       "$resize"      "$text_resize" \
+      "6"  "draw-bigsize" "$drawbigsize" "$text_drawbigsize" \
+      "7"  "draw-normal"  "$drawnormal"  "$text_drawnormal" \
+      "8"  "draw-storke"  "$drawstorke"  "$text_drawstorke" \
+      "9"  "draw-user"    "$drawuser"    "$text_drawuser" \
+      "10" "watermark"    "$WATERMARK"   "$text_watermark" \
+      "11" "serial-foto"  "$serialfoto"  "$text_serialfoto" \
+      "12" "serial-movie" "$serialmovie" "$text_serialmovie" \
+      "13" "tux"          "$tux"         "$text_tux" \
+      "14" "sharpen"      "$sharpen"     "$text_sharpen" \
+      "15" "depth"        "$depth"       "$text_depth" \
+      "16" "showfile"     "$SHOWFILE"    "$text_showfile" 3>&1 1>&2 2>&3`
+    [ $? != 0 ] && exit 0
+
+    # settings
+    FILTER=""
+    crop="off"
+    zoomcenter="off"
+    zoomleft="off"
+    zoomright="off"
+    resize="off"
+    drawbigsize="off"
+    drawnormal="off"
+    drawstorke="off"
+    drawuser="off"
+    serialfoto="off"
+    serialmovie="off"
+    tux="off"
+    sharpen="off"
+    depth="off"
+    SHOWFILE="off"
+    WATERMARK="off"
+
+    for i in $options; do
+      case "$i" in
+        1)  crop="on";        FILTER="$FILTER crop" ;;
+        2)  zoomcenter="on";  FILTER="$FILTER zoom-center" ;;
+        3)  zoomleft="on";    FILTER="$FILTER zoom-left" ;;
+        4)  zoomright="on";   FILTER="$FILTER zoom-right" ;;
+        5)  resize="on";      FILTER="$FILTER resize" ;;
+        6)  drawbigsize="on"; FILTER="$FILTER draw-bigsize" ;;
+        7)  drawnormal="on";  FILTER="$FILTER draw-normal" ;;
+        8)  drawstorke="on";  FILTER="$FILTER draw-storke" ;;
+        9)  drawuser="on";    FILTER="$FILTER draw-user" ;;
+        10) WATERMARK="on" ;;
+        11) serialfoto="on";  FILTER="$FILTER serial-foto" ;;
+        12) serialmovie="on"; FILTER="$FILTER serial-movie" ;;
+        13) tux="on";         FILTER="$FILTER tux" ;;
+        14) sharpen="on";     FILTER="$FILTER sharpen" ;;
+        15) depth="on";       FILTER="$FILTER depth" ;;
+        16) SHOWFILE="on" ;;
+      esac
+    done
+    # action
+    start_action
+    # apply filter
+    filter_select
+    # final
+    final_action
+  done
+else # MAIN PROG
+  # action
+  start_action
+  # apply filter
+  filter_select
+  # final
+  final_action
+fi
+
+exit 0

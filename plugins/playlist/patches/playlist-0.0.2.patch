@@ -1,0 +1,83 @@
+diff -ruN VDR.org/PLUGINS/src/playlist-0.0.2/dataplaylist.c VDR/PLUGINS/src/playlist-0.0.2/dataplaylist.c
+--- VDR.org/PLUGINS/src/playlist-0.0.2/dataplaylist.c	2004-10-08 02:34:00.000000000 +0200
++++ VDR/PLUGINS/src/playlist-0.0.2/dataplaylist.c	2005-11-07 02:26:38.000000000 +0100
+@@ -145,7 +145,11 @@
+     char *temp = strrchr(title, '\t');
+     if (temp)
+       *temp = 0;
++#if VDRVERSNUM >= 10325
++    summary = recording->Info()->Title() ? strdup(recording->Info()->Title()) : NULL;
++#else
+     summary = recording->Summary() ? strdup(recording->Summary()) : NULL;
++#endif
+     return true;
+   }
+   isdel = true;
+diff -ruN VDR.org/PLUGINS/src/playlist-0.0.2/menuplaylist.c VDR/PLUGINS/src/playlist-0.0.2/menuplaylist.c
+--- VDR.org/PLUGINS/src/playlist-0.0.2/menuplaylist.c	2004-10-08 02:34:00.000000000 +0200
++++ VDR/PLUGINS/src/playlist-0.0.2/menuplaylist.c	2005-11-07 02:26:38.000000000 +0100
+@@ -154,7 +154,11 @@
+     else
+     {
+       cRecording *recording = GetRecording(ri);
++#if VDRVERSNUM >= 10325
++      SetHelp(singleselect ? tr("Select") : tr("Add"), singleselect ? NULL : ri->IsMark() ? tr("UnMark") : tr("Mark"), deleterecords.u ? tr("Delete") : NULL, (recording && recording->Info()->Title() && *recording->Info()->Title()) ? tr("Summary") : NULL);
++#else
+       SetHelp(singleselect ? tr("Select") : tr("Add"), singleselect ? NULL : ri->IsMark() ? tr("UnMark") : tr("Mark"), deleterecords.u ? tr("Delete") : NULL, (recording && recording->Summary() && *recording->Summary()) ? tr("Summary") : NULL);
++#endif
+     }
+   } else
+   {
+@@ -256,12 +260,24 @@
+   if (ri && !ri->IsDirectory())
+   {
+     cRecording *recording = GetRecording(ri);
++#if VDRVERSNUM >= 10325
++    if (recording && recording->Info()->Title() && *recording->Info()->Title())
++#else
+     if (recording && recording->Summary() && *recording->Summary())
++#endif
+ #if VDRVERSNUM >= 10307
++#if VDRVERSNUM >= 10325
++      return AddSubMenu(new cMenuText(tr("Summary"), recording->Info()->Title()));
++#else
+       return AddSubMenu(new cMenuText(tr("Summary"), recording->Summary()));
++#endif
++#else
++#if VDRVERSNUM >= 10325
++      return AddSubMenu(new cMenuItemText(tr("Summary"), recording->Info()->Title()));
+ #else
+       return AddSubMenu(new cMenuItemText(tr("Summary"), recording->Summary()));
+ #endif
++#endif
+   }
+   return osContinue;
+ }
+diff -ruN VDR.org/PLUGINS/src/playlist-0.0.2/playlist.c VDR/PLUGINS/src/playlist-0.0.2/playlist.c
+--- VDR.org/PLUGINS/src/playlist-0.0.2/playlist.c	2004-10-08 02:34:00.000000000 +0200
++++ VDR/PLUGINS/src/playlist-0.0.2/playlist.c	2005-11-07 02:28:51.000000000 +0100
+@@ -378,10 +378,11 @@
+   asprintf(&p, "%s%s%s", q, *(q + strlen(q) - 1) == '/' ? "" : "/", playlistconfigfile.u);
+   if (!access(playlistconfigfile.u, F_OK) && !access(playlistconfigfile.u, R_OK) || !access(p, F_OK) && !access(p, R_OK))
+   {
++    char *s;
+     #define MAXARGS 100
+     int fargc = 1;
+     char *fargv[MAXARGS];
+-    char buffer[MAXPARSEBUFFER];
++    cReadLine ReadLine;
+     bool done;
+     FILE *f;
+ 
+@@ -405,9 +406,9 @@
+       esyslog("%s: ERROR: cannot open config file: [%s]%s", plugin_name, ConfigDirectory(""), playlistconfigfile.u);
+       return false;
+     }
+-    while (fgets(buffer, sizeof(buffer), f) > 0)
++    while ((s = ReadLine.Read(f)) != NULL)
+     {
+-      p = skipspace(stripspace(buffer));
++      p = skipspace(stripspace(s));
+       q = NULL;
+       done = false;
+       while (!done)

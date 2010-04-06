@@ -1,0 +1,60 @@
+diff -ur pvrinput-2008-10-04/HISTORY pvrinput-2008-12-24/HISTORY
+--- pvrinput-2008-10-04/HISTORY	2008-10-04 12:13:45.000000000 +0200
++++ pvrinput-2008-12-24/HISTORY	2008-12-24 15:23:45.000000000 +0100
+@@ -1,6 +1,19 @@
+ VDR Plugin 'pvrinput' Revision History
+ ---------------------------------
+ 
++2008-12-24 (Dr. Seltsam)
++- The previous fix in cPluginPvrInput::MainMenuAction must depend on
++  PLUGINPARAMPATCHVERSNUM. Oherwise it does not compile with a vdr version
++  that is not patched with the pluginparam-patch
++- fix frequency of S30 in channels.conf examples, add S29 and S35
++
++2008-10-26 (Dr. Seltsam)
++- fix usage of PvrMenuMain on channels with iptv-syntax
++- fix permission of directories
++- remove executable flag from patches and conf files
++- fix Makefile
++
++
+ 2008-10-03 (Dr. Seltsam)
+ - add possibility to force the plugin to use only a certain card by using the 
+   new value PvrSetup.UseOnlyCard. (see README)
+Nur in pvrinput-2008-12-24: HISTORY~.
+diff -ur pvrinput-2008-10-04/Makefile pvrinput-2008-12-24/Makefile
+--- pvrinput-2008-10-04/Makefile	2008-08-24 20:00:46.000000000 +0200
++++ pvrinput-2008-12-24/Makefile	2008-10-12 19:29:22.000000000 +0200
+@@ -131,9 +131,6 @@
+ 
+ dist: clean
+ 	@-rm -rf $(TMPDIR)/$(ARCHIVE)
+-	@chmod -x *
+-	@chmod -x po/*
+-	@chmod +x po2i18n.pl
+ 	@mkdir $(TMPDIR)/$(ARCHIVE)
+ 	@cp -a * $(TMPDIR)/$(ARCHIVE)
+ 	@tar czf $(PACKAGE).tgz -C $(TMPDIR) $(ARCHIVE)
+diff -ur pvrinput-2008-10-04/plugin.c pvrinput-2008-12-24/plugin.c
+--- pvrinput-2008-10-04/plugin.c	2008-10-04 11:28:46.000000000 +0200
++++ pvrinput-2008-12-24/plugin.c	2008-12-24 14:49:44.000000000 +0100
+@@ -1,6 +1,6 @@
+ #include "common.h"
+ 
+-static const char *VERSION        = "2008-10-04";
++static const char *VERSION        = "2008-12-24";
+ static const char *DESCRIPTION    = tr("Setup.pvrinput$use Hauppauge PVR as input device");
+ static const char *MAINMENUENTRY  = tr("Setup.pvrinput$PVR picture settings");
+ 
+@@ -66,7 +66,11 @@
+ cOsdObject * cPluginPvrInput::MainMenuAction(void) {
+   cChannel * channel = Channels.GetByNumber(cDevice::CurrentChannel());
+   if (channel &&
++#ifdef PLUGINPARAMPATCHVERSNUM
++     ((channel->IsCable() && channel->Ca() == kPvrCa) || channel->IsPlug()) )
++#else
+      (channel->IsCable() && channel->Ca() == kPvrCa))
++#endif
+     return new cPvrMenuMain();
+   Skins.Message(mtError, tr("Setup.pvrinput$Not on an analogue channel!"), 2);
+   return NULL;

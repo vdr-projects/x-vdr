@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# vdrwritedvd - x-vdr version
+#
+# This script will be called by the vdr-plugins dvdselect and dvdswitch to write a dvd.
+#
+# It gets the following parameter:
+#
+# $1 = filename
+
+# Load VDR configuration
+. /etc/default/vdr
+
+# vdr2root
+echo "sudo $VDRSCRIPTDIR/vdr2root writedvd \"$1\"" | at now
+
+exit 0

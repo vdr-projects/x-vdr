@@ -1,0 +1,15 @@
+# /etc/fstab: static file system information.
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+proc            /proc           proc    defaults        0       0
+usbfs           /proc/bus/usb   usbfs   devmode=0666    0       0
+/dev/hda1       /               ext3    defaults,errors=remount-ro 0       1
+/dev/hda2       none            swap    sw              0       0
+/dev/hda5       /media/hda5     ext3    defaults        0       0
+#/dev/cdrom      /media/cdrom0   udf,iso9660 user,noauto     0       0
+# Added for x-vdr
+/dev/cdrom      /media/cdrom0   auto    ro,noauto,user,exec 0       0
+/dev/cdrom      /media/cdfs     cdfs    ro,noauto,user,exec 0       0
+/dev/dvd        /media/cdrom0   auto    ro,noauto,user,exec 0       0
+/dev/dvd        /media/cdfs     cdfs    ro,noauto,user,exec 0       0
+

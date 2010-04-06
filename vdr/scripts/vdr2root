@@ -1,0 +1,244 @@
+#!/bin/sh
+
+# x-vdr (Installations-Skript fuer einen VDR mit Debian als Basis)
+# von Marc Wernecke - www.zulu-entertainment.de
+# 24.03.2008
+
+# vdr2root
+
+# Load VDR configuration
+GRUB_POWEROFF=
+. /etc/default/vdr
+LOGGER="logger -s ${0##*/} "
+
+# Load vdrshutdown configuration
+if [ -f "$VDRCONFDIR/shutdown.conf" ]; then
+  . "$VDRCONFDIR/shutdown.conf"
+else
+  $LOGGER "$VDRCONFDIR/shutdown.conf nonreadable"
+  $LOGGER "using defaults"
+fi
+
+KILL="/usr/bin/killall -q -TERM"
+
+if [ $# -eq 0 ]; then
+  echo "vdr2root -> this script needs a command..."
+  $0 help
+  exit 1
+fi
+
+case $1 in
+  admin)
+    $VDRCONFDIR/plugins/admin/setvdr.sh
+    ;;
+  clean-log)
+    cd /var/log ; cat /dev/null > messages ; cat /dev/null > wtmp ; echo "Säubern der Logfiles..."
+    ;;
+  show-log)
+    if test -s /var/log/messages ; then tail -n 500 /var/log/messages|tac ; else echo "(/var/log/messages) nicht gefunden oder leer..." ; fi
+    ;;
+  video-update)
+    touch $VIDEODIR/.update
+    ;;
+  ssh-start)
+    /etc/init.d/ssh start
+    ;;
+  ssh-stop)
+    /etc/init.d/ssh stop
+    ;;
+  ssh-restart)
+    /etc/init.d/ssh restart
+    ;;
+  vdr-kill)
+    killall -9 runvdr
+    killall -9 vdr
+    ;;
+  vdr-start)
+    /etc/init.d/vdr start
+    ;;
+  vdr-stop)
+    if [ "$AUTOSTART" != "off" ]; then
+      /etc/init.d/vdr stop
+    else
+      killall -9 runvdr
+      killall -9 vdr
+    fi
+    ;;
+  vdr-restart)
+    if [ "$AUTOSTART" != "off" ]; then
+      /etc/init.d/vdr restart
+    else
+      killall -9 vdr
+    fi
+    ;;
+  acpi-wakeup)
+    # $2 = wakeuptime
+    [ $# -eq 3 ] && echo $2 > $3
+    ;;
+  nvram-wakeup)
+    # $2 = wakeuptime
+    [ $# -eq 2 ] && nvram-wakeup $2
+    ;;
+  extb-poweroff)
+    $VDRSCRIPTDIR/extb-poweroff.pl
+    ;;
+  lilo)
+    lilo -R PowerOff
+    ;;
+  grub)
+    if [ $# -eq 2 ] && [ -n "$GRUB_POWEROFF" ]; then
+      grub-set-default $GRUB_POWEROFF
+    else
+      $LOGGER "stop shutdown, because missing configuration"
+    fi
+    ;;
+  reboot)
+    shutdown -r now
+    ;;
+  shutdown)
+    shutdown -h now
+    ;;
+  poweroff)
+    poweroff
+    ;;
+  settime)
+    [ $# -eq 2 ] && /bin/date $2
+    ;;
+  readdvd)
+    # dvdselect and dvdswitch
+    # $1 = "readdvd"
+    # $2 = directory for dvd's (see plugin configuration menu)
+    # $3 = name of dvd
+    # $4 = original dvd-device
+    # dvdswitch only
+    # $5 = mountpoint - default is "(null)"
+    # $6 = "IMAGE" or "DIR"
+    LOGFILE="/var/log/vdrreaddvd.log"
+    echo "vdr2root # `date`" > "$LOGFILE" 2>&1
+    echo "vdr2root # $0 $*" >> "$LOGFILE" 2>&1
+    if [ ! -e "$DVDBURNER" ]; then
+      echo "vdr2root # DVDBURNER=\"$DVDBURNER\" does not exists" >> "$LOGFILE" 2>&1
+      exit 1
+    fi
+    eject -t $DVDBURNER
+    [ ! -d "$2" ] && mkdir -p "$2" && echo "vdr2root # Erstelle \"$2\"" >> "$LOGFILE" 2>&1
+    case $6 in
+      IMAGE)
+        [ -f "$2/$3" ] && rm -f "$2/$3" && echo "vdr2root # Lösche \"$2/$3\"" >> "$LOGFILE" 2>&1
+        echo "vdr2root # DVD einlesen gestartet" >> "$LOGFILE" 2>&1
+        $VDRBINDIR/svdrpsend.pl -d localhost "MESG DVD einlesen gestartet"
+        dd if="$4" of="$2/$3" >> "$LOGFILE" 2>&1
+        ;;
+      DIR)
+        cd "$2"
+        [ -d "$3" ] && rm -rf "$3" && echo "vdr2root # Lösche \"$2/$3\"" >> "$LOGFILE" 2>&1
+        echo "vdr2root # DVD einlesen gestartet" >> "$LOGFILE" 2>&1
+        $VDRBINDIR/svdrpsend.pl -d localhost "MESG DVD einlesen gestartet"
+        vobcopy -i $DVDBURNER -o "$2" -t "$3" -m  >> "$LOGFILE" 2>&1
+        ;;
+    esac
+    eject $DVDBURNER
+    echo "vdr2root # DVD einlesen fertig" >> "$LOGFILE" 2>&1
+    chown $VDRUSER.$VDRGROUP "$2/$3" && echo "vdr2root # chown $VDRUSER.$VDRGROUP \"$2/$3\"" >> "$LOGFILE" 2>&1
+    $VDRBINDIR/svdrpsend.pl -d localhost "MESG DVD einlesen fertig"
+    ;;
+  writedvd)
+    # dvdselect and dvdswitch
+    # $1 = writedvd
+    # $2 = filename
+    LOGFILE="/var/log/vdrwritedvd.log"
+    echo "vdr2root # `date`" > "$LOGFILE" 2>&1
+    echo "vdr2root # $0 $1 \"$2\"" >> "$LOGFILE" 2>&1
+    if [ ! -e "$DVDBURNER" ]; then
+      echo "vdr2root # DVDBURNER=\"$DVDBURNER\" does not exists" >> "$LOGFILE" 2>&1
+      exit 1
+    fi
+    BURN_SPEED=0
+    SPEED=""
+    [ $BURN_SPEED -gt 0 ] && SPEED="-speed=$BURN_SPEED"
+    unset SUDO_COMMAND
+    eject -t $DVDBURNER
+    echo "vdr2root # DVD brennen gestartet" >> "$LOGFILE" 2>&1
+    $VDRBINDIR/svdrpsend.pl -d localhost "MESG DVD brennen gestartet"
+    if [ -f "$2" ]; then
+      growisofs -use-the-force-luke=tty -dvd-compat $SPEED -Z $DVDBURNER="$2" >> "$LOGFILE" 2>&1
+    elif [ -d "$2" ]; then
+      DVDNAME=`basename "$2"`
+      growisofs -use-the-force-luke=tty -dvd-compat $SPEED -Z $DVDBURNER -dvd-video -V "$DVDNAME" "$2" >> "$LOGFILE" 2>&1
+    fi
+    eject $DVDBURNER
+    echo "vdr2root # DVD brennen fertig" >> "$LOGFILE" 2>&1
+    $VDRBINDIR/svdrpsend.pl -d localhost "MESG DVD brennen fertig"
+    ;;
+  automount)
+    wakeonlan 00:00:00:00:00:00
+    echo "wake on..."
+    sleep 10
+    [ ! -d /mnt/vdrserver ] && mkdir -p /mnt/vdrserver
+    if [ ! -d $VIDEODIR/vdrserver ]; then
+      cd $VIDEODIR
+      ln -vnfs /mnt/vdrserver vdrserver 
+    fi
+    echo "...waiting"
+    sleep 10
+    echo "waiting..."
+    sleep 10
+    echo "...waiting"
+    sleep 10
+    echo "waiting..."
+    sleep 10
+    echo "...mounting"
+    mount -t smbfs -o password= //vdrserver/video  /mnt/vdrserver
+    echo "erneues einlesen der Aufnahmen..."
+    touch $VIDEODIR/.update
+    ;;
+  wakeonlan)
+    wakeonlan 00:00:00:00:00:00
+    ;;
+  mount)
+    if [ ! -d /mnt/vdrserver ] ; then mkdir -p /mnt/vdrserver ; fi
+    if [ ! -d $VIDEODIR/vdrserver ] ; then 
+      cd $VIDEODIR
+      ln -vnfs /mnt/vdrserver vdrserver
+    fi
+    mount -t smbfs -o password= //vdrserver/video  /mnt/vdrserver
+    touch $VIDEODIR/.update
+    ;;
+  umount)
+    umount -t smbfs /mnt/vdrserver
+#    exec umount -t smbfs /mnt/vdrserver
+    touch $VIDEODIR/.update
+    ;;
+  * | help)
+    [ "$1" != "help" ] && echo "vdr2root -> # $0 $* <- command not found"
+    echo "vdr2root -> possible commands are..."
+    echo "$0 acpi-wakeup \$2"
+    echo "$0 admin"
+    echo "$0 automount"
+    echo "$0 clean-log"
+    echo "$0 help"
+    echo "$0 lilo"
+    echo "$0 mount"
+    echo "$0 nvram-wakeup \$2"
+    echo "$0 poweroff"
+    echo "$0 readdvd \$2 \$3 \$4"
+    echo "$0 reboot"
+    echo "$0 settime \$2"
+    echo "$0 show-log"
+    echo "$0 shutdown"
+    echo "$0 ssh-start"
+    echo "$0 ssh-stop"
+    echo "$0 umount"
+    echo "$0 vdr-start"
+    echo "$0 vdr-stop"
+    echo "$0 vdr-restart"
+    echo "$0 video-update"
+    echo "$0 wakeonlan"
+    echo "$0 writedvd \$2"
+    ;;
+esac
+
+exit 0
+
+
+

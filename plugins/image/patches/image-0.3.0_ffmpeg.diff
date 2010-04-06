@@ -1,0 +1,10 @@
+--- Makefile~
++++ Makefile
+@@ -80,6 +80,7 @@
+ INCLUDES += -I$(VDRDIR)/include -I.
+ 
+ ifdef FFMDIR
++INCLUDES += -I$(FFMDIR) -I$(FFMDIR)/libavcodec -I$(FFMDIR)/libavformat -I$(FFMDIR)/libswscale
+ DEFINES += -DFFMDIR
+ LIBS += -L$(FFMDIR)/libavcodec -lavcodec -lz
+ ifeq ($(LIBAVCODECVERSION),51)

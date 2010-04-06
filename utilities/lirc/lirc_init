@@ -1,0 +1,130 @@
+#! /bin/sh
+#
+# This is an init script for Debian.
+# Copy it to /etc/init.d/lirc and type
+# > update-rc.d lirc defaults 20
+#
+
+# default configuration
+DEVICE="/dev/lirc0"
+DRIVER="default"
+LOAD_MODULES=true
+MODULES="lirc_dev lirc_serial"
+
+LIRCD="/usr/sbin/lircd"
+LIRCD_ARGS="--permission=666"
+#LIRCD_CONF="/etc/lirc/lircd.conf"
+
+LIRCMD="/usr/sbin/lircd"
+#LIRCMD_CONF="/etc/lirc/lircmd.conf"
+
+START_LIRCD=true
+START_LIRCMD=true
+
+# load configuration if any
+if [ -f /etc/default/lirc ] ; then
+       . /etc/default/lirc
+fi
+
+[ ! -n "$LIRCD_CONF" ] && LIRCD_CONF="/etc/lirc/lircd.conf"
+[ ! -n "$LIRCMD_CONF" ] && LIRCMD_CONF="/etc/lirc/lircmd.conf"
+
+# functions
+load_modules ()
+{
+        local MODULES_MISSING=false
+
+        for mod in $*
+        do
+                modprobe -k $mod 2> /dev/null || MODULES_MISSING=true
+        done
+
+        if $MODULES_MISSING; then
+                echo "#####################################################"
+                echo "## I couldn't load the required kernel modules     ##"
+                echo "## You should install lirc-modules-source to build ##"
+                echo "## kernel support for your hardware.               ##"
+                echo "#####################################################"
+                echo "## If this message is not appropriate you may set  ##"
+                echo "## LOAD_MODULES=false in /etc/default/lirc         ##"
+                echo "#####################################################"
+                START_LIRCMD=false
+                START_LIRCD=false
+        fi
+}
+
+build_args ()
+{
+        local ARGS="$*"
+        if [ -n "$DEVICE" ] && [ "$DEVICE" != "none" ]; then
+                if [ -d /dev/lirc ] && [ "$DEVICE" = "/dev/lirc" ];then
+                        #new device names
+                        DEVICE="/dev/lirc/0"
+                fi
+                ARGS="--device=$DEVICE $ARGS"
+        fi
+        if [ -n "$DRIVER" ] && [ "$DRIVER" != "none" ]; then
+                ARGS="--driver=$DRIVER $ARGS"
+        fi
+        echo $ARGS
+}
+
+# test 
+test -f $LIRCD  || exit 0
+test -f $LIRCMD || exit 0
+
+if [ ! -f $LIRCD_CONF ] || grep -q "^#UNCONFIGURED"  $LIRCD_CONF ; then
+        if [ "$1" = "start" ] ; then
+          echo "##################################################"
+          echo "## LIRC IS NOT CONFIGURED                       ##"
+          echo "##                                              ##"
+          echo "## read /usr/share/doc/lirc/html/configure.html ##"
+          echo "##################################################"
+        fi
+        START_LIRCD=false
+        START_LIRCMD=false
+fi
+if [ ! -f $LIRCMD_CONF ] || grep -q "^#UNCONFIGURED" $LIRCMD_CONF ; then
+       START_LIRCMD=false
+fi
+
+# run
+case "$1" in
+  start)
+    if $LOAD_MODULES && $START_LIRCD ; then
+        load_modules $MODULES
+    fi
+    if $START_LIRCD ; then
+        echo -n "Starting lirc daemon: lircd"
+        LIRCD_ARGS=`build_args $LIRCD_ARGS`
+        start-stop-daemon --start --quiet --exec $LIRCD -- $LIRCD_ARGS $LIRCD_CONF < /dev/null
+    fi
+    if $START_LIRCMD ; then
+        echo -n " lircmd"
+        start-stop-daemon --start --quiet --exec $LIRCMD -- $LIRCMD_CONF < /dev/null
+    fi
+    echo "."
+    ;;
+  stop)
+    echo -n "Stopping lirc daemon: lircmd"
+    start-stop-daemon --stop --quiet --exec $LIRCMD
+    echo -n " lircd"
+    start-stop-daemon --stop --quiet --exec $LIRCD
+    echo "."
+    ;;
+  reload|force-reload)
+    start-stop-daemon --stop --quiet --signal 1 --exec $LIRCD
+    start-stop-daemon --stop --quiet --signal 1 --exec $LIRCMD
+    ;;
+  restart)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+  *)
+    echo "Usage: /etc/init.d/lircd {start|stop|reload|restart|force-reload}"
+    exit 1
+    ;;
+esac
+
+exit 0

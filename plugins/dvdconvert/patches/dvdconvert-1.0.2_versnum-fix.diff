@@ -1,0 +1,39 @@
+diff -ruN dvdconvert-1.0.2/dvdconvert.c~ dvdconvert-1.0.2/dvdconvert.c
+--- dvdconvert-1.0.2/dvdconvert.c~	2006-11-02 22:37:34.000000000 +0100
++++ dvdconvert-1.0.2/dvdconvert.c	2009-03-17 20:52:20.000000000 +0100
+@@ -19,7 +19,7 @@
+ #define STATE_SAVE    999
+ #define DEFAULT_CHARS "abcdefghijklmnopqrstuvwxyz0123456789-/_ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+ 
+-static const char *VERSION        = "1.0.1";
++static const char *VERSION        = "1.0.2";
+ static const char *DESCRIPTION    = "Plugin for dvdconvert with dvd2vdr dvd2dvd";
+ static const char *MAINMENUENTRY  = NULL;
+ 
+diff -ruN dvdconvert-1.0.2/Makefile~ dvdconvert-1.0.2/Makefile
+--- dvdconvert-1.0.2/Makefile~	2004-08-16 07:21:36.000000000 +0200
++++ dvdconvert-1.0.2/Makefile	2009-03-17 20:45:42.000000000 +0100
+@@ -29,9 +29,9 @@
+ 
+ -include $(VDRDIR)/Make.config
+ 
+-### The version number of VDR (taken from VDR's "config.h"):
++### The version number of VDR's plugin API (taken from VDR's "config.h"):
+ 
+-VDRVERSION = $(shell grep 'define VDRVERSION ' $(VDRDIR)/config.h | awk '{ print $$3 }' | sed -e 's/"//g')
++APIVERSION = $(shell sed -ne '/define APIVERSION/s/^.*"\(.*\)".*$$/\1/p' $(VDRDIR)/config.h)
+ 
+ ### The name of the distribution archive:
+ 
+@@ -68,8 +68,8 @@
+ 
+ libvdr-$(PLUGIN).so: $(OBJS)
+ 	$(CXX) $(CXXFLAGS) -shared $(OBJS) -o $@
+-	echo "cp $@ $(LIBDIR)/$@.$(VDRVERSION)"
+-	@cp $@ $(LIBDIR)/$@.$(VDRVERSION)
++	echo "cp $@ $(LIBDIR)/$@.$(APIVERSION)"
++	@cp $@ $(LIBDIR)/$@.$(APIVERSION)
+ 
+ dist: clean
+ 	@-rm -rf $(TMPDIR)/$(ARCHIVE)
+

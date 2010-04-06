@@ -1,0 +1,13 @@
+diff -ruN yaepg-0.0.2.2/yaepg.c yaepg-0.0.2.2_vdr-1.4.7/yaepg.c
+--- yaepg-0.0.2.2/yaepg.c
++++ yaepg-0.0.2.2_vdr-1.4.7/yaepg.c
+@@ -17,7 +17,9 @@
+ static const tColor highlight		= (tColor) 0xFF505050;
+ static const tColor lightgrey		= (tColor) 0xFFAAAAAA;
+ 
++#if VDRVERSNUM >= 10503
+ #define fontYaepg			fontSml
++#endif
+ #define fontChanBox			fontYaepg
+ #define fontTimeBox			fontYaepg
+ #define fontEventBox			fontYaepg

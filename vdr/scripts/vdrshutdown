@@ -1,0 +1,214 @@
+#!/bin/bash
+
+# x-vdr (Installations-Skript fuer einen VDR mit Debian als Basis)
+# von Marc Wernecke - www.zulu-entertainment.de
+# 26.01.2009
+
+# vdrshutdown: shutdown script for x-vdr
+
+# no arguments, no action
+[ $# -gt 0 ] || exit 1
+
+# defaults
+DEBUG=0
+LOGGER="logger -s ${0##*/} "
+WAKEUPTIME=0
+
+# load VDR configuration
+if [ -f /etc/default/vdr ]; then
+  . /etc/default/vdr
+else
+  $LOGGER "exit, because /etc/default/vdr does not exists"
+  exit 1
+fi
+
+# load Shutdown configuration
+if [ -f "$VDRCONFDIR/shutdown.conf" ]; then
+  . "$VDRCONFDIR/shutdown.conf"
+else
+  $LOGGER "exit, because $VDRCONFDIR/shutdown.conf does not exists"
+  exit 1
+fi
+
+# check acpi
+if [ "$WAKEUP_MODE" = "1" ]; then
+  if [ -f /sys/class/rtc/rtc0/wakealarm ]; then
+    ACPI="/sys/class/rtc/rtc0/wakealarm"
+  elif [ -f /proc/acpi/alarm ]; then
+    ACPI="/proc/acpi/alarm"
+  else
+    $LOGGER "acpi-wakeup is not supported by your kernel, exit"
+    echo "$VDRBINDIR/svdrpsend.pl MESG 'acpi-wakeup is not supported by your kernel, exit'"| at now
+    exit 1
+  fi
+fi
+
+# check procs
+while read i; do
+  CMD=$(eval $i 2>/dev/null)
+  if [ $? -eq 0 ] && [ -n "$CMD" ]; then
+    $LOGGER "stop shutdown, because $CMD..."
+    $LOGGER "waiting period $WAITING_PERIOD minutes up to the next shutdown..."
+    echo "$VDRBINDIR/svdrpsend.pl MESG 'Shutdown abgebrochen, weil $CMD'"| at now
+    sleep 1
+    echo "$VDRBINDIR/svdrpsend.pl MESG 'Erneuter Shutdown Versuch in $WAITING_PERIOD Minuten.'"| at now
+    sleep 1
+    echo "$VDRBINDIR/svdrpsend.pl HITK Power"| at now +$WAITING_PERIOD minutes
+    exit 1
+   fi
+done < <(echo "$CHECK_PROCS" | sed '/^[ ]*$/d')
+
+# no wakeup-mode
+if [ "$WAKEUP_MODE" = "0" ]; then
+  echo "$VDRBINDIR/svdrpsend.pl MESG 'Shutdown now!'"| at now
+  sudo $VDRSCRIPTDIR/vdr2root shutdown
+  exit 0
+fi
+
+# extension-board
+if [ "$WAKEUP_MODE" = "3" ]; then
+  echo "$VDRBINDIR/svdrpsend.pl MESG 'Shutdown now!'"| at now
+  sudo $VDRSCRIPTDIR/vdr2root extb-poweroff
+  exit 0
+fi
+
+# check MAX_POWEROFF_TIME for special commands and set the value
+if [ "$MAX_POWEROFF_TIME" = "MAXIMAL" ]; then  # calculate the maximal wakeup-time
+  MONTH_NOW=`date +%-m` # if this month has no 31th, set the wakeup to the 31th of the next month
+  if [ $MONTH_NOW==2 ] || [ $MONTH_NOW==4 ] || [ $MONTH_NOW==6 ] || [ $MONTH_NOW==9 ] || [ $MONTH_NOW==11 ]; then
+    YEAR_NOW=`date +%Y`
+    NEXT_WAKEUP=`date -d "$YEAR_NOW-$(($MONTH_NOW+1))-31 23:59:59" +%s`
+    MAX_POWEROFF_TIME=$((($NEXT_WAKEUP-`date +%s`) / 60))
+  else # sleep exactly one month
+    MAX_POWEROFF_TIME=44640
+  fi
+  WAKEUPTIME=$((`date +%s` + $MAX_POWEROFF_TIME * 60))
+elif  [ "$MAX_POWEROFF_TIME" = "INTERVAL" ]; then  # calculate the next wakeup-time for housekeeping
+  DAY_IN_YEAR=`date +%j`
+  DREAMDAY=0
+  while [ $DREAMDAY -le $DAY_IN_YEAR ]; do
+    DREAMDAY=$(($DREAMDAY + $INTERVAL))
+  done
+  YEAR_NOW=`date +%Y`
+  if [ $DREAMDAY -gt 365 ]; then
+    DREAMDAY=$(($DREAMDAY - 365))
+    YEAR_NOW=$(($YEAR_NOW + 1))
+  fi
+  WAKEUPTIME=$((`date -d "$YEAR_NOW-01-01 $DREAMTIME:00" +%s` + $DREAMDAY * 3600 * 24))
+elif [ -n "$MAX_POWEROFF_TIME" ] && (($MAX_POWEROFF_TIME > 0)); then  # calculate, at what time the machine should be powered on
+  WAKEUPTIME=$((`date +%s` + $MAX_POWEROFF_TIME * 60))
+else
+  WAKEUPTIME=$1
+fi
+
+# final test
+if [ $WAKEUPTIME -gt $1 ] && [ $1 -gt 0 ]; then
+  WAKEUPTIME=$1
+fi
+
+# wakeupbefore - minutes before the programmed wakeuptime the computer should wake up
+[ -z "$WAKEUP_BEFORE" ] && WAKEUP_BEFORE=0
+WAKEUPTIME=$(($WAKEUPTIME - $WAKEUP_BEFORE * 60))
+
+# wakeup-time is greater then zero
+if [ $WAKEUPTIME -gt 0 ]; then
+  # calculate the minimal wakeup-time
+  MinEventTimeout=`grep -m1 "MinEventTimeout" $VDRCONFDIR/setup.conf | cut -f 2 -d "=" | sed -e 's/^ //g' -e 's/ $//g'`
+  [ $MinEventTimeout -lt 10 ] && MinEventTimeout=10
+  MIN_WAKEUPTIME=$(($NOW + $MinEventTimeout * 60 + 1))
+  if [ $MIN_WAKEUPTIME -gt $WAKEUPTIME ]; then
+    case "$MIN_WAKEUP_VAR" in
+      0) VAR=`date -d "1970-01-01 UTC $MIN_WAKEUPTIME seconds" +"%Y-%m-%d %R:%S"`
+         echo "$VDRBINDIR/svdrpsend.pl MESG 'Timer wird auf $VAR gestellt.'"| at now
+         sleep 2
+      ;;
+      1) WAKEUPTIME=$(($WAKEUPTIME - $MinEventTimeout * 60 + 600))
+         [ $WAKEUPTIME -lt $(($NOW + 600)) ] && WAKEUPTIME=$(($NOW + 600))
+         VAR=`date -d "1970-01-01 UTC $WAKEUPTIME seconds" +"%Y-%m-%d %R:%S"`
+         echo "$VDRBINDIR/svdrpsend.pl MESG 'Timer wird auf $VAR gestellt.'"| at now
+         sleep 2
+      ;;
+      2) echo "$VDRBINDIR/svdrpsend.pl MESG 'Es werden keine Timer gestellt.'"| at now
+         sleep 2
+         [ "$WAKEUP_MODE" = "1" ] && sudo $VDRSCRIPTDIR/vdr2root poweroff && exit 0
+         sudo $VDRSCRIPTDIR/vdr2root shutdown && exit 0
+      ;;
+      3) echo "$VDRBINDIR/svdrpsend.pl MESG 'Shutdown abgebrochen.'"| at now
+         sleep 2
+         exit 0
+      ;;
+    esac
+  fi
+
+  # debug
+  if [ "$DEBUG" = "1" ]; then
+    echo `date '+%F %T'` > /tmp/wakeuptime.txt
+    echo "Next Wakeup Time:" >> /tmp/wakeuptime.txt
+    echo "ACPI  -> `date -d "1970-01-01 UTC $WAKEUPTIME seconds" +"%Y-%m-%d %R:%S"` > $ACPI" >> /tmp/wakeuptime.txt
+    echo "NVRAM -> $WAKEUPTIME" >> /tmp/wakeuptime.txt
+  fi
+
+  # acpi-wakeup
+  if [ "$WAKEUP_MODE" = "1" ]; then
+    echo "$VDRBINDIR/svdrpsend.pl MESG 'Shutdown now!'"| at now
+    if [ "$ACPI" = "/sys/class/rtc/rtc0/wakealarm" ]; then
+       VAR="$WAKEUPTIME"
+       sudo $VDRSCRIPTDIR/vdr2root acpi-wakeup "0" "$ACPI"
+    else
+       VAR=`date -d "1970-01-01 UTC $WAKEUPTIME seconds" +"%Y-%m-%d %R:%S"`
+       sudo $VDRSCRIPTDIR/vdr2root acpi-wakeup "$VAR" "$ACPI"
+    fi
+    sudo $VDRSCRIPTDIR/vdr2root acpi-wakeup "$VAR" "$ACPI"
+    sleep 1
+    sudo $VDRSCRIPTDIR/vdr2root poweroff
+    exit 0
+  fi
+
+  # nvram-wakeup
+  if [ "$WAKEUP_MODE" = "2" ]; then
+    echo "$VDRBINDIR/svdrpsend.pl MESG 'Shutdown now!'"| at now
+    VAR="-s $WAKEUPTIME $NVRAM_OPT ${NVRAM_CONFIG:+-C $NVRAM_CONFIG} ${NVRAM_IWNAME:+-I $NVRAM_IWNAME}"
+#    VAR="-s $WAKEUPTIME $NVRAM_OPT -w 0 ${NVRAM_CONFIG:+-C $NVRAM_CONFIG} ${NVRAM_IWNAME:+-I $NVRAM_IWNAME}"
+#   sudo $VDRSCRIPTDIR/vdr2root nvram-wakeup -d
+    sudo $VDRSCRIPTDIR/vdr2root nvram-wakeup "$VAR"
+    sleep 1
+    if [ "$NEED_REBOOT" = "0" ]; then
+      sudo $VDRSCRIPTDIR/vdr2root shutdown
+    else
+      if [ "$LILO" = "1" ]; then
+        sudo $VDRSCRIPTDIR/vdr2root lilo
+      else
+        sudo $VDRSCRIPTDIR/vdr2root grub $GRUB_POWEROFF
+      fi
+      sudo $VDRSCRIPTDIR/vdr2root reboot
+    fi
+    exit 0
+  fi
+
+else  # wakeup-time is equal to zero
+  if [ "$WAKEUP_MODE" = "2" ]; then
+    # disable nvram-wakeup
+    sudo $VDRSCRIPTDIR/vdr2root nvram-wakeup -d
+    sleep 1
+    # if wakeup-lan works only with a shutdown via poweroff-kernel
+    if [ "$NEED_REBOOT" = "2" ]; then
+      if [ "$LILO" = "1" ]; then
+        sudo $VDRSCRIPTDIR/vdr2root lilo
+      else
+        sudo $VDRSCRIPTDIR/vdr2root grub $GRUB_POWEROFF
+      fi
+      sudo $VDRSCRIPTDIR/vdr2root reboot
+      exit 0
+    fi
+  fi
+fi
+
+# wakeuptime is equal to zero, shutdown
+echo "$VDRBINDIR/svdrpsend.pl MESG 'Shutdown now!'"| at now
+if [ "$WAKEUP_MODE" = "1" ]; then
+  sudo $VDRSCRIPTDIR/vdr2root poweroff
+else
+  sudo $VDRSCRIPTDIR/vdr2root shutdown
+fi
+
+exit 0

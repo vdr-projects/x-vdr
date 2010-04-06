@@ -1,0 +1,36 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 93_playlist-0.0.2-1.5.7.dpatch by Thomas Günther <tom@toms-cafe.de>
+## http://toms-cafe.de/vdr/download/playlist-0.0.2-1.5.7.diff
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Changes for VDR >= 1.5.7.
+
+@DPATCH@
+--- playlist-0.0.2/playlist.c
++++ playlist-0.0.2/playlist.c
+@@ -159,7 +159,11 @@ cPluginPlaylist::cPluginPlaylist(void)
+   // Initialize any member variables here.
+   // DON'T DO ANYTHING ELSE THAT MAY HAVE SIDE EFFECTS, REQUIRE GLOBAL
+   // VDR OBJECTS TO EXIST OR PRODUCE ANY OUTPUT!
++#if VDRVERSNUM >= 10507
++  OSDLanguage = NULL;
++#else
+   OSDLanguage = -1;
++#endif
+   PluginPlaylist = this;
+ }
+ 
+--- playlist-0.0.2/playlist.h
++++ playlist-0.0.2/playlist.h
+@@ -139,7 +139,11 @@ void ExpandEnvironment(tParamFile *FileS
+ class cPluginPlaylist : public cPlugin {
+ private:
+   // Add any member variables or functions you may need here.
++#if VDRVERSNUM >= 10507
++  const char *OSDLanguage;
++#else
+   int OSDLanguage;
++#endif
+   void TestAndSetOSDLanguage(void);
+   bool ProcessArg(int argc, char *argv[]);
+ 

@@ -1,0 +1,25 @@
+#!/bin/sh
+
+[ -d /usr/include/ffmpeg ] && exit
+
+mkdir -p /usr/include/ffmpeg
+cd /usr/include/ffmpeg
+
+ln -vnfs /usr/include/libavcodec libavcodec
+ln -vnfs /usr/include/libavcodec/avcodec.h avcodec.h
+
+ln -vnfs /usr/include/libavdevice libavdevice
+ln -vnfs /usr/include/libavdevice/avdevice.h avdevice.h
+
+ln -vnfs /usr/include/libavfilter libavfilter
+
+ln -vnfs /usr/include/libavformat libavformat
+ln -vnfs /usr/include/libavformat/avformat.h avformat.h
+
+ln -vnfs /usr/include/libavutil libavutil
+
+ln -vnfs /usr/include/libpostproc libpostproc
+ln -vnfs /usr/include/libpostproc/postprocess.h postprocess.h
+
+ln -vnfs /usr/include/libswscale libswscale
+ln -vnfs /usr/include/libswscale/swscale.h swscale.h

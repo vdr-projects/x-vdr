@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# kill processes accessing em8300 devices
+[ ! -e /dev/em8300-0 ] && fuser -k /dev/em8300-0
+[ ! -e /dev/em8300_mv-0 ] && fuser -k /dev/em8300_mv-0
+[ ! -e /dev/em8300_ma-0 ] && fuser -k /dev/em8300_ma-0
+
+# unload modules
+[ `lsmod | grep em8300 | wc -l` -ne 0 ] && rmmod em8300
+[ `lsmod | grep adv717x | wc -l` -ne 0 ] && rmmod adv717x
+[ `lsmod | grep bt865 | wc -l` -ne 0 ] && rmmod bt865
+#rmmod i2c-algo-bit
+#rmmod i2c-core
+

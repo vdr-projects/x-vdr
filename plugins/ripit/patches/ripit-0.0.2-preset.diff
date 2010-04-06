@@ -1,0 +1,32 @@
+--- ripitosd.c~	2006-11-14 18:43:48.000000000 +0100
++++ ripitosd.c	2007-06-23 14:03:40.000000000 +0200
+@@ -108,10 +108,10 @@
+   else if  (RipitSetup.Ripit_maxbitrate ==  9) maxbit = 320;
+ 
+   if       (RipitSetup.Ripit_preset ==  0) strcpy(presetarg, "");
+-  else if  (RipitSetup.Ripit_preset ==  1) strcpy(presetarg, "--preset 64");
+-  else if  (RipitSetup.Ripit_preset ==  2) strcpy(presetarg, "--alt-preset 192");
+-  else if  (RipitSetup.Ripit_preset ==  3) strcpy(presetarg, "--preset extreme -V 2 --vbr-new -h");
+-  else if  (RipitSetup.Ripit_preset ==  4) strcpy(presetarg, "--preset 320 -h");
++  else if  (RipitSetup.Ripit_preset ==  1) strcpy(presetarg, "--preset fast medium");
++  else if  (RipitSetup.Ripit_preset ==  2) strcpy(presetarg, "--preset fast standard");
++  else if  (RipitSetup.Ripit_preset ==  3) strcpy(presetarg, "--preset fast extreme");
++  else if  (RipitSetup.Ripit_preset ==  4) strcpy(presetarg, "--preset insane");
+ 
+ 
+   if(RipitSetup.Ripit_crc) {
+@@ -209,10 +209,10 @@
+   else if  (RipitSetup.Ripit_maxbitrate ==  9) maxbit = 320;
+ 
+   if       (RipitSetup.Ripit_preset ==  0) strcpy(presetarg, "");
+-  else if  (RipitSetup.Ripit_preset ==  1) strcpy(presetarg, "--preset 64");
+-  else if  (RipitSetup.Ripit_preset ==  2) strcpy(presetarg, "--alt-preset 192");
+-  else if  (RipitSetup.Ripit_preset ==  3) strcpy(presetarg, "--preset extreme -V 2 --vbr-new -h");
+-  else if  (RipitSetup.Ripit_preset ==  4) strcpy(presetarg, "--preset 320 -h");
++  else if  (RipitSetup.Ripit_preset ==  1) strcpy(presetarg, "--preset fast medium");
++  else if  (RipitSetup.Ripit_preset ==  2) strcpy(presetarg, "--preset fast standard");
++  else if  (RipitSetup.Ripit_preset ==  3) strcpy(presetarg, "--preset fast extreme");
++  else if  (RipitSetup.Ripit_preset ==  4) strcpy(presetarg, "--preset insane");
+ 
+ 
+   if(RipitSetup.Ripit_crc) {

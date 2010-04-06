@@ -1,0 +1,22 @@
+#!/bin/sh
+# debian init script /etc/init.d/activy for activy
+# modified for x-vdr
+source  /etc/default/vdr
+
+[ "$alcd" = "on" ] || exit
+
+case "$1" in
+  start)
+    echo "Setting activy keys and display"
+    $VDRSCRIPTDIR/activy_msg.sh "Starting system ..." ""
+    $VDRSCRIPTDIR/activy.sh
+    ;;
+  stop)
+    echo "Clear activy display"
+    $VDRSCRIPTDIR/activy_pb.sh
+    $VDRSCRIPTDIR/activy_msg.sh "" ""
+    printf "\xF0\xFF" > /dev/ttyS0
+    ;;
+esac
+
+exit 0

@@ -1,0 +1,12 @@
+diff -ruN cutalot-0.0.2a/cal-mpeg.h cutalot-0.0.2a_vdr-1.5.1/cal-mpeg.h
+--- cutalot-0.0.2a/cal-mpeg.h	2006-09-09 15:32:29.000000000 +0200
++++ cutalot-0.0.2a_vdr-1.5.1/cal-mpeg.h	2007-03-19 13:22:34.000000000 +0100
+@@ -8,7 +8,7 @@
+ 
+ #include <vdr/tools.h>
+ 
+-typedef uint64 pts_t;
++typedef uint64_t pts_t;
+ 
+ #define NO_PTS      8589934592LL
+ #define NO_DTS      8589934592LL

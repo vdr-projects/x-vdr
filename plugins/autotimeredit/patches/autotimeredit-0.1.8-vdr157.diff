@@ -1,0 +1,90 @@
+diff -ruNp autotimeredit-0.1.8~/autotimeredit.c autotimeredit-0.1.8/autotimeredit.c
+--- autotimeredit-0.1.8~/autotimeredit.c	2009-03-01 14:22:04.000000000 +0100
++++ autotimeredit-0.1.8/autotimeredit.c	2009-03-01 14:20:24.000000000 +0100
+@@ -312,7 +312,11 @@ class cPluginAutoTimer : public cPlugin
+ {
+ private:
+   // Add any member variables or functions you may need here.
++#if VDRVERSNUM < 10507
+   int OSDLanguage;
++#else
++  char *OSDLanguage;
++#endif
+   void TestAndSetOSDLanguage(void);
+   bool ProcessArg(int argc, char *argv[]);
+ public:
+@@ -340,7 +344,11 @@ cPluginAutoTimer::cPluginAutoTimer(void)
+   // Initialize any member variables here.
+   // DON'T DO ANYTHING ELSE THAT MAY HAVE SIDE EFFECTS, REQUIRE GLOBAL
+   // VDR OBJECTS TO EXIST OR PRODUCE ANY OUTPUT!
++#if VDRVERSNUM < 10507
+   OSDLanguage = -1;
++#else
++  OSDLanguage = NULL;
++#endif
+   int i;
+   for (i = 1; i < MaxDefaultDictionary; i++)
+     SetupDefaultDictionarys.Add(new cDefaultDictionary("", 0));
+diff -ruNp autotimeredit-0.1.8~/Makefile autotimeredit-0.1.8/Makefile
+--- autotimeredit-0.1.8~/Makefile	2009-03-01 14:22:04.000000000 +0100
++++ autotimeredit-0.1.8/Makefile	2009-03-01 15:46:57.000000000 +0100
+@@ -46,9 +46,9 @@ INCLUDES += -I$(VDRDIR)/include -I$(DVBD
+ DEFINES += -D_GNU_SOURCE -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
+ 
+ ### Test wareagle-patch
+-ifeq ($(shell test -f $(VDRDIR)/iconpatch.h ; echo $$?),0)
+-  DEFINES += -DHAVE_ICONPATCH
+-endif
++#ifeq ($(shell test -f $(VDRDIR)/iconpatch.h ; echo $$?),0)
++#  DEFINES += -DUSE_WAREAGLEICON
++#endif
+ 
+ #for more debug lines
+ #DEFINES += -DATE_Debug1 #
+diff -ruNp autotimeredit-0.1.8~/menuautotimer.c autotimeredit-0.1.8/menuautotimer.c
+--- autotimeredit-0.1.8~/menuautotimer.c	2005-10-19 23:22:17.000000000 +0200
++++ autotimeredit-0.1.8/menuautotimer.c	2009-03-01 14:20:32.000000000 +0100
+@@ -6,10 +6,8 @@
+  * $Id: menuautotimer.c 1.7 2005/10/19 23:22:17 hflor Exp $
+  */
+ 
+-#ifdef HAVE_ICONPATCH
++#ifdef USE_WAREAGLEICON
+   #include <vdr/iconpatch.h>
+-#else
+-  #define ICON_UHR '*'
+ #endif
+ 
+ #include "autotimeredit.h"
+@@ -279,7 +277,7 @@ void cMenuAutoTimerItem::Set(void)
+                           autotimer->Options() & Searchpos_Description ? tr("Display3$D") : "-",
+                           use_except_repeat.u ? autotimer->Except_Repeat() ? tr("Display4$R") : "-" : "",
+                           use_except_repeat.u && use_weekdays.u ? autotimer->Weekdays() != 1111111 ? tr("Display5$W") : "-" : "");
+-  if (show_channel.u)
++  if (show_channel.u) {
+     if (autotimer->UseChannel()) {
+       if (show_channelname.u)
+         asprintf(&tmp[pos++], "\t%.7s", autotimer->Channel()->Name());
+@@ -287,6 +285,7 @@ void cMenuAutoTimerItem::Set(void)
+         asprintf(&tmp[pos++], "\t%0*d", numdigits(Channels.MaxNumber()), autotimer->Channel()->Number());
+     } else
+       asprintf(&tmp[pos++], "\t--");
++  }
+   if (show_startstop.u & 0x1) {
+     if (autotimer->UseStart())
+       asprintf(&tmp[pos++], "\t%02d:%02d", autotimer->StartTime() / 100, autotimer->StartTime() % 100);
+@@ -299,8 +298,12 @@ void cMenuAutoTimerItem::Set(void)
+     else
+       asprintf(&tmp[pos++], "\t--:--");
+   }
+-
+-  asprintf(&buffer, "%c%s%s%s%s\t%s", autotimer->Active() ? ICON_UHR : ' ', tmp[0], tmp[1], tmp[2], tmp[3], autotimer->Search());
++#ifdef USE_WAREAGLEICON
++  if (Setup.WarEagleIcons)
++     asprintf(&buffer, "%s%s%s%s%s\t%s", autotimer->Active() ? IsLangUtf8() ? ICON_CLOCK_UTF8 : ICON_CLOCK : " ", tmp[0], tmp[1], tmp[2], tmp[3], autotimer->Search());
++  else
++#endif /* WAREAGLEICON */
++     asprintf(&buffer, "%s%s%s%s%s\t%s", autotimer->Active() ? "*" : " ", tmp[0], tmp[1], tmp[2], tmp[3], autotimer->Search());
+   SetText(buffer, false);
+ #ifdef ATE_Debug2
+   dsyslog("%s: cMenuAutoTimerItem::Set SetText=%s", plugin_name, buffer);

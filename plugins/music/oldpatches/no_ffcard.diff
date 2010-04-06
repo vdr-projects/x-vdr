@@ -1,0 +1,11 @@
+--- Makefile.ORG
++++ Makefile
+@@ -23,7 +23,7 @@
+ 
+ # Uncomment if you own a FF-Card , otherwise scrollmode is disabled .
+ # If you have problems with scrolling oder hang-ups , dont use it.
+-HAVE_FFCARD=1
++#HAVE_FFCARD=1
+ 
+ # Uncomment if you own enough ram for OSD (e.g modded FF-Card to 4MB ram or softdecoder)
+ #HAVE_OSDMOD=1

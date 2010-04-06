@@ -1,0 +1,31 @@
+--- DisplayMenu.c.orig	2008-11-22 18:16:40.000000000 +0100
++++ DisplayMenu.c	2009-03-06 00:30:46.000000000 +0100
+@@ -977,9 +977,16 @@ void cSkinElchiDisplayMenu::SetRecording
+       recsize = filesize[i-1];
+ 
+       if (hasMarks && index) {
++#if VDRVERSNUM >= 10703
++         uint16_t FileNumber;
++         off_t FileOffset;
++         int Length;
++         bool PictureType;
++#else
+          uchar FileNumber;
+          int FileOffset, Length;
+          uchar PictureType;
++#endif
+ 
+          bool cutin = true;
+          cMark *mark = marks.First();
+@@ -1029,7 +1036,11 @@ void cSkinElchiDisplayMenu::SetRecording
+                               trVDR("Lifetime"), Recording->lifetime);
+ 
+       if (lastIndex)
++#if VDRVERSNUM >= 10703
++         text = cString::sprintf("%s%s:  %.2f MBit/s (Video+Audio)\n", (const char *)text, tr("est. bit-rate"), (float)recsize/lastIndex*DEFAULTFRAMESPERSECOND*8/MEGABYTE(1));
++#else
+          text = cString::sprintf("%s%s:  %.2f MBit/s (Video+Audio)\n", (const char *)text, tr("est. bit-rate"), (float)recsize/lastIndex*FRAMESPERSEC*8/MEGABYTE(1));
++#endif
+ 
+       const cComponents *Components = Info->Components();
+       if (Components) {

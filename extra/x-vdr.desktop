@@ -1,0 +1,19 @@
+[Desktop Entry]
+Comment=
+Comment[de]=
+Encoding=UTF-8
+Exec=x-vdr
+GenericName=
+GenericName[de]=
+Icon=
+MimeType=
+Name=x-vdr
+Name[de]=x-vdr
+Path=
+StartupNotify=false
+Terminal=false
+TerminalOptions=
+Type=Application
+X-DCOP-ServiceType=none
+X-KDE-SubstituteUID=false
+X-KDE-Username=

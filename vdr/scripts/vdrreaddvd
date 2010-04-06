@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# vdrreaddvd - x-vdr version
+#
+# This script will be called by the vdr-plugins dvdselect and dvdswitch to copy a DVD to the local drive.
+#
+# It gets the following parameters:
+#
+# dvdselect and dvdswitch
+# $1 = directory for dvd's (see plugin configuration menu)
+# $2 = name of dvd
+# $3 = original dvd-device
+# dvdswitch only
+# $4 = mountpoint - default is "(none)"
+# $5 = "IMAGE" or "DIR"
+
+# Load VDR configuration
+. /etc/default/vdr
+
+# vdr2root
+if [ $# -eq 3 ]; then
+  # dvdselect
+  echo "sudo $VDRSCRIPTDIR/vdr2root readdvd \"$1\" \"$2\" \"$3.iso\" (none) IMAGE" | at now
+elif [ $# -eq 5 ]; then
+  # dvdswitch
+  echo "sudo $VDRSCRIPTDIR/vdr2root readdvd \"$1\" \"$2\" \"$3\" \"$4\" \"$5\"" | at now
+else
+  exit 1
+fi
+
+exit 0

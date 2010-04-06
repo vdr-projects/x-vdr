@@ -1,0 +1,3348 @@
+# Include patch http://deela.cc.fh-lippe.de/files/vdr-chanorg/chanorg-0.0.6.patch
+# gettext-i18n
+
+diff -Nru chanorg-0.0.6/chan-menu.c chanorg-0.0.6-gettext-i18n/chan-menu.c
+--- chanorg-0.0.6/chan-menu.c	2005-01-26 19:06:13.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/chan-menu.c	2008-04-13 12:08:20.000000000 +0200
+@@ -14,37 +14,37 @@
+ 
+ void cGroupMove::Setup()
+ {
+-	cChannel *tmp=ChanOrg.OrgChans.First();
++	cChannel *tmp=pChanOrg->OrgChans.First();
+         Clear();
+ 	cChannel *last=new cChannel();
+ #if VDRVERSNUM<10315
+ 	last->SetName(tr(":End"));
+-	ChanOrg.OrgChans.NewChannel(last,last->Name(),0,0,0,0);
++	pChanOrg->OrgChans.NewChannel(last,last->Name(),0,0,0,0);
+ #else
+ 	last->SetName(tr(":End"),"","");
+-	ChanOrg.OrgChans.NewChannel(last,last->Name(),last->ShortName(),last->Provider(),0,0,0,0);
++	pChanOrg->OrgChans.NewChannel(last,last->Name(),last->ShortName(),last->Provider(),0,0,0,0);
+ #endif
+-	ChanOrg.OrgChans.Last()->Parse(last->Name());
+-	ChanOrg.OrgChans.ReNumber();
++	pChanOrg->OrgChans.Last()->Parse(last->Name());
++	pChanOrg->OrgChans.ReNumber();
+ 	int j=0;
+-	if (ChanOrg.OrgChans.First()->GroupSep() && tmp!=ToMove)
++	if (pChanOrg->OrgChans.First()->GroupSep() && tmp!=ToMove)
+ 	{
+-		Add(new cOsdItem(ChanOrg.OrgChans.First()->Name(),osUser1));
+-		Group[j]=ChanOrg.OrgChans.First();
++		Add(new cOsdItem(pChanOrg->OrgChans.First()->Name(),osUser1));
++		Group[j]=pChanOrg->OrgChans.First();
+ 		j++;
+ 	}
+ 	int i=0;
+-	while ((i=ChanOrg.OrgChans.GetNextGroup(i))>0)
++	while ((i=pChanOrg->OrgChans.GetNextGroup(i))>0)
+ 	{
+-		tmp=ChanOrg.OrgChans.Get(i);
++		tmp=pChanOrg->OrgChans.Get(i);
+ 		Group[j]=tmp;
+-		if (tmp != ToMove && tmp->Index()!=ChanOrg.OrgChans.GetNextGroup(ToMove->Index()))
++		if (tmp != ToMove && tmp->Index()!=pChanOrg->OrgChans.GetNextGroup(ToMove->Index()))
+ 		{
+ 		Add(new cOsdItem(tmp->Name(),osUser1));
+ 		j++;
+ 		}
+ 	}
+-	SetCurrent(Get(ChanOrg.LastAffect));
++	SetCurrent(Get(pChanOrg->LastAffect));
+ 	Display();
+ }
+ 
+@@ -59,9 +59,9 @@
+ 	{
+ 		case osUser1 : 
+ 			MoveGroup(Group[Current()]);
+-			ChanOrg.OrgChans.Del(ChanOrg.OrgChans.Last());
+-			ChanOrg.OrgChans.ReNumber();
+-			ChanOrg.ReDraw=true;
++			pChanOrg->OrgChans.Del(pChanOrg->OrgChans.Last());
++			pChanOrg->OrgChans.ReNumber();
++			pChanOrg->ReDraw=true;
+ 			return osBack;
+ 			break;
+ 		default:break;
+@@ -78,16 +78,16 @@
+ 	while (move && (!move->GroupSep() || move==ToMove) )
+ 	{
+ 		movelist[i]=move;
+-		move=ChanOrg.OrgChans.Next(move);
++		move=pChanOrg->OrgChans.Next(move);
+ 		i++;
+ 	}
+ 	nbr=i;
+ 	for (int j=0;j<nbr;j++)
+ 	{
+ 		if (movelist[j]->Index() > chan->Index())
+-		ChanOrg.OrgChans.Move(movelist[j],chan);
++		pChanOrg->OrgChans.Move(movelist[j],chan);
+ 		else
+-		ChanOrg.OrgChans.Move(movelist[j]->Index(),chan->Index()-1);
++		pChanOrg->OrgChans.Move(movelist[j]->Index(),chan->Index()-1);
+ 	}
+ }
+ 
+@@ -111,17 +111,17 @@
+ 	switch(Key)
+ 	{
+ 		case kOk : 
+-			   ChanOrg.LastAffect = Current();
++			   pChanOrg->LastAffect = Current();
+ 			   if (chan->Number()>Group[Current()]->Number())
+ 			   {
+-				ChanOrg.OrgChans.Move(chan,ChanOrg.OrgChans.Next(Group[Current()]));
++				pChanOrg->OrgChans.Move(chan,pChanOrg->OrgChans.Next(Group[Current()]));
+ 			   }
+ 			   else
+ 			   {
+-			   ChanOrg.OrgChans.Move(chan,Group[Current()]);
++			   pChanOrg->OrgChans.Move(chan,Group[Current()]);
+ 			   }
+-			   ChanOrg.OrgChans.ReNumber();
+-			   ChanOrg.ReDraw=true;
++			   pChanOrg->OrgChans.ReNumber();
++			   pChanOrg->ReDraw=true;
+ 			   return osBack;
+ 			   break;
+ 		default : break;
+@@ -133,22 +133,22 @@
+ {
+ 	Clear();
+ 	int j=0;
+-	if (ChanOrg.OrgChans.First()->GroupSep())
++	if (pChanOrg->OrgChans.First()->GroupSep())
+ 	{
+-		Add(new cOsdItem(ChanOrg.OrgChans.First()->Name(),osUser1));
+-		Group[j]=ChanOrg.OrgChans.First();	
++		Add(new cOsdItem(pChanOrg->OrgChans.First()->Name(),osUser1));
++		Group[j]=pChanOrg->OrgChans.First();	
+ 		j++;
+ 	}
+ 	int i=0;
+ 	cChannel *tmp;
+-	while ((i=ChanOrg.OrgChans.GetNextGroup(i))>0)
++	while ((i=pChanOrg->OrgChans.GetNextGroup(i))>0)
+ 	{
+ 		tmp=GetByIndex(i);
+ 		Group[j]=tmp;
+ 		Add(new cOsdItem(tmp->Name(),osUser1));
+ 		j++;
+ 	}
+-	SetCurrent(Get(ChanOrg.LastAffect));
++	SetCurrent(Get(pChanOrg->LastAffect));
+ 	Display();
+ }
+ 
+@@ -203,7 +203,7 @@
+ 				   {
+ 				           Edit();
+ 				   }
+-				   ChanOrg.ReDraw=true;
++				   pChanOrg->ReDraw=true;
+ 				   return osBack;
+ 				   break;
+ 			default :break;
+@@ -216,6 +216,7 @@
+ 
+ cChanOrgMenu::cChanOrgMenu(void) : cOsdMenu(tr("Channels Organizer"),20)
+ {
++	pChanOrg = new cPluginChanOrg();
+ 	ClearMarks();
+ 	SaveTimers();
+ 	MakeChannelsList();
+@@ -224,48 +225,48 @@
+ 
+ cChanOrgMenu::~cChanOrgMenu(void)
+ {
+-	delete &ChanOrg;
++	delete pChanOrg;
+ }
+ 
+ void cChanOrgMenu::TriAlphaCroiss(cChannel *start,cChannel *stop)
+ {
+ 	if (start->Index()+1>=stop->Index()) return;
+ 	bool DelLast=false;
+-	if (stop==ChanOrg.OrgChans.Last())
++	if (stop==pChanOrg->OrgChans.Last())
+ 	{
+ 		cChannel *last=new cChannel();
+ #if VDRVERSNUM<10315
+ 		last->SetName(":Last");
+-		ChanOrg.OrgChans.NewChannel(last,last->Name(),0,0,0,0);
++		pChanOrg->OrgChans.NewChannel(last,last->Name(),0,0,0,0);
+ #else
+ 		last->SetName(":Last","","");
+-		ChanOrg.OrgChans.NewChannel(last,last->Name(),last->ShortName(),last->Provider(),0,0,0,0);
++		pChanOrg->OrgChans.NewChannel(last,last->Name(),last->ShortName(),last->Provider(),0,0,0,0);
+ #endif
+-		ChanOrg.OrgChans.Last()->Parse(last->Name());
+-		ChanOrg.OrgChans.ReNumber();
+-		stop=ChanOrg.OrgChans.Last();
++		pChanOrg->OrgChans.Last()->Parse(last->Name());
++		pChanOrg->OrgChans.ReNumber();
++		stop=pChanOrg->OrgChans.Last();
+ 		DelLast=true;
+ 	}
+ 	bool cont=false;
+-	cChannel *chan = ChanOrg.OrgChans.Next(start);
+-	cChannel *tmp = ChanOrg.OrgChans.Next(chan);
+-	while (chan && ((start==ChanOrg.OrgChans.Last())? (tmp!=NULL) :(tmp!=stop)))
++	cChannel *chan = pChanOrg->OrgChans.Next(start);
++	cChannel *tmp = pChanOrg->OrgChans.Next(chan);
++	while (chan && ((start==pChanOrg->OrgChans.Last())? (tmp!=NULL) :(tmp!=stop)))
+ 	{
+ 	 if ( ( strcasecmp(chan->Name(),tmp->Name()) ) > 0) 
+ 	 {
+-		ChanOrg.OrgChans.Move(chan,tmp);
++		pChanOrg->OrgChans.Move(chan,tmp);
+ 		cont=true;
+ 	 }
+ 	else chan=tmp;
+-	tmp=ChanOrg.OrgChans.Next(chan);
++	tmp=pChanOrg->OrgChans.Next(chan);
+ 	}
+-	ChanOrg.OrgChans.ReNumber();
++	pChanOrg->OrgChans.ReNumber();
+ 	chan=NULL;
+ 	tmp=NULL;
+ 	if (DelLast)
+ 	{
+-		ChanOrg.OrgChans.Del(ChanOrg.OrgChans.Last());
+-		stop=ChanOrg.OrgChans.Last();
++		pChanOrg->OrgChans.Del(pChanOrg->OrgChans.Last());
++		stop=pChanOrg->OrgChans.Last();
+ 	}
+ 	if (cont) TriAlphaCroiss(start,stop);
+ }
+@@ -274,41 +275,41 @@
+ {
+ 	if (start->Index()+1>=stop->Index()) return;
+ 	bool DelLast=false;
+-	if (stop==ChanOrg.OrgChans.Last())
++	if (stop==pChanOrg->OrgChans.Last())
+ 	{
+ 		cChannel *last=new cChannel();
+ #if VDRVERSNUM<10315
+ 		last->SetName(":Last");
+-		ChanOrg.OrgChans.NewChannel(last,last->Name(),0,0,0,0);
++		pChanOrg->OrgChans.NewChannel(last,last->Name(),0,0,0,0);
+ #else
+ 		last->SetName(":Last","","");
+-		ChanOrg.OrgChans.NewChannel(last,last->Name(),last->ShortName(),last->Provider(),0,0,0,0);
++		pChanOrg->OrgChans.NewChannel(last,last->Name(),last->ShortName(),last->Provider(),0,0,0,0);
+ #endif
+-		ChanOrg.OrgChans.Last()->Parse(last->Name());
+-		ChanOrg.OrgChans.ReNumber();
+-		stop=ChanOrg.OrgChans.Last();
++		pChanOrg->OrgChans.Last()->Parse(last->Name());
++		pChanOrg->OrgChans.ReNumber();
++		stop=pChanOrg->OrgChans.Last();
+ 		DelLast=true;
+ 	}
+ 	bool cont=false;
+-	cChannel *chan = ChanOrg.OrgChans.Next(start);
+-	cChannel *tmp = ChanOrg.OrgChans.Next(chan);
+-	while (chan && ((start==ChanOrg.OrgChans.Last())? (tmp!=NULL) :(tmp!=stop)))
++	cChannel *chan = pChanOrg->OrgChans.Next(start);
++	cChannel *tmp = pChanOrg->OrgChans.Next(chan);
++	while (chan && ((start==pChanOrg->OrgChans.Last())? (tmp!=NULL) :(tmp!=stop)))
+ 	{
+ 	 if ( ( strcasecmp(chan->Name(),tmp->Name()) ) < 0) 
+ 	 {
+-		ChanOrg.OrgChans.Move(chan,tmp);
++		pChanOrg->OrgChans.Move(chan,tmp);
+ 		cont=true;
+ 	 }
+ 	else chan=tmp;
+-	tmp=ChanOrg.OrgChans.Next(chan);
++	tmp=pChanOrg->OrgChans.Next(chan);
+ 	}
+-	ChanOrg.OrgChans.ReNumber();
++	pChanOrg->OrgChans.ReNumber();
+ 	chan=NULL;
+ 	tmp=NULL;
+ 	if (DelLast)
+ 	{
+-		ChanOrg.OrgChans.Del(ChanOrg.OrgChans.Last());
+-		stop=ChanOrg.OrgChans.Last();
++		pChanOrg->OrgChans.Del(pChanOrg->OrgChans.Last());
++		stop=pChanOrg->OrgChans.Last();
+ 	}
+ 	if (cont) TriAlphaDec(start,stop);
+ }
+@@ -317,41 +318,41 @@
+ {
+ 	if (start->Index()+1>=stop->Index()) return;
+ 	bool DelLast=false;
+-	if (stop==ChanOrg.OrgChans.Last())
++	if (stop==pChanOrg->OrgChans.Last())
+ 	{
+ 		cChannel *last=new cChannel();
+ #if VDRVERSNUM<10315
+ 		last->SetName(":Last");
+-		ChanOrg.OrgChans.NewChannel(last,last->Name(),0,0,0,0);
++		pChanOrg->OrgChans.NewChannel(last,last->Name(),0,0,0,0);
+ #else
+ 		last->SetName(":Last","","");
+-		ChanOrg.OrgChans.NewChannel(last,last->Name(),last->ShortName(),last->Provider(),0,0,0,0);
++		pChanOrg->OrgChans.NewChannel(last,last->Name(),last->ShortName(),last->Provider(),0,0,0,0);
+ #endif
+-		ChanOrg.OrgChans.Last()->Parse(last->Name());
+-		ChanOrg.OrgChans.ReNumber();
+-		stop=ChanOrg.OrgChans.Last();
++		pChanOrg->OrgChans.Last()->Parse(last->Name());
++		pChanOrg->OrgChans.ReNumber();
++		stop=pChanOrg->OrgChans.Last();
+ 		DelLast=true;
+ 	}
+ 	bool cont=false;
+-	cChannel *chan = ChanOrg.OrgChans.Next(start);
+-	cChannel *tmp = ChanOrg.OrgChans.Next(chan);
+-	while (chan && ((start==ChanOrg.OrgChans.Last())? (tmp!=NULL) :(tmp!=stop)))
++	cChannel *chan = pChanOrg->OrgChans.Next(start);
++	cChannel *tmp = pChanOrg->OrgChans.Next(chan);
++	while (chan && ((start==pChanOrg->OrgChans.Last())? (tmp!=NULL) :(tmp!=stop)))
+ 	{
+ 	 if (  chan->Frequency() > tmp->Frequency()) 
+ 	 {
+-		ChanOrg.OrgChans.Move(chan,tmp);
++		pChanOrg->OrgChans.Move(chan,tmp);
+ 		cont=true;
+ 	 }
+ 	else chan=tmp;
+-	tmp=ChanOrg.OrgChans.Next(chan);
++	tmp=pChanOrg->OrgChans.Next(chan);
+ 	}
+-	ChanOrg.OrgChans.ReNumber();
++	pChanOrg->OrgChans.ReNumber();
+ 	chan=NULL;
+ 	tmp=NULL;
+ 	if (DelLast)
+ 	{
+-		ChanOrg.OrgChans.Del(ChanOrg.OrgChans.Last());
+-		stop=ChanOrg.OrgChans.Last();
++		pChanOrg->OrgChans.Del(pChanOrg->OrgChans.Last());
++		stop=pChanOrg->OrgChans.Last();
+ 	}
+ 	if (cont) TriTranspCroiss(start,stop);
+ }
+@@ -360,61 +361,61 @@
+ {
+ 	if (start->Index()+1>=stop->Index()) return;
+ 	bool DelLast=false;
+-	if (stop==ChanOrg.OrgChans.Last())
++	if (stop==pChanOrg->OrgChans.Last())
+ 	{
+ 		cChannel *last=new cChannel();
+ #if VDRVERSNUM<10315
+ 		last->SetName(":Last");
+-		ChanOrg.OrgChans.NewChannel(last,last->Name(),0,0,0,0);
++		pChanOrg->OrgChans.NewChannel(last,last->Name(),0,0,0,0);
+ #else
+ 		last->SetName(":Last","","");
+-		ChanOrg.OrgChans.NewChannel(last,last->Name(),last->ShortName(),last->Provider(),0,0,0,0);
++		pChanOrg->OrgChans.NewChannel(last,last->Name(),last->ShortName(),last->Provider(),0,0,0,0);
+ #endif
+-		ChanOrg.OrgChans.Last()->Parse(last->Name());
+-		ChanOrg.OrgChans.ReNumber();
+-		stop=ChanOrg.OrgChans.Last();
++		pChanOrg->OrgChans.Last()->Parse(last->Name());
++		pChanOrg->OrgChans.ReNumber();
++		stop=pChanOrg->OrgChans.Last();
+ 		DelLast=true;
+ 	}
+ 	bool cont=false;
+-	cChannel *chan = ChanOrg.OrgChans.Next(start);
+-	cChannel *tmp = ChanOrg.OrgChans.Next(chan);
+-	while (chan && ((start==ChanOrg.OrgChans.Last())? (tmp!=NULL) :(tmp!=stop)))
++	cChannel *chan = pChanOrg->OrgChans.Next(start);
++	cChannel *tmp = pChanOrg->OrgChans.Next(chan);
++	while (chan && ((start==pChanOrg->OrgChans.Last())? (tmp!=NULL) :(tmp!=stop)))
+ 	{
+ 	 if ( chan->Frequency()<tmp->Frequency()) 
+ 	 {
+-		ChanOrg.OrgChans.Move(chan,tmp);
++		pChanOrg->OrgChans.Move(chan,tmp);
+ 		cont=true;
+ 	 }
+ 	else chan=tmp;
+-	tmp=ChanOrg.OrgChans.Next(chan);
++	tmp=pChanOrg->OrgChans.Next(chan);
+ 	}
+-	ChanOrg.OrgChans.ReNumber();
++	pChanOrg->OrgChans.ReNumber();
+ 	chan=NULL;
+ 	tmp=NULL;
+ 	if (DelLast)
+ 	{
+-		ChanOrg.OrgChans.Del(ChanOrg.OrgChans.Last());
+-		stop=ChanOrg.OrgChans.Last();
++		pChanOrg->OrgChans.Del(pChanOrg->OrgChans.Last());
++		stop=pChanOrg->OrgChans.Last();
+ 	}
+ 	if (cont) TriTranspDec(start,stop);
+ }
+ 
+ void cChanOrgMenu::MakeChannelsList(void)
+ {
+-  ChanOrg.OrgChans.cList<cChannel>::Clear();
++  pChanOrg->OrgChans.cList<cChannel>::Clear();
+   for (cChannel *channel = Channels.First(); channel; channel = Channels.Next(channel)) {
+ 	  if (!channel->GroupSep() || *channel->Name())
+ 	  {
+ 		 
+ #if VDRVERSNUM<10315
+-		 ChanOrg.OrgChans.NewChannel(channel,channel->Name(),channel->Nid(),channel->Tid(),channel->Sid(),channel->Rid());
++		 pChanOrg->OrgChans.NewChannel(channel,channel->Name(),channel->Nid(),channel->Tid(),channel->Sid(),channel->Rid());
+ #else
+-		 ChanOrg.OrgChans.NewChannel(channel,channel->Name(),channel->ShortName(),channel->Provider(),channel->Nid(),channel->Tid(),channel->Sid(),channel->Rid());
++		 pChanOrg->OrgChans.NewChannel(channel,channel->Name(),channel->ShortName(),channel->Provider(),channel->Nid(),channel->Tid(),channel->Sid(),channel->Rid());
+ #endif
+ #if VDRVERSNUM>10317
+-		 ChanOrg.OrgChans.Last()->Parse(*channel->ToText());
++		 pChanOrg->OrgChans.Last()->Parse(*channel->ToText());
+ #else
+-		 ChanOrg.OrgChans.Last()->Parse(channel->ToText());
++		 pChanOrg->OrgChans.Last()->Parse(channel->ToText());
+ #endif
+ 	  }
+       }
+@@ -422,8 +423,8 @@
+ 
+ void cChanOrgMenu::Draw(void)
+ {
+-ChanOrg.ReDraw=false;
+-cChannel *chan=ChanOrg.OrgChans.First();
++pChanOrg->ReDraw=false;
++cChannel *chan=pChanOrg->OrgChans.First();
+ char *buff;
+ int i = Current();
+ Clear();
+@@ -439,7 +440,7 @@
+ 		asprintf(&buff,"%i : %s",chan->Number(),chan->Name());
+ 		Add(new cOsdItem(buff,osUser1));
+ 	}
+-	chan=ChanOrg.OrgChans.Next(chan);
++	chan=pChanOrg->OrgChans.Next(chan);
+ }
+ SetCurrent(Get(i));
+ if (i>=0)
+@@ -451,26 +452,26 @@
+ 	chan=GetByIndex(0);
+ }
+ if (chan) chan->GroupSep()? SetHelp(tr("Del Group"),tr("Edit Group"),tr("Sort Group"),tr("Move")) : SetHelp (tr("Add Group"),tr("Affect"),tr("Zap"),tr("Move"));
+-ChanOrg.OrgChans.ReNumber();
++pChanOrg->OrgChans.ReNumber();
+ Display();
+ }
+ 
+ cChannel *cAffect::GetByIndex(int Index)
+ {
+-cChannel *chan=ChanOrg.OrgChans.First();
++cChannel *chan=pChanOrg->OrgChans.First();
+ 	for(int i=0;i!=Index;i++)
+ 	{
+-		chan=ChanOrg.OrgChans.Next(chan);
++		chan=pChanOrg->OrgChans.Next(chan);
+ 	}
+ 	return chan;
+ }
+ 
+ cChannel *cChanOrgMenu::GetByIndex(int Index)
+ {
+-cChannel *chan=ChanOrg.OrgChans.First();
++cChannel *chan=pChanOrg->OrgChans.First();
+ 	for(int i=0;i!=Index;i++)
+ 	{
+-		chan=ChanOrg.OrgChans.Next(chan);
++		chan=pChanOrg->OrgChans.Next(chan);
+ 	}
+ 	return chan;
+ }
+@@ -486,24 +487,24 @@
+ 	CurChan->SetName(name,"","");
+ #endif
+ 	CurChan->Parse(name);
+-	ChanOrg.OrgChans.ReNumber();
++	pChanOrg->OrgChans.ReNumber();
+ }
+ 
+ void cGroup::Insert(void)
+ {
+ 	int num=CurChan->Number();
+-	cChannel *channel=ChanOrg.OrgChans.Last();
++	cChannel *channel=pChanOrg->OrgChans.Last();
+ #if VDRVERSNUM<10315
+-	ChanOrg.OrgChans.NewChannel(channel,channel->Name(),channel->Nid(),channel->Tid(),channel->Sid(),channel->Rid());
++	pChanOrg->OrgChans.NewChannel(channel,channel->Name(),channel->Nid(),channel->Tid(),channel->Sid(),channel->Rid());
+ #else
+-	ChanOrg.OrgChans.NewChannel(channel,channel->Name(),channel->ShortName(),channel->Provider(),channel->Nid(),channel->Tid(),channel->Sid(),channel->Rid());
++	pChanOrg->OrgChans.NewChannel(channel,channel->Name(),channel->ShortName(),channel->Provider(),channel->Nid(),channel->Tid(),channel->Sid(),channel->Rid());
+ #endif
+-	for (int i=ChanOrg.OrgChans.Count();i>Pos;i--)
++	for (int i=pChanOrg->OrgChans.Count();i>Pos;i--)
+ 	{
+-		ChanOrg.OrgChans.Move(i-1,i); 
++		pChanOrg->OrgChans.Move(i-1,i); 
+ 	}
+ 	char *name;
+-	CurChan=ChanOrg.OrgChans.Prev(CurChan);
++	CurChan=pChanOrg->OrgChans.Prev(CurChan);
+ 	if (Num==0) asprintf(&name,":%s",Name);
+ 	else asprintf(&name,":@%i %s",Num,Name);
+ #if VDRVERSNUM<10315
+@@ -513,7 +514,7 @@
+ #endif
+ 	CurChan->SetNumber(num);
+ 	CurChan->Parse(name);
+-	ChanOrg.OrgChans.ReNumber();
++	pChanOrg->OrgChans.ReNumber();
+ }
+ 
+ void cChanOrgMenu::SaveTimers()
+@@ -521,13 +522,13 @@
+ 	int i=0;
+ 	for (cTimer *t = Timers.First(); t; t= Timers.Next(t))
+ 	{
+-		ChanOrg.Tmr.Add(new cTimer(*t));
++		pChanOrg->Tmr.Add(new cTimer(*t));
+ #if VDRVERSNUM>10317
+-		ChanOrg.Tmr.Last()->Parse((const char *)t->ToText(false));
+-		asprintf(&ChanOrg.TmrChan[i],"%s",*t->ToText(true));
++		pChanOrg->Tmr.Last()->Parse((const char *)t->ToText(false));
++		asprintf(&pChanOrg->TmrChan[i],"%s",*t->ToText(true));
+ #else
+-		ChanOrg.Tmr.Last()->Parse(t->ToText(false));
+-		asprintf(&ChanOrg.TmrChan[i],"%s",t->ToText(true));
++		pChanOrg->Tmr.Last()->Parse(t->ToText(false));
++		asprintf(&pChanOrg->TmrChan[i],"%s",t->ToText(true));
+ #endif
+ 		i++;
+ 	}
+@@ -537,10 +538,10 @@
+ {
+ 	int i=0;
+ 	Timers.cList<cTimer>::Clear();
+-	for (cTimer *t = ChanOrg.Tmr.First(); t; t = ChanOrg.Tmr.Next(t))
++	for (cTimer *t = pChanOrg->Tmr.First(); t; t = pChanOrg->Tmr.Next(t))
+ 	{
+ 		Timers.Add(new cTimer(*t));
+-		Timers.Last()->Parse(ChanOrg.TmrChan[i]);
++		Timers.Last()->Parse(pChanOrg->TmrChan[i]);
+ 		i++;
+ 	}
+ }
+@@ -549,8 +550,8 @@
+ eOSState cChanOrgMenu::ProcessKey(eKeys Key)
+ {
+ 	eOSState state = cOsdMenu::ProcessKey(Key);
+-	cChannel *chan=ChanOrg.OrgChans.First();
+-	char totext[255];
++	cChannel *chan=pChanOrg->OrgChans.First();
++	char totext[512];
+ 	if (!HasSubMenu())
+ 	{
+ 	switch(state)
+@@ -572,7 +573,7 @@
+ 						strcpy(totext,chan->ToText());
+ #endif
+ 						Channels.Last()->Parse(totext);
+-						chan=ChanOrg.OrgChans.Next(chan);
++						chan=pChanOrg->OrgChans.Next(chan);
+ 					}
+ 					Channels.ReNumber();
+ #if VDRVERSNUM>10317
+@@ -601,7 +602,7 @@
+ 			default : break;
+ 			}
+ 		case osUnknown:
+-			if (ChanOrg.ReDraw) Draw();
++			if (pChanOrg->ReDraw) Draw();
+ 			switch(Key)
+ 			{
+ 			case kBlue:
+@@ -610,8 +611,8 @@
+ 					if ( (Marked != Current()) && Marked!=Current()+1    )
+ 
+ 					{
+-						ChanOrg.OrgChans.Move(Marked,Current()<=Marked ? Current()+1 : Current() );
+-						ChanOrg.OrgChans.ReNumber();
++						pChanOrg->OrgChans.Move(Marked,Current()<=Marked ? Current()+1 : Current() );
++						pChanOrg->OrgChans.ReNumber();
+ 					}
+ 				MarkMove=false;
+ 				Marked=0;
+@@ -634,7 +635,7 @@
+ 				{
+ 					//Tri Transp Dec
+ 					Skins.Message(mtStatus,tr("Sorting"));
+-					TriTranspDec(GetByIndex(Current()),ChanOrg.OrgChans.GetNextGroup(Current())>0? GetByIndex(ChanOrg.OrgChans.GetNextGroup(Current())):ChanOrg.OrgChans.Last());
++					TriTranspDec(GetByIndex(Current()),pChanOrg->OrgChans.GetNextGroup(Current())>0? GetByIndex(pChanOrg->OrgChans.GetNextGroup(Current())):pChanOrg->OrgChans.Last());
+ 					Skins.Message(mtStatus,tr("Sort done"));
+ 					sleep(Setup.OSDMessageTime);
+ 					Skins.Message(mtStatus,"");
+@@ -651,15 +652,15 @@
+ 					   }
+ 					   else if (!MarkMove && !MarkTri)
+ 						   {
+-					   	   ChanOrg.OrgChans.Del( GetByIndex(Current()) );
+-						   ChanOrg.OrgChans.ReNumber();
++					   	   pChanOrg->OrgChans.Del( GetByIndex(Current()) );
++						   pChanOrg->OrgChans.ReNumber();
+ 						   Draw();
+ 						   }
+ 				    	   else
+ 					   {
+ 						   //Tri Alpha Croiss
+ 						Skins.Message(mtStatus,tr("Sorting"));
+-						TriAlphaCroiss(GetByIndex(Current()),ChanOrg.OrgChans.GetNextGroup(Current())>0? GetByIndex(ChanOrg.OrgChans.GetNextGroup(Current())):ChanOrg.OrgChans.Last());
++						TriAlphaCroiss(GetByIndex(Current()),pChanOrg->OrgChans.GetNextGroup(Current())>0? GetByIndex(pChanOrg->OrgChans.GetNextGroup(Current())):pChanOrg->OrgChans.Last());
+ 						Skins.Message(mtStatus,tr("Sort done"));
+ 						sleep(Setup.OSDMessageTime);
+ 						Skins.Message(mtStatus,"");
+@@ -673,8 +674,8 @@
+ 				   {
+ 					if ( Marked!=Current() && Marked+1!=Current())
+ 					{
+-						ChanOrg.OrgChans.Move(Marked,Current()<=Marked ? Current() : Current()-1 );
+-						ChanOrg.OrgChans.ReNumber();
++						pChanOrg->OrgChans.Move(Marked,Current()<=Marked ? Current() : Current()-1 );
++						pChanOrg->OrgChans.ReNumber();
+ 					}
+ 					MarkMove=false;
+ 					Marked=0;
+@@ -685,7 +686,7 @@
+ 					if (MarkTri)
+ 					{
+ 					Skins.Message(mtStatus,tr("Sorting"));
+-					TriTranspCroiss(GetByIndex(Current()),ChanOrg.OrgChans.GetNextGroup(Current())>0? GetByIndex(ChanOrg.OrgChans.GetNextGroup(Current())):ChanOrg.OrgChans.Last());
++					TriTranspCroiss(GetByIndex(Current()),pChanOrg->OrgChans.GetNextGroup(Current())>0? GetByIndex(pChanOrg->OrgChans.GetNextGroup(Current())):pChanOrg->OrgChans.Last());
+ 					Skins.Message(mtStatus,tr("Sort done"));
+ 					sleep(Setup.OSDMessageTime);
+ 					Skins.Message(mtStatus,"");
+@@ -701,7 +702,7 @@
+ 				   }
+ 				   else 
+ 				   {
+-					   cDevice::PrimaryDevice()->SwitchChannel(Channels.GetByChannelID(ChanOrg.OrgChans.Get(Current())->GetChannelID()),true);
++					   cDevice::PrimaryDevice()->SwitchChannel(Channels.GetByChannelID(pChanOrg->OrgChans.Get(Current())->GetChannelID()),true);
+ 				   }
+ 				   break;
+ 			case kGreen : 
+@@ -717,7 +718,7 @@
+ 				   {
+ 					   //Tri Alpha Dec
+ 					   Skins.Message(mtStatus,tr("Sorting"));
+-					   TriAlphaDec(GetByIndex(Current()),ChanOrg.OrgChans.GetNextGroup(Current())>0? GetByIndex(ChanOrg.OrgChans.GetNextGroup(Current())):ChanOrg.OrgChans.Last());
++					   TriAlphaDec(GetByIndex(Current()),pChanOrg->OrgChans.GetNextGroup(Current())>0? GetByIndex(pChanOrg->OrgChans.GetNextGroup(Current())):pChanOrg->OrgChans.Last());
+ 					   Skins.Message(mtStatus,tr("Sort done"));
+ 					   sleep(Setup.OSDMessageTime);
+ 					   Skins.Message(mtStatus,"");
+diff -Nru chanorg-0.0.6/chan-menu.h chanorg-0.0.6-gettext-i18n/chan-menu.h
+--- chanorg-0.0.6/chan-menu.h	2004-07-22 22:06:06.000000000 +0200
++++ chanorg-0.0.6-gettext-i18n/chan-menu.h	2008-04-13 12:12:49.000000000 +0200
+@@ -2,7 +2,9 @@
+ #define __CHANMENU_H
+ #include <vdr/plugin.h>
+ #include <vdr/menu.h>
++#if APIVERSNUM < 10507
+ #include "i18n.h"
++#endif
+ class cGroupMove : public cOsdMenu
+ {
+ 	private:
+diff -Nru chanorg-0.0.6/chanorg.c chanorg-0.0.6-gettext-i18n/chanorg.c
+--- chanorg-0.0.6/chanorg.c	2004-07-22 00:55:45.000000000 +0200
++++ chanorg-0.0.6-gettext-i18n/chanorg.c	2008-04-13 12:13:25.000000000 +0200
+@@ -1,13 +1,13 @@
+ #include "chanorg.h"
+ #include "chan-menu.h"
+ 
+-cPluginChanOrg ChanOrg;
++cPluginChanOrg *pChanOrg;
+ 
+ void cPluginChanOrg::Debug(void)
+ {
+-	cChannel *chan=ChanOrg.OrgChans.First();
++	cChannel *chan=pChanOrg->OrgChans.First();
+ 		fprintf(stderr,"Chaine Index %i %s\n",chan->Index(),chan->Name());
+-	while ((chan=ChanOrg.OrgChans.Next(chan)))
++	while ((chan=pChanOrg->OrgChans.Next(chan)))
+ 	{
+ 		fprintf(stderr,"Chaine Index %i %s\n",chan->Index(),chan->Name());
+ 	}
+@@ -24,7 +24,9 @@
+ 
+ bool cPluginChanOrg::Initialize(void)
+ {
++#if APIVERSNUM < 10507
+ 	RegisterI18n(Phrases);
++#endif
+ 	return true;
+ }
+ 
+diff -Nru chanorg-0.0.6/chanorg.h chanorg-0.0.6-gettext-i18n/chanorg.h
+--- chanorg-0.0.6/chanorg.h	2005-01-26 19:07:03.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/chanorg.h	2008-04-13 12:10:34.000000000 +0200
+@@ -5,8 +5,8 @@
+ #include <vdr/i18n.h>
+ 
+ static const char *VERSION        = "0.0.6";
+-static const char *DESCRIPTION    = "Channels Organizer";
+-static const char *MAINMENUENTRY  = "Channels Organizer";
++static const char *DESCRIPTION    = trNOOP("Channels Organizer");
++static const char *MAINMENUENTRY  = tr("Channels Organizer");
+ 
+ // --- cPluginLocker -------------------------------------------------------------
+ 
+@@ -33,6 +33,6 @@
+   void Debug(void);
+ };
+ 
+-extern cPluginChanOrg ChanOrg;
++extern cPluginChanOrg *pChanOrg;
+ 
+ #endif //__AIDE_H
+diff -Nru chanorg-0.0.6/i18n.c chanorg-0.0.6-gettext-i18n/i18n.c
+--- chanorg-0.0.6/i18n.c	2005-01-26 19:10:28.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/i18n.c	2008-04-13 12:12:24.000000000 +0200
+@@ -1,3 +1,4 @@
++#if APIVERSNUM < 10507
+ #include "i18n.h"
+ 
+ const tI18nPhrase Phrases[] = {
+@@ -460,3 +461,4 @@
+   },
+   { NULL }
+ };
++#endif
+diff -Nru chanorg-0.0.6/Makefile chanorg-0.0.6-gettext-i18n/Makefile
+--- chanorg-0.0.6/Makefile	2004-07-15 21:11:19.000000000 +0200
++++ chanorg-0.0.6-gettext-i18n/Makefile	2008-04-13 12:10:38.000000000 +0200
+@@ -16,7 +16,7 @@
+ ### The C++ compiler and options:
+ 
+ CXX      ?= g++
+-CXXFLAGS ?= -O2 -Wall -Woverloaded-virtual
++CXXFLAGS ?= -fPIC -O2 -Wall -Woverloaded-virtual
+ 
+ ### The directory environment:
+ 
+@@ -62,9 +62,34 @@
+ 
+ -include $(DEPFILE)
+ 
++### Internationalization (I18N):
++
++PODIR     = po
++LOCALEDIR = $(VDRDIR)/locale
++I18Npo    = $(wildcard $(PODIR)/*.po)
++I18Nmsgs  = $(addprefix $(LOCALEDIR)/, $(addsuffix /LC_MESSAGES/vdr-$(PLUGIN).mo, $(notdir $(foreach file, $(I18Npo), $(basename $(file))))))
++I18Npot   = $(PODIR)/$(PLUGIN).pot
++
++%.mo: %.po
++	msgfmt -c -o $@ $<
++
++$(I18Npot): $(wildcard *.c)
++	xgettext -C -cTRANSLATORS --no-wrap --no-location -k -ktr -ktrNOOP --msgid-bugs-address='<micky979@free.fr>' -o $@ $^
++
++%.po: $(I18Npot)
++	msgmerge -U --no-wrap --no-location --backup=none -q $@ $<
++	@touch $@
++
++$(I18Nmsgs): $(LOCALEDIR)/%/LC_MESSAGES/vdr-$(PLUGIN).mo: $(PODIR)/%.mo
++	@mkdir -p $(dir $@)
++	cp $< $@
++
++.PHONY: i18n
++i18n: $(I18Nmsgs)
++
+ ### Targets:
+ 
+-all: libvdr-$(PLUGIN).so
++all: libvdr-$(PLUGIN).so i18n
+ 
+ libvdr-$(PLUGIN).so: $(OBJS)
+ 	$(CXX) $(CXXFLAGS) -shared $(OBJS) -o $@
+@@ -79,4 +104,5 @@
+ 	@echo Distribution package created as $(PACKAGE).tgz
+ 
+ clean:
++	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
+ 	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
+diff -Nru chanorg-0.0.6/po/ca_ES.po chanorg-0.0.6-gettext-i18n/po/ca_ES.po
+--- chanorg-0.0.6/po/ca_ES.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/ca_ES.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,114 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Marc Rovira Vall <tm05462@salleURL.edu>, 2003
++# Ramon Roca <ramon.roca@xcombo.com>, 2003
++# Jordi Vil‡ <jvila@tinet.org>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Jordi Vil‡ <jvila@tinet.org>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/chanorg.pot chanorg-0.0.6-gettext-i18n/po/chanorg.pot
+--- chanorg-0.0.6/po/chanorg.pot	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/chanorg.pot	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,113 @@
++# SOME DESCRIPTIVE TITLE.
++# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the PACKAGE package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++#, fuzzy
++msgid ""
++msgstr ""
++"Project-Id-Version: PACKAGE VERSION\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: LANGUAGE <LL@li.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=CHARSET\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/cs_CZ.po chanorg-0.0.6-gettext-i18n/po/cs_CZ.po
+--- chanorg-0.0.6/po/cs_CZ.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/cs_CZ.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,112 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# VladimÌr B·rta <vladimir.barta@k2atmitec.cz>, 2006
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: VladimÌr B·rta <vladimir.barta@k2atmitec.cz>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/da_DK.po chanorg-0.0.6-gettext-i18n/po/da_DK.po
+--- chanorg-0.0.6/po/da_DK.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/da_DK.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,112 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Mogens Elneff <mogens@elneff.dk>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Mogens Elneff <mogens@elneff.dk>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/de_DE.po chanorg-0.0.6-gettext-i18n/po/de_DE.po
+--- chanorg-0.0.6/po/de_DE.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/de_DE.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,112 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Klaus Schmidinger <kls@cadsoft.de>, 2000
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Klaus Schmidinger <kls@cadsoft.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr "Verschiebe vor Gruppe"
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ":Ende"
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr "W‰hlen"
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr "Gruppe"
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr "Name"
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr "Nummer"
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr "Hinzuf¸gen"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr "Zuweisen"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr "Lˆschen"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr "Bearbeiten"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr "Verschieben"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr "Sortieren"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr "Umschalten"
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr "ƒnderungen speichern?"
++
++#: chan-menu.c:630
++msgid "After"
++msgstr "Dahinter"
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr "Davor"
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr "Abbrechen"
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr "Sortieren"
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr "Sortieren beendet"
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr "Alpha ab"
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr "Alpha auf"
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr "Transp ab"
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr "Transp auf"
+diff -Nru chanorg-0.0.6/po/el_GR.po chanorg-0.0.6-gettext-i18n/po/el_GR.po
+--- chanorg-0.0.6/po/el_GR.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/el_GR.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,112 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Dimitrios Dimitrakos <mail@dimitrios.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Dimitrios Dimitrakos <mail@dimitrios.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-7\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/es_ES.po chanorg-0.0.6-gettext-i18n/po/es_ES.po
+--- chanorg-0.0.6/po/es_ES.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/es_ES.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,112 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Ruben Nunez Francisco <ruben.nunez@tang-it.com>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Ruben Nunez Francisco <ruben.nunez@tang-it.com>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/et_EE.po chanorg-0.0.6-gettext-i18n/po/et_EE.po
+--- chanorg-0.0.6/po/et_EE.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/et_EE.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,112 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Arthur Konovalov <kasjas@hot.ee>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Arthur Konovalov <kasjas@hot.ee>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-13\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/fi_FI.po chanorg-0.0.6-gettext-i18n/po/fi_FI.po
+--- chanorg-0.0.6/po/fi_FI.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/fi_FI.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,115 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Hannu Savolainen <hannu@opensound.com>, 2002
++# Jaakko Hyv‰tti <jaakko@hyvatti.iki.fi>, 2002
++# Niko Tarnanen <niko.tarnanen@hut.fi>, 2003
++# Rolf Ahrenberg <rahrenbe@cc.hut.fi>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Rolf Ahrenberg <rahrenbe@cc.hut.fi>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/fr_FR.po chanorg-0.0.6-gettext-i18n/po/fr_FR.po
+--- chanorg-0.0.6/po/fr_FR.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/fr_FR.po	2008-04-13 12:11:56.000000000 +0200
+@@ -0,0 +1,115 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Jean-Claude Repetto <jc@repetto.org>, 2001
++# Olivier Jacques <jacquesolivier@hotmail.com>, 2003
++# Gregoire Favre <greg@magma.unil.ch>, 2003
++# Nicolas Huillard <nhuillard@e-dition.fr>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Nicolas Huillard <nhuillard@e-dition.fr>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr "Deplacer avant groupe"
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ":Fin"
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr "Choix du groupe pour"
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr "Groupe"
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr "Nom"
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr "Numero"
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr "Organisateur Chaines"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr "Creer Groupe"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr "Affecter"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr "Suppr Groupe"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr "Modif Groupe"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr "Deplacer"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr "Tri Group"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr "Zap"
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr "Appliquer les changements?"
++
++#: chan-menu.c:630
++msgid "After"
++msgstr "Apres"
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr "Avant"
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr "Annuler"
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr "Tri en cours"
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr "Tri termine"
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr "Alpha Dec"
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr "Alpha Croiss"
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr "Transp Dec"
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr "Transp Croiss"
+diff -Nru chanorg-0.0.6/po/hr_HR.po chanorg-0.0.6-gettext-i18n/po/hr_HR.po
+--- chanorg-0.0.6/po/hr_HR.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/hr_HR.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,113 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Drazen Dupor <drazen.dupor@dupor.com>, 2004
++# Dino Ravnic <dino.ravnic@fer.hr>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Drazen Dupor <drazen.dupor@dupor.com>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/hu_HU.po chanorg-0.0.6-gettext-i18n/po/hu_HU.po
+--- chanorg-0.0.6/po/hu_HU.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/hu_HU.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,113 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Istvan Koenigsberger <istvnko@hotmail.com>, 2002
++# Guido Josten <guido.josten@t-online.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Istvan Koenigsberger <istvnko@hotmail.com>, Guido Josten <guido.josten@t-online.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/it_IT.po chanorg-0.0.6-gettext-i18n/po/it_IT.po
+--- chanorg-0.0.6/po/it_IT.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/it_IT.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,114 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Alberto Carraro <bertocar@tin.it>, 2001
++# Antonio Ospite <ospite@studenti.unina.it>, 2003
++# Sean Carlos <seanc@libero.it>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Sean Carlos <seanc@libero.it>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr "Muovi in su il gruppo"
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ":Fine"
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr "Seleziona grp"
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr "Gruppo"
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr "Nome"
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr "Numero"
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr "Aggiungi grp"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr "Cancella grp"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr "Modifica grp"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr "Muovi"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr "Ordina grp"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr "Vedi canale"
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr "Applica cambiamenti?"
++
++#: chan-menu.c:630
++msgid "After"
++msgstr "In giu'"
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr "In su"
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr "Cancella"
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr "Ordinamento"
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr "Ordinamento completato"
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr "Alpha giu'"
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr "Alpha su"
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr "Transp giu'"
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr "Transp su"
+diff -Nru chanorg-0.0.6/po/nl_NL.po chanorg-0.0.6-gettext-i18n/po/nl_NL.po
+--- chanorg-0.0.6/po/nl_NL.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/nl_NL.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,114 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Arnold Niessen <niessen@iae.nl> <arnold.niessen@philips.com>, 2001
++# Hans Dingemans <hans.dingemans@tacticalops.nl>, 2003
++# Maarten Wisse <Maarten.Wisse@urz.uni-hd.de>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Maarten Wisse <Maarten.Wisse@urz.uni-hd.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/nn_NO.po chanorg-0.0.6-gettext-i18n/po/nn_NO.po
+--- chanorg-0.0.6/po/nn_NO.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/nn_NO.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,113 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# J¯rgen Tvedt <pjtvedt@online.no>, 2001
++# Truls Slevigen <truls@slevigen.no>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Truls Slevigen <truls@slevigen.no>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/pl_PL.po chanorg-0.0.6-gettext-i18n/po/pl_PL.po
+--- chanorg-0.0.6/po/pl_PL.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/pl_PL.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,112 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Michael Rakowski <mrak@gmx.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Michael Rakowski <mrak@gmx.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/pt_PT.po chanorg-0.0.6-gettext-i18n/po/pt_PT.po
+--- chanorg-0.0.6/po/pt_PT.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/pt_PT.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,112 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Paulo Lopes <pmml@netvita.pt>, 2001
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Paulo Lopes <pmml@netvita.pt>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/ro_RO.po chanorg-0.0.6-gettext-i18n/po/ro_RO.po
+--- chanorg-0.0.6/po/ro_RO.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/ro_RO.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,113 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Paul Lacatus <paul@campina.iiruc.ro>, 2002
++# Lucian Muresan <lucianm@users.sourceforge.net>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Lucian Muresan <lucianm@users.sourceforge.net>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/ru_RU.po chanorg-0.0.6-gettext-i18n/po/ru_RU.po
+--- chanorg-0.0.6/po/ru_RU.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/ru_RU.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,112 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Vyacheslav Dikonov <sdiconov@mail.ru>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Vyacheslav Dikonov <sdiconov@mail.ru>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-5\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr "øﬁ‹’·‚ÿ‚Ï ﬂ’‡’‘ ”‡„ﬂﬂﬁŸ"
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ":∫ﬁ›’Ê"
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr "≤Î—ﬁ‡ ”‡„ﬂﬂÎ"
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr "≥‡„ﬂﬂ–"
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr "∏‹Ô"
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr "Ωﬁ‹’‡"
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr "Ωﬁ“–Ô ”‡„ﬂﬂ–"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr "ø‡ÿ‹’›ÿ‚Ï"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr "√‘–€. ”‡„ﬂﬂ„"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr "¿’‘. ”‡„ﬂﬂ„"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr "ø’‡’‹’·‚ÿ‚Ï"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr "¡ﬁ‡‚. ”‡„ﬂﬂ„"
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr "ø’‡’⁄€ÓÁÿ‚Ï"
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr "ø‡ÿ‹’›ÿ‚Ï ÿ◊‹’›’›ÿÔ?"
++
++#: chan-menu.c:630
++msgid "After"
++msgstr "øﬁ·€’"
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr "ø’‡’‘"
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr "æ‚‹’›ÿ‚Ï"
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr "¡ﬁ‡‚ÿ‡ﬁ“⁄–"
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr "¡ﬁ‡‚ÿ‡ﬁ“⁄– ﬁ⁄ﬁ›Á’›–"
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr "∞€‰–“ÿ‚ „—Î“."
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr "∞€‰–“ÿ‚ “ﬁ◊‡."
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr "¬‡–›·ﬂ. „—Î“."
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr "¬‡–›·ﬂ. “ﬁ◊‡."
+diff -Nru chanorg-0.0.6/po/sl_SI.po chanorg-0.0.6-gettext-i18n/po/sl_SI.po
+--- chanorg-0.0.6/po/sl_SI.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/sl_SI.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,113 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Miha Setina <mihasetina@softhome.net>, 2000
++# Matjaz Thaler <matjaz.thaler@guest.arnes.si>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Matjaz Thaler <matjaz.thaler@guest.arnes.si>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/sv_SE.po chanorg-0.0.6-gettext-i18n/po/sv_SE.po
+--- chanorg-0.0.6/po/sv_SE.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/sv_SE.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,113 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Tomas Prybil <tomas@prybil.se>, 2002
++# Jan Ekholm <chakie@infa.abo.fi>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Tomas Prybil <tomas@prybil.se>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""
+diff -Nru chanorg-0.0.6/po/tr_TR.po chanorg-0.0.6-gettext-i18n/po/tr_TR.po
+--- chanorg-0.0.6/po/tr_TR.po	1970-01-01 01:00:00.000000000 +0100
++++ chanorg-0.0.6-gettext-i18n/po/tr_TR.po	2008-04-13 12:10:38.000000000 +0200
+@@ -0,0 +1,112 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Oktay YolgeÁen <oktay_73@yahoo.de>, 2007
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2008-04-13 12:10+0200\n"
++"PO-Revision-Date: 2008-04-13 12:10+0200\n"
++"Last-Translator: Oktay YolgeÁen <oktay_73@yahoo.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-9\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: chan-menu.c:9
++msgid "Move before group"
++msgstr ""
++
++#: chan-menu.c:21 chan-menu.c:24
++msgid ":End"
++msgstr ""
++
++#: chan-menu.c:98
++msgid "Select Group for"
++msgstr ""
++
++#: chan-menu.c:155 chan-menu.c:165
++msgid "Group"
++msgstr ""
++
++#: chan-menu.c:180
++msgid "Name"
++msgstr ""
++
++#: chan-menu.c:181
++msgid "Number"
++msgstr ""
++
++#: chan-menu.c:217
++msgid "Channels Organizer"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Add Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Affect"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Del Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Edit Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Move"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Sort Group"
++msgstr ""
++
++#: chan-menu.c:454 chan-menu.c:599
++msgid "Zap"
++msgstr ""
++
++#: chan-menu.c:560
++msgid "Apply Changes?"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "After"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Before"
++msgstr ""
++
++#: chan-menu.c:630
++msgid "Cancel"
++msgstr ""
++
++#: chan-menu.c:637 chan-menu.c:662 chan-menu.c:688 chan-menu.c:720
++msgid "Sorting"
++msgstr ""
++
++#: chan-menu.c:639 chan-menu.c:664 chan-menu.c:690 chan-menu.c:722
++msgid "Sort done"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Alpha Up"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Down"
++msgstr ""
++
++#: chan-menu.c:699
++msgid "Transp Up"
++msgstr ""

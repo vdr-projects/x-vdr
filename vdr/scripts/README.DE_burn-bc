@@ -1,0 +1,142 @@
+burn-bc (burn background creator 0.0.5) - readme 2007-07-01
+===================================================
+Beschreibung:
+=================
+burn-bc ist ein Skript zum erstellen von Hintergründen für das burn-plugin des VDR.
+Das Skript kann per Terminal, Maus (Xdialog) oder aus dem VDR-Menu bedient werden.
+Es können Bilder aus der eigenen Sammlung oder Screenshots der laufenden Sendung bzw. Aufzeichnung verwendet werden.
+Die Bilder werden mit auswählbaren Filtern bearbeitet und an die entsprechenden Stellen kopiert.
+Textfelder können gezeichnet oder als Template eingeblendet eingebelndet werden.
+
+=================
+Vorraussetzungen:
+=================
+ImageMagick 6.2.4
+svdrpsend.pl (zum erstellen der Screenshots)
+sharutils (zum erstellen der Screenshots)
+Xdialog (optional)
+at (optional)
+
+=================
+Installation:
+=================
+Am einfachsten ist es, burn-bc nach /usr/bin zu kopieren und ausführbar zu machen.
+# terminal
+cp ./burn-bc /usr/bin
+chmod 755 /usr/bin/burn-bc
+
+Das Skript kann aber auch an jeder anderen Stelle abgelegt werden.
+Nur muss dann der Pfad beim aufrufen mit angegeben werden.
+
+Damit burn-bc aus dem VDR-Menu bedienbar ist, muss die commands.conf angepasst werden:
+burn-bc   : echo "/usr/bin/burn-bc -f 'crop zoom-center resize draw-storke unsharp' -w default"|at now
+
+Wer auch eigene Bilder verwenden möchte, kann zum aufrufen das image-plugin benutzen und dafür die imagecmds.conf ergänzen:
+burn-bc   : echo "/usr/bin/burn-bc -f 'draw-storke unsharp' -w default -i %s"|at now
+
+Weitere Beispiele gibt es weiter unten...
+
+=================
+Filter:
+=================
+# Optimierung
+crop                -> Ränder abschneiden
+
+# Bildausschnitt
+zoom-center         -> Zoom auf die Mitte des Bildes
+zoom-left           -> Zoom auf die linke Seite des Bildes
+zoom-right          -> Zoom auf die rechte Seite des Bildes
+zoom-center-16x9    -> Zoom auf die Mitte eines anamorphen 16/9 Bildes
+zoom-left-16x9      -> Zoom auf die linke Seite eines anamorphen 16/9 Bildes
+zoom-right-16x9     -> Zoom auf die rechte Seite eines anamorphen 16/9 Bildes
+letterbox-16x9      -> Erzeugt ein Letterbox Bild aus einem anamorphen 16/9 Bild
+
+# Optimierung (nach dem Ränder abschneiden oder zoomen notwendig)
+resize              -> Skaliert das Bild auf 720x576
+
+# Textfelder
+comp-atop           -> Legt ein Template über das Bild
+comp-blend          -> Blendet ein Template in das Bild
+draw-bigsize        -> Zeichnet zwei grosse, transparente Textfelder mit Rahmen über das Bild
+draw-normal         -> Zeichnet zwei transparente Textfelder mit runde Ecken über das Bild
+draw-storke         -> Zeichnet zwei transparente Textfelder mit runde Ecken und Rahmen über das Bild
+draw-user           -> Zeichnet die Textfelder über das Bild (zum anpassen gedacht)
+
+# Fun
+serial-foto         -> Legt eine Serie von vier bzw fünf (bei 16/9 Filmen) verkleinerten Screenshots über das Bild
+serial-movie        -> Montiert eine Serie von fünf Screenshots zu einem Filmstreifen und legt diesen über das Bild
+tux                 -> Blendet ein Bild (das als Template "$targetdir/tux.png" vorliegen muss) in den unteren rechten Teil des Textfeldes ein.
+watermark           -> Blendet einen Schriftzug in den unteren rechten Teil des Textfeldes ein.
+
+# Optimierung
+sharpen             -> Leichtes anheben der Bildschärfe
+depth               -> Reduziert die Farbtiefe auf 24bpp (damit das Bild mit dem Image-Plugin angezeigt werden kann)
+
+=================
+Tipps:
+=================
+Auf die Reihenfolge der Filter achten und nie mehr als notwendig verwenden.
+
+=================
+Argumente:
+=================
+burn-bc [-argument wert]
+Optionale Argumente sind:
+-f | -filter crop
+-f | -filter zoom-center|zoom-left|zoom-right|zoom-center-16x9|zoom-left-16x9|zoom-right-16x9|letterbox-16x9
+-f | -filter resize
+-f | -filter comp-atop|comp-blend|draw-bigsize|draw-normal|draw-storke|draw-user
+-f | -filter serial-foto|serial-movie
+-f | -filter tux
+-f | -filter sharpen
+-f | -filter depth
+-i | -image /path/to/image.ext
+-o | -osd on|off
+-t | -target /path/to/plugins/burn/menu-bg.png
+-T | -template /path/to/template.png
+-w | -watermark ?|default|"some text"
+-W | -width 720|768
+-x | -showfile on|off
+-d | -dialog
+-h | -help
+-v | -version
+
+Terminal:
+=================
+burn-bc -w default -f crop -f resize -f draw-storke'
+burn-bc -f 'crop zoom-center resize draw-storke unsharp depth' -o off -w default
+burn-bc -f draw-normal -w default -i ~/bilder/image.jpg
+
+Xdialog:
+=================
+burn-bc
+burn-bc -d -w "    Dokumentation"
+burn-bc -d -w ?
+
+KDE Kontext-Menu (rechte Maustaste):
+burn-bc -d -w ? -i %f
+
+commands.conf
+=================
+d v d - b c       : echo "sub menu"
+- Draw Only       : echo "/usr/bin/burn-bc -f draw-storke -w default"|at now
+- Simple Cropping : echo "/usr/bin/burn-bc -f 'crop resize draw-storke unsharp' -w default"|at now
+- Zoom Center     : echo "/usr/bin/burn-bc -f 'crop zoom-center resize draw-storke unsharp' -w default"|at now
+- Zoom Left       : echo "/usr/bin/burn-bc -f 'crop zoom-left resize draw-storke unsharp' -w default"|at now
+- Zoom Right      : echo "/usr/bin/burn-bc -f 'crop zoom-right resize draw-storke unsharp' -w default"|at now
+- Serial Foto     : echo "/usr/bin/burn-bc -f 'crop zoom-center resize draw-storke serial-foto unsharp' -w default"|at now
+- Serial Movie    : echo "/usr/bin/burn-bc -f 'crop zoom-center resize draw-storke serial-movie unsharp' -w default"|at now
+
+imagecmds.conf
+=================
+# ?  - Bestätigung anfordern, (optional)
+# %s - Platzhalter für Dateinamen (optional)
+# burn-bc
+Draw Only        : echo "/usr/bin/burn-bc -f  draw-storke -w default -i %s"|at now
+Resize Only      : echo "/usr/bin/burn-bc -f 'draw-storke unsharp' -w default -i %s"|at now
+Simple Cropping  : echo "/usr/bin/burn-bc -f 'crop resize draw-storke unsharp' -w default -i %s"|at now
+Zoom Center      : echo "/usr/bin/burn-bc -f 'zoom-center resize draw-storke unsharp' -w default -i %s"|at now
+Zoom Left        : echo "/usr/bin/burn-bc -f 'crop zoom-left resize draw-storke unsharp' -w default -i %s"|at now
+Zoom Right       : echo "/usr/bin/burn-bc -f 'crop zoom-right resize draw-storke unsharp' -w default -i %s"|at now
+Symlink anlegen  : echo ln -fs '%s' /var/lib/vdr/plugins/burn/menu-bg.png | sh
+

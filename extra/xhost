@@ -1,0 +1,5 @@
+#!/bin/sh
+
+xhost local:localhost
+
+exit 0 

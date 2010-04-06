@@ -1,0 +1,14 @@
+--- control.c~	2007-06-18 19:58:52.000000000 +0200
++++ control.c	2007-06-26 17:01:50.000000000 +0200
+@@ -22,7 +22,11 @@
+ 		mSwitch(true),
+ 		mOsd(NULL)
+ {
++#if VDRVERSNUM >= 10500
++	SetNeedsFastResponse(true);
++#else
+ 	needsFastResponse = true;
++#endif
+ 	cRemote::Put(kOk, true); // Hide OSD
+ }
+ 

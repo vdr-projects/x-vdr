@@ -1,0 +1,26 @@
+--- Makefile~	2008-05-03 21:30:09.000000000 +0200
++++ Makefile	2009-01-10 00:22:56.000000000 +0100
+@@ -13,7 +13,7 @@
+ #
+ ### uncomment the following line, if you have a recent FFMPEG version that
+ ### has a changed structure of its header files.
+-#WITH_NEW_FFMPEG_HEADERS=1
++WITH_NEW_FFMPEG_HEADERS=1
+ 
+ # The official name of this plugin.
+ # This name will be used in the '-P...' option of VDR to load the plugin.
+@@ -53,8 +53,12 @@
+ 
+ ### Includes and Defines (add further entries here):
+ 
+-INCLUDES += -I$(VDRDIR)/include -I$(DVBDIR)/include -I. -I$(FFMDIR)/libavcodec
+-LIBS     = -L$(FFMDIR)/libavcodec -lavcodec
++INCLUDES += -I$(VDRDIR)/include -I$(DVBDIR)/include -I. -I$(FFMDIR)
++ifneq ($(shell which pkg-config),)
++    LIBS = $(shell pkg-config --silence-errors --libs libavcodec)
++else
++    LIBS = -lavcodec
++endif
+ DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
+ DEFINES += -D_GNU_SOURCE
+ 

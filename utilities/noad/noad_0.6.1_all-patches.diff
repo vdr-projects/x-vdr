@@ -1,0 +1,120 @@
+diff -aurwB ../noad-0.6.1/audiotools.cpp ./audiotools.cpp
+--- ../noad-0.6.1/audiotools.cpp	2005-02-13 16:00:31.000000000 +0100
++++ ./audiotools.cpp	2008-09-25 23:46:49.000000000 +0200
+@@ -3,7 +3,9 @@
+ #ifdef HAVE_LIBAVCODEC
+ 
+ #include "mpeg2wrap.h"
++extern "C" {
+ #include "avcodec.h"
++}
+ 
+ #define MIN_LOWVALS 3
+ #define CUT_VAL 10
+@@ -97,8 +99,13 @@
+   inbuf_ptr = mbuf;
+   while (size > 0) 
+   {
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(0<<8)+0)
+     len = avcodec_decode_audio(c, (short *)outbuf, &out_size, 
+                                   inbuf_ptr, size);
++#else
++    len = avcodec_decode_audio2(c, (short *)outbuf, &out_size, 
++                                  inbuf_ptr, size);
++#endif
+     if (len < 0) 
+     {
+       fprintf(stderr, "Error while decoding\n");
+diff -aurwB ../noad-0.6.1/main.cpp ./main.cpp
+--- ../noad-0.6.1/main.cpp	2005-03-02 20:12:29.000000000 +0100
++++ ./main.cpp	2008-09-13 01:00:16.000000000 +0200
+@@ -566,10 +566,17 @@
+     signal(SIGABRT, signal_handler);
+     signal(SIGSEGV, signal_handler);
+     signal(SIGUSR1, signal_handler);
++    signal(SIGALRM, signal_handler);
+     
+     // do cleanup at exit...
+     atexit(cleanUp);
+     
++   
++    if (!bOnline) {
++       // now start alarm timer to kill hanging noad (hardcoded 30min timeout)
++       alarm(30*60);
++    }
++    
+     // now do the work..,
+     doNoad(bBefore, recDir);
+ 
+diff -aurwB ../noad-0.6.1/svdrpc.cpp ./svdrpc.cpp
+--- ../noad-0.6.1/svdrpc.cpp	2005-02-12 18:32:10.000000000 +0100
++++ ./svdrpc.cpp	2008-09-13 01:41:26.000000000 +0200
+@@ -189,6 +189,10 @@
+     {
+       select(1, &set, NULL, NULL, &timeout);
+       n = read(filedes, buf + rbytes, 1);
++      if(n<0) {
++        filedes=-1;
++        break;
++      }
+       rbytes += n;
+       if (rbytes == size)
+          break;
+@@ -214,7 +218,8 @@
+   while( i < 100 && outstandingReply > 0 )
+   {
+     usleep(10000);
+-    ReadReply();
++    if( !ReadReply() )
++      break;
+     i++;
+   }
+   return( outstandingReply <= 0 );
+@@ -272,10 +277,10 @@ char *noadMsg(const char *msg, const cha
+ 
+ void noadStartMessage( const char *s)
+ {
+-  noadMsg("starte noad für ",s);
++  noadMsg("noad starts for ",s);
+ }
+ 
+ void noadEndMessage( const char *s)
+ {
+-  noadMsg("noad done für ",s);
++  noadMsg("noad done for ",s);
+ }
+diff -aurwB ../noad-0.6.1/tools.cpp ./tools.cpp
+--- ../noad-0.6.1/tools.cpp	2005-09-01 13:07:29.000000000 +0200
++++ ./tools.cpp	2008-09-13 00:59:45.000000000 +0200
+@@ -17,6 +17,8 @@
+ #include <time.h>
+ #include <unistd.h>
+ #include <execinfo.h>
++#include <sys/types.h>
++#include <signal.h>
+ 
+ extern int SysLogLevel;
+ 
+@@ -1157,6 +1159,10 @@
+     esyslog(LOG_ERR, "ERROR: frame larger than buffer (%d > %d)", Length, Max);
+     Length = Max;
+   }
++  if (f == -1) {
++    esyslog(LOG_ERR, "ERROR: cannot open video-file (recording deleted while scanning or bad index-file)");
++    kill(getpid(),SIGTERM);
++  }
+   int r = ReadStream(f,b,Length);
+   //int r = safe_read(f, b, Length);
+   //int r = read( f,b,Length);
+diff -aurwB ../noad-0.6.1/vdr_cl.h ./vdr_cl.h
+--- ../noad-0.6.1/vdr_cl.h	2005-03-06 09:26:00.000000000 +0100
++++ ./vdr_cl.h	2008-09-13 01:04:51.000000000 +0200
+@@ -52,7 +52,7 @@
+ 
+ #define KILOBYTE(n) ((n) * 1024)
+ // The maximum size of a single frame:
+-#define MAXFRAMESIZE  KILOBYTE(192)
++#define MAXFRAMESIZE  KILOBYTE(512)
+ 
+ #define FRAMESPERSEC 25
+ #define FRAMESPERMIN (FRAMESPERSEC*60)

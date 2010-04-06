@@ -1,0 +1,35 @@
+--- utility.h.orig	2005-04-02 23:43:21.000000000 +0200
++++ utility.h	2009-03-01 16:16:28.000000000 +0100
+@@ -1,19 +1,20 @@
+ #ifndef CUTILITY_H
+-#define CUTILITY_H
+-
+-#include <iostream>
++#define CUTILITY_H
++
++#include <iostream>
+ #include <fstream>
+-#include <string>
+-
+-using namespace std;
++#include <string>
++#include <stdlib.h>
++
++using namespace std;
+ 
+ class cUtility {
+-	public:
+-        static string StrTrim(string sInput);
+-        static string StrBeforeChar(string sLine, char cFind);
+-        static string StrAfterChar(string sLine, char cFind);
+-        static int StrToInt(string sInput);
+-		static int CharToInt(char *cInput);
++  public:
++    static string StrTrim(string sInput);
++    static string StrBeforeChar(string sLine, char cFind);
++    static string StrAfterChar(string sLine, char cFind);
++    static int StrToInt(string sInput);
++    static int CharToInt(char *cInput);
+ };
+ 
+ #endif // CUTILITY_H

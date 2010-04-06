@@ -1,0 +1,152 @@
+diff -Nur console-0.6.0/console.c console-0.6.0-n/console.c
+--- console-0.6.0/console.c	2004-09-11 23:44:25.000000000 +0200
++++ console-0.6.0-n/console.c	2006-11-07 02:10:27.000000000 +0100
+@@ -60,14 +60,34 @@
+ 
+ const char *cPluginConsole::CommandLineHelp() {
+ 
+-  return NULL;  
++  // Return a string that describes all known command line options.
++  return "  -c prog, --command=prog   specify the programm which is\n"
++         "                            called when you start the plugin\n";
+ }
+ 
+ 
+ 
+ bool cPluginConsole::ProcessArgs(int argc, char *argv[]) {
+ 
+-  return true;
++  // Implement command line argument processing here if applicable.
++   static struct option long_options[] = {
++       { "command", required_argument, 	NULL, 'c' },
++       {  NULL,   no_argument,		NULL,  0  },
++   };
++   
++   int c;
++   while ((c = getopt_long(argc, argv, "c:", long_options, NULL)) != -1) {
++      switch (c) {
++	 case 'c':
++	    fprintf(stderr, "arg: %s\n", optarg);
++	    ConsoleCmd = strdup(optarg);
++	    break;
++	 default:
++	    fprintf(stderr, "arg char: %c\n", c);
++	    return false;
++      }
++   }
++   return true;
+ }
+ 
+ 
+diff -Nur console-0.6.0/Makefile console-0.6.0-n/Makefile
+--- console-0.6.0/Makefile	2006-11-07 02:04:40.000000000 +0100
++++ console-0.6.0-n/Makefile	2006-11-07 02:10:27.000000000 +0100
+@@ -16,7 +16,7 @@
+ ### The C++ compiler and options:
+ 
+ CXX      = g++
+-CXXFLAGS = -O2 -Wall -Woverloaded-virtual
++CXXFLAGS = -fPIC -O2 -Wall -Woverloaded-virtual
+ 
+ ### The directory environment:
+ 
+diff -Nur console-0.6.0/menu.c console-0.6.0-n/menu.c
+--- console-0.6.0/menu.c	2004-09-12 00:10:57.000000000 +0200
++++ console-0.6.0-n/menu.c	2006-11-07 02:10:27.000000000 +0100
+@@ -1210,14 +1210,14 @@
+     }
+     case kNone:
+                     // Handle blinking elements
+-                    if (time_ms() >= _nextBlinkTime) {
++                    if ((int)cTimeMs::Now() >= _nextBlinkTime) {
+ 
+-                      _nextBlinkTime = time_ms() + config.BlinkRate * 100;
++                      _nextBlinkTime = cTimeMs::Now() + config.BlinkRate * 100;
+                       _blink = !_blink;
+                     }
+ 
+                     // Handle keyboard releaseing
+-                    if (time_ms() >= _timeReleaseCapture) {
++                    if ((int)cTimeMs::Now() >= _timeReleaseCapture) {
+                       _timeReleaseCapture = INT_MAX;
+ 
+                       // Time elapsed -> repost ESC...
+@@ -1243,10 +1243,10 @@
+                       _pConsole->getScreen().BellSeen();
+ 
+                       if (config.BellTimeout) {
+-                        _toRing = time_ms() + config.BellTimeout * 1000;
++                        _toRing = cTimeMs::Now() + config.BellTimeout * 1000;
+                         state = osUser1;
+                       }
+-                    } else if (_toRing && time_ms() > _toRing) {
++                    } else if (_toRing && (int)cTimeMs::Now() > _toRing) {
+                       _toRing = 0;
+                       state = osUser1;
+                     }
+@@ -1441,7 +1441,7 @@
+           // esc detected. Ask for exit
+           if (data[i] == ESC) {
+ 
+-            _timeReleaseCapture = time_ms() + 1000;
++            _timeReleaseCapture = cTimeMs::Now() + 1000;
+             _inputState = 1;
+ 
+           } else
+diff -Nur console-0.6.0/virtualconsoles.c console-0.6.0-n/virtualconsoles.c
+--- console-0.6.0/virtualconsoles.c	2004-09-11 23:40:18.000000000 +0200
++++ console-0.6.0-n/virtualconsoles.c	2006-11-07 02:10:27.000000000 +0100
+@@ -20,6 +20,17 @@
+ #include "i18n.h"
+ 
+ 
++// This program will be used to realize a console.
++// Be carefull! If your VDR runs as root, then every
++// user can kill your machine if you don't protect
++// the cnsoles.
++// So the default is "/bin/login".
++
++#ifdef CONSOLE_USE_SHELL_INSTEAD_LOGIN
++const char *ConsoleCmd="/bin/sh";
++#else
++const char *ConsoleCmd="/bin/login";
++#endif
+ 
+ 
+ cConsConsoles::cConsConsoles()
+@@ -128,9 +139,9 @@
+ 
+ int cConsConsoles::CreateConsole() {
+ 
+-  char* const args[] = {PROG_FOR_CONSOLE, NULL};
++  char* const args[] = { (char*)ConsoleCmd, NULL };
+ 
+-  cConsVirtualConsole* p = new cConsVirtualConsole(tr("Console"), PROG_FOR_CONSOLE, args);
++  cConsVirtualConsole* p = new cConsVirtualConsole( tr("Console"), ConsoleCmd, args );
+ 
+   if (p) {
+ 
+diff -Nur console-0.6.0/virtualconsoles.h console-0.6.0-n/virtualconsoles.h
+--- console-0.6.0/virtualconsoles.h	2004-09-11 23:40:18.000000000 +0200
++++ console-0.6.0-n/virtualconsoles.h	2006-11-07 02:10:27.000000000 +0100
+@@ -21,19 +21,7 @@
+ 
+ 
+ 
+-// This program will be used to realize a console.
+-// Be carefull! If your VDR runs as root, then every
+-// user can kill your machine if you don't protect
+-// the cnsoles.
+-// So the default is "/bin/login".
+-
+-#ifdef CONSOLE_USE_SHELL_INSTEAD_LOGIN
+-#define PROG_FOR_CONSOLE "/bin/sh"
+-#else
+-#define PROG_FOR_CONSOLE "/bin/login"
+-#endif
+-
+-
++extern const char *ConsoleCmd;
+ 
+ 
+ class cConsVirtualConsole;

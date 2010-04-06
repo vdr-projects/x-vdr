@@ -1,0 +1,11 @@
+diff -ruN music-0.2.0/player-mp3.c music/player-mp3.c
+--- music-0.2.0/player-mp3.c
++++ music/player-mp3.c
+@@ -25,6 +25,7 @@
+ #include <sys/ioctl.h>
+ #include <math.h>
+ #include <glob.h>
++#include <asm-i386/types.h>
+ 
+ #ifdef WITH_OSS
+ #include <sys/soundcard.h>

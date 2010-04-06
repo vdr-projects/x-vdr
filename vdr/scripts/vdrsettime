@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Load VDR configuration
+. /etc/default/vdr
+
+sudo $VDRSCRIPTDIR/vdr2root settime "$1"
+
+

@@ -1,0 +1,1625 @@
+diff -Nru yaepg-0.0.2.2/i18n.c yaepg-0.0.2.2-fr/i18n.c
+--- yaepg-0.0.2.2/i18n.c	2006-12-03 18:51:07.000000000 +0100
++++ yaepg-0.0.2.2-fr/i18n.c	2008-04-12 13:56:27.000000000 +0200
+@@ -6,6 +6,7 @@
+  * $Id: i18n.c,v 1.3 2004/11/08 01:41:20 bball Exp $
+  */
+ 
++#if APIVERSNUM < 10507
+ #include "i18n.h"
+ 
+ const tI18nPhrase Phrases[] = {
+@@ -15,7 +16,7 @@
+     "",// Italiano
+     "",// Nederlands
+     "",// Português
+-    "",// Français
++    "Pas d'info",// Français
+     "",// Norsk
+     "",// suomi
+     "",// Polski
+@@ -35,7 +36,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Format de sortie",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -55,7 +56,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Masquer dans le menu principal",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -75,7 +76,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Changer automatiquement de canal",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -95,7 +96,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Début:",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -115,7 +116,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Fin:",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -135,7 +136,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Fréquence:",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -155,7 +156,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Chaque",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -175,7 +176,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Lun",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -195,7 +196,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Mar",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -215,7 +216,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Mer",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -235,7 +236,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Jeu",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -255,7 +256,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Ven",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -275,7 +276,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Sam",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -295,7 +296,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Dim",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -315,7 +316,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Lun-Ven",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -335,7 +336,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Dim-Sam",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -355,7 +356,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Aussitôt que",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -375,7 +376,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Programmation ajoutée",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -395,7 +396,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Programmation annulée",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -415,7 +416,7 @@
+     "",// TODO
+     "",// TODO
+     "",// TODO
+-    "",// TODO
++    "Format de temps",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -431,3 +432,4 @@
+   },
+   { NULL }
+   };
++#endif
+diff -Nru yaepg-0.0.2.2/Makefile yaepg-0.0.2.2-fr/Makefile
+--- yaepg-0.0.2.2/Makefile	2007-12-11 07:58:19.000000000 +0100
++++ yaepg-0.0.2.2-fr/Makefile	2008-04-12 13:56:27.000000000 +0200
+@@ -61,9 +61,34 @@
+ 
+ -include $(DEPFILE)
+ 
++### Internationalization (I18N):
++
++PODIR     = po
++LOCALEDIR = $(VDRDIR)/locale
++I18Npo    = $(wildcard $(PODIR)/*.po)
++I18Nmo    = $(addsuffix .mo, $(foreach file, $(I18Npo), $(basename $(file))))
++I18Ndirs  = $(notdir $(foreach file, $(I18Npo), $(basename $(file))))
++I18Npot   = $(PODIR)/$(PLUGIN).pot
++
++%.mo: %.po
++	msgfmt -c -o $@ $<
++
++$(I18Npot): $(wildcard *.c)
++	xgettext -C -cTRANSLATORS --no-wrap -F -k -ktr -ktrNOOP --msgid-bugs-address='<micky979@free.fr>' -o $@ $(wildcard *.c)
++
++$(I18Npo): $(I18Npot)
++	msgmerge -U --no-wrap -F --backup=none -q $@ $<
++
++i18n: $(I18Nmo)
++	@mkdir -p $(LOCALEDIR)
++	for i in $(I18Ndirs); do\
++	    mkdir -p $(LOCALEDIR)/$$i/LC_MESSAGES;\
++	    cp $(PODIR)/$$i.mo $(LOCALEDIR)/$$i/LC_MESSAGES/vdr-$(PLUGIN).mo;\
++	    done
++
+ ### Targets:
+ 
+-all: libvdr-$(PLUGIN).so
++all: libvdr-$(PLUGIN).so i18n
+ 
+ libvdr-$(PLUGIN).so: $(OBJS)
+ 	$(CXX) $(CXXFLAGS) -shared $(OBJS) -o $@
+@@ -78,4 +103,5 @@
+ 	@echo Distribution package created as $(PACKAGE).tgz
+ 
+ clean:
++	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
+ 	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
+diff -Nru yaepg-0.0.2.2/po/ca_ES.po yaepg-0.0.2.2-fr/po/ca_ES.po
+--- yaepg-0.0.2.2/po/ca_ES.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/ca_ES.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,58 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Marc Rovira Vall <tm05462@salleURL.edu>, 2003
++# Ramon Roca <ramon.roca@xcombo.com>, 2003
++# Jordi Vilà <jvila@tinet.org>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Jordi Vilà <jvila@tinet.org>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/cs_CZ.po yaepg-0.0.2.2-fr/po/cs_CZ.po
+--- yaepg-0.0.2.2/po/cs_CZ.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/cs_CZ.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,56 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Vladimír Bárta <vladimir.barta@k2atmitec.cz>, 2006
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Vladimír Bárta <vladimir.barta@k2atmitec.cz>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/da_DK.po yaepg-0.0.2.2-fr/po/da_DK.po
+--- yaepg-0.0.2.2/po/da_DK.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/da_DK.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,56 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Mogens Elneff <mogens@elneff.dk>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Mogens Elneff <mogens@elneff.dk>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/de_DE.po yaepg-0.0.2.2-fr/po/de_DE.po
+--- yaepg-0.0.2.2/po/de_DE.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/de_DE.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,56 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Klaus Schmidinger <kls@cadsoft.de>, 2000
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Klaus Schmidinger <kls@cadsoft.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr "Keine Daten verfügbar."
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr "Anfang:"
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr "Halt:"
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr "Frequenz:"
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr "Timer hinzugefügt"
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr "Timer annullierte"
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr "TV Ausgabe"
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr "Hauptmenüeintrag verstecken"
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr "Kanal automatisch wechseln"
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr "Zeit-Format"
+diff -Nru yaepg-0.0.2.2/po/el_GR.po yaepg-0.0.2.2-fr/po/el_GR.po
+--- yaepg-0.0.2.2/po/el_GR.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/el_GR.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,56 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Dimitrios Dimitrakos <mail@dimitrios.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Dimitrios Dimitrakos <mail@dimitrios.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-7\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/es_ES.po yaepg-0.0.2.2-fr/po/es_ES.po
+--- yaepg-0.0.2.2/po/es_ES.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/es_ES.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,56 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Ruben Nunez Francisco <ruben.nunez@tang-it.com>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Ruben Nunez Francisco <ruben.nunez@tang-it.com>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/et_EE.po yaepg-0.0.2.2-fr/po/et_EE.po
+--- yaepg-0.0.2.2/po/et_EE.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/et_EE.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,56 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Arthur Konovalov <kasjas@hot.ee>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Arthur Konovalov <kasjas@hot.ee>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-13\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/fi_FI.po yaepg-0.0.2.2-fr/po/fi_FI.po
+--- yaepg-0.0.2.2/po/fi_FI.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/fi_FI.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,59 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Hannu Savolainen <hannu@opensound.com>, 2002
++# Jaakko Hyvätti <jaakko@hyvatti.iki.fi>, 2002
++# Niko Tarnanen <niko.tarnanen@hut.fi>, 2003
++# Rolf Ahrenberg <rahrenbe@cc.hut.fi>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Rolf Ahrenberg <rahrenbe@cc.hut.fi>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/fr_FR.po yaepg-0.0.2.2-fr/po/fr_FR.po
+--- yaepg-0.0.2.2/po/fr_FR.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/fr_FR.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,59 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Jean-Claude Repetto <jc@repetto.org>, 2001
++# Olivier Jacques <jacquesolivier@hotmail.com>, 2003
++# Gregoire Favre <greg@magma.unil.ch>, 2003
++# Nicolas Huillard <nhuillard@e-dition.fr>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Nicolas Huillard <nhuillard@e-dition.fr>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr "Pas d'info"
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr "Début:"
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr "Fin:"
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr "Fréquence:"
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr "Programmation ajoutée"
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr "Programmation annulée"
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr "Format de sortie"
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr "Masquer dans le menu principal"
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr "Changer automatiquement de chaîne"
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr "Format de l'heure"
+diff -Nru yaepg-0.0.2.2/po/hr_HR.po yaepg-0.0.2.2-fr/po/hr_HR.po
+--- yaepg-0.0.2.2/po/hr_HR.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/hr_HR.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,57 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Drazen Dupor <drazen.dupor@dupor.com>, 2004
++# Dino Ravnic <dino.ravnic@fer.hr>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Drazen Dupor <drazen.dupor@dupor.com>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/hu_HU.po yaepg-0.0.2.2-fr/po/hu_HU.po
+--- yaepg-0.0.2.2/po/hu_HU.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/hu_HU.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,57 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Istvan Koenigsberger <istvnko@hotmail.com>, 2002
++# Guido Josten <guido.josten@t-online.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Istvan Koenigsberger <istvnko@hotmail.com>, Guido Josten <guido.josten@t-online.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/it_IT.po yaepg-0.0.2.2-fr/po/it_IT.po
+--- yaepg-0.0.2.2/po/it_IT.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/it_IT.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,58 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Alberto Carraro <bertocar@tin.it>, 2001
++# Antonio Ospite <ospite@studenti.unina.it>, 2003
++# Sean Carlos <seanc@libero.it>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Sean Carlos <seanc@libero.it>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/nl_NL.po yaepg-0.0.2.2-fr/po/nl_NL.po
+--- yaepg-0.0.2.2/po/nl_NL.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/nl_NL.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,58 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Arnold Niessen <niessen@iae.nl> <arnold.niessen@philips.com>, 2001
++# Hans Dingemans <hans.dingemans@tacticalops.nl>, 2003
++# Maarten Wisse <Maarten.Wisse@urz.uni-hd.de>, 2005
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Maarten Wisse <Maarten.Wisse@urz.uni-hd.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/nn_NO.po yaepg-0.0.2.2-fr/po/nn_NO.po
+--- yaepg-0.0.2.2/po/nn_NO.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/nn_NO.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,57 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Jørgen Tvedt <pjtvedt@online.no>, 2001
++# Truls Slevigen <truls@slevigen.no>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Truls Slevigen <truls@slevigen.no>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/pl_PL.po yaepg-0.0.2.2-fr/po/pl_PL.po
+--- yaepg-0.0.2.2/po/pl_PL.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/pl_PL.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,56 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Michael Rakowski <mrak@gmx.de>, 2002
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Michael Rakowski <mrak@gmx.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/pt_PT.po yaepg-0.0.2.2-fr/po/pt_PT.po
+--- yaepg-0.0.2.2/po/pt_PT.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/pt_PT.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,56 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Paulo Lopes <pmml@netvita.pt>, 2001
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Paulo Lopes <pmml@netvita.pt>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/ro_RO.po yaepg-0.0.2.2-fr/po/ro_RO.po
+--- yaepg-0.0.2.2/po/ro_RO.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/ro_RO.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,57 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Paul Lacatus <paul@campina.iiruc.ro>, 2002
++# Lucian Muresan <lucianm@users.sourceforge.net>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Lucian Muresan <lucianm@users.sourceforge.net>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/ru_RU.po yaepg-0.0.2.2-fr/po/ru_RU.po
+--- yaepg-0.0.2.2/po/ru_RU.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/ru_RU.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,56 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Vyacheslav Dikonov <sdiconov@mail.ru>, 2004
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Vyacheslav Dikonov <sdiconov@mail.ru>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-5\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr     ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr     ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr     ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr     ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr     ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr     ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr     ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr     ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr     ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr     ""
+diff -Nru yaepg-0.0.2.2/po/sl_SI.po yaepg-0.0.2.2-fr/po/sl_SI.po
+--- yaepg-0.0.2.2/po/sl_SI.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/sl_SI.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,57 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Miha Setina <mihasetina@softhome.net>, 2000
++# Matjaz Thaler <matjaz.thaler@guest.arnes.si>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Matjaz Thaler <matjaz.thaler@guest.arnes.si>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-2\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/sv_SE.po yaepg-0.0.2.2-fr/po/sv_SE.po
+--- yaepg-0.0.2.2/po/sv_SE.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/sv_SE.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,57 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Tomas Prybil <tomas@prybil.se>, 2002
++# Jan Ekholm <chakie@infa.abo.fi>, 2003
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Tomas Prybil <tomas@prybil.se>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/tr_TR.po yaepg-0.0.2.2-fr/po/tr_TR.po
+--- yaepg-0.0.2.2/po/tr_TR.po	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/tr_TR.po	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,56 @@
++# VDR plugin language source file.
++# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
++# This file is distributed under the same license as the VDR package.
++# Oktay Yolgeçen <oktay_73@yahoo.de>, 2007
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR 1.5.7\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: 2007-10-14 00:26+0200\n"
++"Last-Translator: Oktay Yolgeçen <oktay_73@yahoo.de>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-9\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/po/yaepg.pot yaepg-0.0.2.2-fr/po/yaepg.pot
+--- yaepg-0.0.2.2/po/yaepg.pot	1970-01-01 01:00:00.000000000 +0100
++++ yaepg-0.0.2.2-fr/po/yaepg.pot	2008-04-12 13:56:27.000000000 +0200
+@@ -0,0 +1,57 @@
++# SOME DESCRIPTIVE TITLE.
++# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the PACKAGE package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++#, fuzzy
++msgid ""
++msgstr ""
++"Project-Id-Version: PACKAGE VERSION\n"
++"Report-Msgid-Bugs-To: micky979@free.fr\n"
++"POT-Creation-Date: 2007-10-14 00:26+0200\n"
++"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: LANGUAGE <LL@li.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=CHARSET\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: yaepg.c:674 yaepg.c:675 yaepg.c:731
++msgid "No Info"
++msgstr ""
++
++#: yaepg.c:894
++msgid "Start:"
++msgstr ""
++
++#: yaepg.c:902
++msgid "Stop:"
++msgstr ""
++
++#: yaepg.c:910
++msgid "Frequency:"
++msgstr ""
++
++#: yaepg.c:1612
++msgid "Timer added"
++msgstr ""
++
++#: yaepg.c:1623
++msgid "Timer cancelled"
++msgstr ""
++
++#: yaepg.c:2095
++msgid "TV output format"
++msgstr ""
++
++#: yaepg.c:2096
++msgid "Hide mainmenu entry"
++msgstr ""
++
++#: yaepg.c:2097
++msgid "Change channel automatically"
++msgstr ""
++
++#: yaepg.c:2098
++msgid "Time format"
++msgstr ""
+diff -Nru yaepg-0.0.2.2/yaepg.c yaepg-0.0.2.2-fr/yaepg.c
+--- yaepg-0.0.2.2/yaepg.c	2007-06-18 02:16:25.000000000 +0200
++++ yaepg-0.0.2.2-fr/yaepg.c	2008-04-12 13:56:42.000000000 +0200
+@@ -2073,7 +2073,9 @@
+ bool cPluginYaepg::Start(void)
+ {
+ 	// Start any background activities the plugin shall perform.
++#if APIVERSNUM < 10507
+ 	RegisterI18n(Phrases);
++#endif
+ 	return true;
+ }
+ 
+diff -Nru yaepg-0.0.2.2/yaepg.h yaepg-0.0.2.2-fr/yaepg.h
+--- yaepg-0.0.2.2/yaepg.h	2007-06-18 02:15:48.000000000 +0200
++++ yaepg-0.0.2.2-fr/yaepg.h	2008-04-12 13:56:27.000000000 +0200
+@@ -11,7 +11,9 @@
+ 
+ #include <vdr/plugin.h>
+ #include <stdarg.h>
++#if APIVERSNUM < 10507
+ #include "i18n.h"
++#endif
+ 
+ #define YAEPG_ERROR(...)		cYaepg::LogMsg(YLOG_ERR, __VA_ARGS__)
+ #define YAEPG_INFO(...)			cYaepg::LogMsg(YLOG_INF, __VA_ARGS__)
+@@ -22,7 +24,7 @@
+ } eYlog_t;
+ 
+ static const char *VERSION        = "0.0.2.2";
+-static const char *DESCRIPTION    = "Yet Another EPG";
+-static const char *MAINMENUENTRY  = "Yaepg";
++static const char *DESCRIPTION    = trNOOP("Yet Another EPG");
++static const char *MAINMENUENTRY  = tr("Yaepg");
+ 
+ #endif /* _YAEPG__H */

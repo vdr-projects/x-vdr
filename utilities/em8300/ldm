@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# make devices
+[ ! -e /dev/em8300-0 ]    && mknod /dev/em8300-0    c 121 0
+[ ! -e /dev/em8300_mv-0 ] && mknod /dev/em8300_mv-0 c 121 1
+[ ! -e /dev/em8300_ma-0 ] && mknod /dev/em8300_ma-0 c 121 2
+[ ! -e /dev/em8300_sp-0 ] && mknod /dev/em8300_sp-0 c 121 3
+chmod 666 /dev/em8300*
+
+# load modules
+KERNEL=`uname -r`
+EM8300=/lib/modules/$KERNEL/em8300
+insmod $EM8300/adv717x.ko pixelport_16bit=1 pixelport_other_pal=1 #swap_redblue_pal=0 color_bars=1
+insmod $EM8300/bt865.ko   # color_bars=1
+insmod $EM8300/em8300.ko  use_bt865=0 bt865_ucode_timeout=1 dicom_fix=0 dicom_control=0 dicom_other_pal=1 activate_loopback=0  audio_driver=oss
+
+

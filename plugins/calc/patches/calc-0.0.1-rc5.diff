@@ -1,0 +1,78 @@
+diff -Nur calc-0.0.1-rc5/calc.c calc-0.0.1-rc5-n/calc.c
+--- calc-0.0.1-rc5/calc.c	2004-07-18 20:53:54.000000000 +0200
++++ calc-0.0.1-rc5-n/calc.c	2006-11-07 02:37:26.000000000 +0100
+@@ -72,7 +72,7 @@
+   void AddDigit(eKeys key);
+   void CalculateResult(char* inOperand1, char* inOperand2, char *outOperand, char cOperator);
+   operType operatorSymbol;
+-  void cCalcMain::CalculateResultTrig(char* inOperand1, char *outOperand, char cOperator, gradType calculateGradType);
++  void CalculateResultTrig(char* inOperand1, char *outOperand, char cOperator, gradType calculateGradType);
+ public:
+   cCalcMain(void);
+   ~cCalcMain();
+@@ -486,12 +486,12 @@
+ {
+   FILE *f;
+ //  printf("inOperand1 %s inOperand2 %s operator %c\n",inOperand1,inOperand2,cOperator);
+-  f = fopen("./bc_in.dat","w");
++  f = fopen("/tmp/bc_in.dat","w");
+   fprintf(f,"scale = 10\n");
+   fprintf(f,"%s%c%s\n",inOperand1,cOperator,inOperand2);
+   fclose(f);
+-  system("bc <./bc_in.dat >./bc_out.dat");
+-  f = fopen("./bc_out.dat","r");
++  system("/usr/bin/bc </tmp/bc_in.dat >/tmp/bc_out.dat");
++  f = fopen("/tmp/bc_out.dat","r");
+   if (f != NULL)
+   {
+     fscanf(f,"%s",outOperand);
+@@ -499,6 +499,8 @@
+   }
+     else
+     printf("VDR-Calc : bc run failed !!\n");
++  remove("/tmp/bc_in.dat");
++  remove("/tmp/bc_out.dat");
+ }
+ 
+ void cCalcMain::CalculateResultTrig(char* inOperand1, char *outOperand, char cOperator, gradType 				calculateGradType)
+@@ -512,7 +514,7 @@
+     CalculateResult(inOperand1, "(3.1415926535/200)",inOperand1, '*');
+ 
+ //  printf("inOperand1 %s inOperand2 %s operator %c\n",inOperand1,inOperand2,cOperator);
+-  f = fopen("./bc_in.dat","w");
++  f = fopen("/tmp/bc_in.dat","w");
+   fprintf(f,"scale = 10\n");
+ 
+ // only valid for cOperator == s, c, t (for sin,cos,tan)
+@@ -525,8 +527,8 @@
+     fprintf(f,"s(%s)/c(%s)\n",inOperand1,inOperand1);
+   }
+   fclose(f);
+-  system("bc -l <./bc_in.dat >./bc_out.dat");
+-  f = fopen("./bc_out.dat","r");
++  system("/usr/bin/bc -l </tmp/bc_in.dat >/tmp/bc_out.dat");
++  f = fopen("/tmp/bc_out.dat","r");
+   if (f != NULL)
+   {
+     fscanf(f,"%s",outOperand);
+@@ -534,6 +536,8 @@
+   }
+     else
+     printf("VDR-Calc : bc run failed !!\n");
++  remove("/tmp/bc_in.dat");
++  remove("/tmp/bc_out.dat");
+   clearOutputForNextDigit = true;
+ }
+ 
+diff -Nur calc-0.0.1-rc5/Makefile calc-0.0.1-rc5-n/Makefile
+--- calc-0.0.1-rc5/Makefile	2006-11-07 02:04:33.000000000 +0100
++++ calc-0.0.1-rc5-n/Makefile	2006-11-07 02:37:26.000000000 +0100
+@@ -16,7 +16,7 @@
+ ### The C++ compiler and options:
+ 
+ CXX      ?= g++
+-CXXFLAGS ?= -O2 -Wall -Woverloaded-virtual
++CXXFLAGS ?= -fPIC -O2 -Wall -Woverloaded-virtual
+ 
+ ### The directory environment:
+ 

@@ -1,0 +1,11 @@
+--- Makefile~
++++ Makefile
+@@ -12,7 +12,7 @@
+ 
+ # If you have installed ImageMagick and want to use
+ # images in event's and recording's details.
+-#HAVE_IMAGEMAGICK = 1
++HAVE_IMAGEMAGICK = 1
+ 
+ # If you are using the epgsearch plugin and want to see the number of
+ # timer conflicts in the main menu's info area.

@@ -1,0 +1,36 @@
+--- menu-image.c
++++ menu-image.c.patch
+@@ -17,6 +17,7 @@
+ #include <sys/ioctl.h>
+ #include <sys/types.h>
+ #include <unistd.h>
++#include <libgen.h>
+ #include <typeinfo>
+ 
+ #include "image.h"
+@@ -25,7 +26,7 @@
+ #include "menu-image.h"
+ #include "control-image.h"
+ #include <vdr/i18n.h>
+-
++#include <vdr/plugin.h>
+ #include <vdr/status.h>
+ 
+ 
+@@ -79,6 +80,8 @@
+     char *full = source->BuildName(name);
+     cDirItem *item = cMenuBrowse::GetSelected();
+     if(item) {
++      // check, whether we can use a different plugin for replay
++      if(!cPluginManager::CallFirstService("ReplayDirectoryImages", dirname(full))) {
+     
+       //FIXME use a nonblocking way
+       //OSD_InfoMsg(tr("Building slide show..."));
+@@ -96,6 +99,7 @@
+ 			}
+ 			lastselect = NULL;
+ 		}
++    }
+   free(full);
+   free(name);
+   }

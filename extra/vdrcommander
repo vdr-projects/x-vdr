@@ -1,0 +1,211 @@
+#!/bin/bash
+
+# vdr-commander 0.0.1 (start-script for VDR)
+# by Marc Wernecke - www.zulu-entertainment.de
+# 30.05.2007
+VERSION="vdrcommander 0.0.1"
+
+### Config ####################################################################################
+SERVERIP=""
+MAC=""
+NONROOT="true"
+
+### Arguments #################################################################################
+[ -r $HOME/vdrcommander.conf ] && . $HOME/vdrcommander.conf
+KILLVDR="false"
+RUNVDR="false"
+
+for i in $* ; do
+  case $1 in
+    --help|-h)
+      echo "$VERSION"
+      echo "--help|-h       Shows the help text and exit"
+      echo "--nonroot|-n    Sets NONROOT flag"
+      echo "--reset|-r      Remove the configuration file (\$HOME/vdrcommander.conf)"
+      echo "--ip|-i [ip]    127.0.0.1 for localhost or any other ip for a vdr-server in your local-network"
+      echo "--mac|-m        00:00:00:00:00:00"
+      echo "--version|-v    Shows the script version and exit"
+      exit 0
+      ;;
+    --nonroot|-n)
+      NONROOT="true"
+      ;;
+    --reset|-R)
+      if [ -f $HOME/vdrcommander.conf ]; then
+        rm -f $HOME/vdrcommander.conf
+        SERVERIP=
+        MAC=
+      fi
+      ;;
+    --killvdr|-k)
+      KILLVDR="true"
+      ;;
+    --runvdr|-r)
+      RUNVDR="true"
+      ;;
+    --ip|-i)
+      shift 1
+      SERVERIP="$1"
+      ;;
+    --mac|-m)
+      shift 1
+      MAC="$1"
+      ;;
+    --version|-v)
+      echo "$VERSION"
+      exit 0
+      ;;
+  esac
+  shift 1
+done
+
+if [ -n "`ps x --user root | grep "/usr/.*bin/X.*:0" | grep -v grep`" ]; then   # X is running
+  DIALOG="Xdialog"
+  d_args="--left --wrap"
+  d_size="0 0"
+else
+  DIALOG="dialog"
+  d_args=""
+  d_size="19 70"
+fi
+
+
+### Functions #################################################################################
+function _exit() {
+  case $1 in
+    0) exit 0
+      ;;
+    1) exit 1
+      ;;
+    2) exit 2
+      ;;
+  esac
+  exit 0
+}
+
+function _suonly() {
+ [ "$NONROOT" = "true" ] && return 0
+  # superuser only
+  SU=$(which kanotix-su)
+  [ -n "$SU" ] || SU=$(which su-me)
+  if [ "`id -u`" != "0" ] && [ -n "$SU" ]; then
+    exec $SU $0 $ARGS || _exit 1
+    _exit 0
+  else
+    return 2
+#   _exit 2
+  fi
+  return 0
+}
+
+function _vdr() {
+  # Check if VDR is running
+  [ `ps -C vdr | grep -cw "vdr"` -eq 0 ] && return 1
+  return 0
+}
+
+function _serverip() {
+  SERVERIP=`$DIALOG $d_args --title " $VERSION " --inputbox "VDR-Server IP" 10 50 "$SERVERIP" 3>&1 1>&2 2>&3`
+  [ $? != 0 ] && return 1
+  [ "$SERVERIP" = "" ] && return 1
+  echo "SERVERIP=$SERVERIP" >> $HOME/vdrcommander.conf
+  return 0
+}
+
+function _mac() {
+  MAC=`$DIALOG $d_args --title " $VERSION " --inputbox "VDR-Server MAC" 10 50 "$MAC" 3>&1 1>&2 2>&3`
+  [ $? != 0 ] && return 1
+  [ "$MAC" = "" ] && return 1
+  echo "MAC=$MAC" >> $HOME/vdrcommander.conf
+  return 0
+}
+
+function _ping() {
+  [ -n "$SERVERIP" ] || return 2
+#  $DIALOG $d_args --title " $VERSION " --infobox "Sende ping zu VDR-Server ($SERVERIP)" $d_size &
+  ping -c1 $SERVERIP > /dev/null || return 1
+  return 0
+}
+
+function _wakeonlan() {
+  [ -n "$SERVERIP" ] || _serverip
+  [ -n "$MAC" ] || _mac
+  _ping && return 0
+  $DIALOG $d_args --title " $VERSION " --infobox "Wecke VDR-Server ($MAC)" $d_size &
+  wakeonlan $MAC || return 1
+  STATUS="VDR-Server wurde gestartet"
+  return 0
+}
+
+function _runvdr() {
+  ARGS="--runvdr"
+  _suonly
+  _vdr || runvdr > /dev/null &
+  STATUS="VDR wurde gestartet"
+}
+
+function _killvdr() {
+  ARGS="--killvdr"
+  _suonly
+  _vdr || return 0
+  vdrplayer --exit
+  killall -9 runvdr
+  killall -9 vdr
+  STATUS="VDR wurde beendet"
+}
+
+function _status() {
+  USER=`id -un`
+  if [ -z "$STATUS" ]; then
+    STATUS="VDR ist aktiv"
+    _vdr || STATUS="VDR ist nicht aktiv"
+  fi
+  _ping && STATUS="$STATUS \nServer ist online ($SERVERIP)"
+}
+
+function _vdrversion() {
+  if [ "$DIALOG" = "Xdialog" ]; then
+    vdr --version > /tmp/vdrversion.txt
+    $DIALOG $d_args --title " $VERSION " --no-cancel --textbox "/tmp/vdrversion.txt" $d_size
+  else
+    VDRVERSION=$(vdr --version)
+    $DIALOG $d_args --title " $VERSION " --msgbox "$VDRVERSION" $d_size
+  fi
+}
+
+
+### Main Script ###############################################################################
+# superuser only
+_suonly
+NONROOT="false"
+[ "$KILLVDR" = "true" ] && _killvdr
+[ "$RUNVDR" = "true" ] && _runvdr
+[ -n "$SERVERIP" ] && $DIALOG $d_args --title " $VERSION " --infobox "Sende ping zu VDR-Server ($SERVERIP)" $d_size &
+
+# Dialog
+while true; do
+  _status
+  option=`$DIALOG $d_args --title " $VERSION" --menu \
+  "Benutzer ist \"$USER\" \n$STATUS" $d_size 10 \
+  '0' 'Anzeige aktualisieren' \
+  '1' 'VDR starten' \
+  '2' 'VDR beenden' \
+  '3' 'VDR Player aufrufen' \
+  '4' 'Server aufwecken' \
+  '5' 'x-vdr aufrufen' \
+  '6' 'VDR-Version anzeigen' 3>&1 1>&2 2>&3`
+  [ $? != 0 ] && _exit 1
+  ARGS=""
+  STATUS=""
+
+  case $option in
+    1) _runvdr ;;
+    2) _killvdr ;;
+    3) vdrplayer & ;;
+    4) _wakeonlan ;;
+    5) x-vdr -x & ;;
+    6) _vdrversion ;;
+  esac
+done
+
+_exit 0

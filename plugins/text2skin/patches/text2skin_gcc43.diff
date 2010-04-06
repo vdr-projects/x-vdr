@@ -1,0 +1,36 @@
+--- text2skin/cache.h~	2009-02-15 21:37:23.000000000 +0100
++++ text2skin/cache.h	2009-02-15 21:40:19.000000000 +0100
+@@ -19,21 +19,21 @@
+ 
+ 	item_map   mItems;
+ 	usage_list mUsage;
+-	uint       mMaxItems;
++	unsigned   mMaxItems;
+ 
+ protected:
+ 	virtual void DeleteObject(const key_type &Key, data_type &Data) = 0;
+ 	virtual void ResetObject(data_type &Data) = 0;
+ 
+ public:
+-	cxCache(uint MaxItems);
++	cxCache(unsigned MaxItems);
+ 	virtual ~cxCache();
+ 
+ 	void Reset(void);
+ 	void Flush(void);
+ 	bool Contains(const key_type &Key);
+ 	data_type &operator[](const key_type &Key);
+-	uint Count(void) { return mUsage.size(); }
++	unsigned Count(void) { return mUsage.size(); }
+ };
+ 
+ template<class key_type, class data_type>
+@@ -43,7 +43,7 @@
+ }
+ 
+ template<class key_type, class data_type>
+-cxCache<key_type, data_type>::cxCache(uint MaxItems) 
++cxCache<key_type, data_type>::cxCache(unsigned MaxItems) 
+ {
+ 	mMaxItems = MaxItems;
+ }

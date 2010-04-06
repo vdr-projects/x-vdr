@@ -1,0 +1,1100 @@
+#!/bin/sh
+
+# x-vdr (Installations-Skript fuer einen VDR mit Debian als Basis)
+# von Marc Wernecke - www.zulu-entertainment.de
+# 11.04.2009
+
+# x-vdr functions
+
+###########################################################
+## bash
+
+## bash alias
+alias ..="cd .."
+alias which="type -path"
+alias where="type -all"
+alias rm="rm"
+alias mv="mv"
+alias cp="cp"
+
+## x-vdr alias
+alias unfreeze_rc=`which unfreeze-rc.d`
+alias freeze_rc=`which freeze-rc.d`
+
+###########################################################
+## Defaults
+BACKUPDIR="/tmp/vdr-backup"
+BACKUPPATH="$SOURCEDIR/x-vdr/backup"
+
+###########################################################
+##  General Functions
+
+# schreibe in logfile und screen
+function log() {
+  LOGFILE="/var/log/x-vdr.log"
+  if [ "$1" = "--silent" ]; then
+    shift 1
+    echo "`date` $*" >> $LOGFILE
+  else
+    echo "`date` $*" >> $LOGFILE
+    echo "$*"
+  fi
+}
+
+# ueberpruefe eingabe (on/off)
+function verify_input() {
+  input="$1"
+  [ "vi_${input}" != "vi_on" ] && input="off"
+  echo "$input"
+}
+
+# ueberpruefe vdr versions nummer
+function verify_vdrversion() {
+  input="$1"
+  if [ -z "$(echo "$input" | sed -e 's/ //' | grep "^1.[6-7].\+[0-9]$")" ]; then
+#    $DIALOG $d_args --title " $version - Eingabefehler " --msgbox "Die VDR Versions Nummer ist ungueltig!" $d_size
+    log "Error - VDRVERSION ist ungueltig!"
+    return 1
+  fi
+  return 0
+}
+
+# DVB_API_VERSION
+function get_dvbapi {
+  if [ -d $SOURCEDIR/DVB ]; then
+    VERSION_H=$(find $SOURCEDIR/DVB/ | grep "/version.h$")
+  else
+    VERSION_H=$(find /usr/include/linux/dvb/ | grep "/version.h$")
+  fi
+
+  if [ -n "$VERSION_H" ]; then
+    DVB_API_VERSION=$(grep -m1 "DVB_API_VERSION" $VERSION_H | cut -f3 -d" ")
+    DVB_API_VERSION_MINOR=$(grep -m1 "DVB_API_VERSION_MINOR" $VERSION_H | cut -f3 -d" ")
+  fi
+}
+
+# apt
+
+function apt_installed() {
+  [ "$*" != "" ] || return 1
+  [ -n "$error_file" ] || error_file="/var/log/x-vdr.log"
+
+  # set LANGUAGE to "en"
+  LANGUAGE_OLD="$LANGUAGE"
+  export LANGUAGE="en"
+
+
+  package="$1"
+
+  if [ -n "$(echo $package | grep '/')" ]; then
+    package_tmp=$(echo $package | cut -f 1 -d '/')
+    apt_cache=$(apt-cache policy $package_tmp)
+  elif [ -n "$(echo $package | grep '=')" ]; then
+    package_tmp=$(echo $package | cut -f 1 -d '=')
+    apt_cache=$(apt-cache policy $package_tmp)
+  else
+    apt_cache=$(apt-cache policy $package)
+  fi
+
+  export LANGUAGE="$LANGUAGE_OLD"
+
+  if [ "$apt_cache" != "" ] && [ -z "$(echo $apt_cache | grep 'Installed.*(none)')" ]; then  # installed
+    version=$(echo $apt_cache | cut -f 3 -d ':'     | sed -e 's/Candidate//g' -e 's/^ //g' -e 's/ $//g')
+    if [ `echo $version | wc -m` -eq 2 ]; then
+      version=$(echo $apt_cache | cut -f 3,4 -d ':' | sed -e 's/Candidate//g' -e 's/^ //g' -e 's/ $//g')
+    fi
+    if [ "`echo $version | grep xvdr`" ]; then
+      echo "xvdr"
+    else
+      echo "debian"
+    fi
+    return 0
+  fi
+
+  echo "not installed"
+  return 1
+}
+
+
+function apt_install() {
+  [ "$*" != "" ] || return 1
+  [ -n "$error_file" ] || error_file="/var/log/x-vdr.log"
+
+  # set LANGUAGE to "en"
+  LANGUAGE_OLD="$LANGUAGE"
+  export LANGUAGE="en"
+
+  # check if the package is...
+  for package in $*; do
+    if [ "$APT_UPGRADE" = "on" ]; then
+      result=1
+      apt-get -y --force-yes install $package && result=$?
+      case $result in
+        0 ) log "$package is installed now" ;;
+        * ) log "ERROR - $package could not installed" ; EXITCODE=1 ; echo $package >> $error_file ;;
+      esac
+
+    else
+      if [ -n "$(echo $package | grep '/')" ]; then
+        package_tmp=$(echo $package | cut -f 1 -d '/')
+        apt_cache=$(apt-cache policy $package_tmp)
+      elif [ -n "$(echo $package | grep '=')" ]; then
+        package_tmp=$(echo $package | cut -f 1 -d '=')
+        apt_cache=$(apt-cache policy $package_tmp)
+      else
+        apt_cache=$(apt-cache policy $package)
+      fi
+
+      if [ "$apt_cache" != "" ]; then
+        if [ -n "$(echo $apt_cache | grep 'Installed.*(none)')" ]; then  # not installed
+          version=$(echo $apt_cache | cut -f 4 -d ':'     | sed -e 's/Version table//g' -e 's/^ //g' -e 's/ $//g')
+          if [ `echo $version | wc -m` -eq 2 ]; then
+            version=$(echo $apt_cache | cut -f 4,5 -d ':' | sed -e 's/Version table//g' -e 's/^ //g' -e 's/ $//g')
+          fi
+          result=1
+          apt-get -y --force-yes install $package && result=$?
+          case $result in
+            0 ) log "$package ($version) is installed now" ;;
+            * ) log "ERROR - $package could not installed" ; EXITCODE=1 ; echo $package >> $error_file ;;
+          esac
+        else  # installed
+          version=$(echo $apt_cache | cut -f 3 -d ':'     | sed -e 's/Candidate//g' -e 's/^ //g' -e 's/ $//g')
+          if [ `echo $version | wc -m` -eq 2 ]; then
+            version=$(echo $apt_cache | cut -f 3,4 -d ':' | sed -e 's/Candidate//g' -e 's/^ //g' -e 's/ $//g')
+          fi
+          log "$package ($version) is already installed"
+        fi
+      else  # not found
+        log "ERROR - Unable to locate package $package"
+      fi
+    fi
+  done
+  export LANGUAGE="$LANGUAGE_OLD"
+}
+
+function apt_remove() {
+  [ "$*" != "" ] || return 1
+  [ -n "$error_file" ] || error_file="/var/log/x-vdr.log"
+
+  # set LANGUAGE to "en"
+  LANGUAGE_OLD="$LANGUAGE"
+  export LANGUAGE="en"
+
+  # check if the package is...
+  for package in $*; do
+    apt_cache=$(apt-cache policy $package)
+    if [ "$apt_cache" != "" ]; then
+      if [ -n "$(echo $apt_cache | grep 'Installed.*(none)')" ]; then  # not installed
+        log "$package is not installed"
+      else  # installed
+        result=1
+        apt-get -y --force-yes --purge remove $package && result=$?
+        case $result in
+          0 ) log "$package is removed now" ;;
+          * ) log "ERROR - $package could not removed" ; EXITCODE=1 ; echo $package >> $error_file ;;
+        esac
+      fi
+    else  # not found
+      log "ERROR - Unable to locate package $package"
+    fi
+  done
+  export LANGUAGE="$LANGUAGE_OLD"
+}
+
+###########################################################
+## Install VDR Functions
+
+# user und group erstellen
+function make_user() {
+  if [ "$VDRUSER" != "root" ]; then
+    if [ "$INS_USER" = "on" ] && [ `cat /etc/passwd | grep -cw "^${VDRUSER}:x"` -eq 0 ]; then
+      addgroup --gid 99 $VDRGROUP
+      useradd -u 99 -g $VDRGROUP -d $VDRCONFDIR -s /bin/bash -c "Video Disk Recorder" $VDRUSER
+      adduser $VDRUSER audio
+      adduser $VDRUSER video
+      adduser $VDRUSER cdrom
+      adduser $VDRUSER lp
+      log "VDRUSER = $VDRUSER"
+      log "VDRGROUP = $VDRGROUP"
+    elif [ "$INS_USER" = "off" ] && [ `cat /etc/passwd | grep -cw "^${VDRUSER}:x"` -gt 0 ]; then
+      log "VDRUSER = $VDRUSER"
+      log "VDRGROUP = $VDRGROUP"
+      log "Der user muss zur Zeit noch von Hand geloescht werden."
+    fi
+  fi
+}
+
+# autostart on/off
+function make_autostart() {
+  INITSCRIPT="vdr"
+  [ "$*" ] && INITSCRIPT=$1
+  test -x /etc/init.d/$INITSCRIPT || return 1
+  if [ "$AUTOSTART" = "on" ]; then
+    unfreeze_rc
+    update-rc.d $INITSCRIPT defaults 99 && log "Enable Autostart for: $INITSCRIPT"
+    freeze_rc
+  elif [ "$AUTOSTART" = "off" ]; then
+    unfreeze_rc
+    update-rc.d -f $INITSCRIPT remove && log "Disable Autostart for: $INITSCRIPT"
+    freeze_rc
+  fi
+}
+
+# Erstellen der Verzeichnisse
+function make_dirs() {
+  # media verzeichnis erstellen
+  [ ! -d $MEDIADIR ] && mkdir -p $MEDIADIR && log "Erstelle $MEDIADIR"
+  # video verzeichnis erstellen
+  [ ! -d $VIDEODIR ] && mkdir -p $VIDEODIR && log "Erstelle $VIDEODIR"
+  # musik verzeichnis erstellen
+  [ ! -d $MUSICDIR ] && mkdir -p $MUSICDIR && log "Erstelle $MUSICDIR"
+  # mkdir divx verzeichnis erstellen
+  [ ! -d $DIVXDIR ] && mkdir -p $DIVXDIR && log "Erstelle $DIVXDIR"
+  # bilder verzeichnis erstellen
+  [ ! -d $PICTUREDIR ] && mkdir -p $PICTUREDIR && log "Erstelle $PICTUREDIR"
+  # dvdimage verzeichnis erstellen
+  [ ! -d $DVDISODIR ] && mkdir -p $DVDISODIR && log "Erstelle $DVDISODIR"
+  # erstellen des man verzeichnisses
+  [ ! -d $VDRMANDIR/man1 ] && mkdir -p $VDRMANDIR/man1 && log "Erstelle $VDRMANDIR/man1"
+  [ ! -d $VDRMANDIR/man5 ] && mkdir -p $VDRMANDIR/man5 && log "Erstelle $VDRMANDIR/man5"
+  # epg
+  [ ! -d $VDRVARDIR ] && mkdir -p $VDRVARDIR && log "Erstelle $VDRVARDIR"
+  # vdr, runvdr, vdr2root, etc.
+  [ ! -d $VDRBINDIR ] && mkdir -p $VDRBINDIR && log "Erstelle $VDRBINDIR"
+  # VDRSCRIPTDIR.
+  [ ! -d $VDRSCRIPTDIR ] && mkdir -p $VDRSCRIPTDIR && log "Erstelle $VDRSCRIPTDIR"
+  # config
+  [ ! -d $VDRCONFDIR/plugins ] && mkdir -p $VDRCONFDIR/plugins && log "Erstelle $VDRCONFDIR"
+  [ ! -d $VDRCONFDIR/themes  ] && mkdir -p $VDRCONFDIR/themes
+  # plugins
+  [ ! -d $VDRLIBDIR ] && mkdir -p $VDRLIBDIR && log "Erstelle $VDRLIBDIR"
+  # rechte setzen
+  chown -R $VDRUSER:$VDRGROUP $VDRCONFDIR $VDRSCRIPTDIR $VDRVARDIR $VIDEODIR $MUSICDIR $DIVXDIR $DVDISODIR $PICTUREDIR $MEDIADIR
+}
+
+# Erstelle /etc/default/vdr
+function make_default() {
+  [ "$setup" = "on" ] && submenu="off"
+  DEFAULT="/etc/default/vdr"
+  {
+    echo "# $DEFAULT"
+    echo "# x-vdr `date '+%F %T'`"
+    echo "#"
+    echo ""
+    echo "# init.d"
+    echo "AUTOSTART=\"$AUTOSTART\""
+    echo "XPLAYER=\"$XPLAYER\""
+    echo ""
+    echo ""
+    echo "# vdr"
+    echo "VDRUSER=\"$VDRUSER\""
+    echo "VDRGROUP=\"$VDRGROUP\""
+    echo "VDRBINDIR=\"$VDRBINDIR\""
+    echo "VDRPRG=\"$VDRPRG\""
+    echo "VDRCONFDIR=\"$VDRCONFDIR\""
+    echo "VDRLIBDIR=\"$VDRLIBDIR\""
+    echo "VDRSCRIPTDIR=\"$VDRSCRIPTDIR\""
+    echo "VDRVARDIR=\"$VDRVARDIR\""
+    echo "MEDIADIR=\"$MEDIADIR\""
+    echo "VIDEODIR=\"$VIDEODIR\""
+    echo "MUSICDIR=\"$MUSICDIR\""
+    echo "DVDISODIR=\"$DVDISODIR\""
+    echo "PICTUREDIR=\"$PICTUREDIR\""
+    echo "DIVXDIR=\"$DIVXDIR\""
+    echo "DVDBURNER=\"$DVDBURNER\""
+    echo "KEYB_TTY=\"$KEYB_TTY\""
+    echo "VDRLANG=\"$VDRLANG\""
+    echo "VDRCHARSET=\"$VDRCHARSET\""
+    echo "WATCHDOG=$WATCHDOG"
+    echo "XV_DISPLAY=$XV_DISPLAY"
+    echo ""
+    echo ""
+    # utilities
+    echo "# utilities"
+    echo "em8300=\"$em8300\""
+    echo "graphlcd_base=\"$graphlcd_base\""
+    echo "LCDproc=\"$LCDproc\""
+    echo "lirc=\"$lirc\""
+    echo "lirc_port=\"$lirc_port\""
+    echo "noad=\"$noad\""
+    echo "vdradmin=\"$vdradmin\""
+#    echo "vdrconvert=\"$vdrconvert\""
+#    echo "tvmovie2vdr=\"$tvmovie2vdr\""
+#    echo "ssh=\"$ssh\""
+#    echo "samba=\"$samba\""
+#    echo "mysql=\"$mysql\""
+#    echo "kde=\"$kde\""
+#    echo "xxv=\"$xxv\""
+#    echo "fb_tv=\"$fb_tv\""
+    echo ""
+    echo ""
+    # plugins
+    echo "# plugins"
+    echo "PLUGINS_ON_TOP=\"$PLUGINS_ON_TOP\""
+    xPlugins -d
+    echo ""
+  } > $DEFAULT
+}
+
+# verify patchlevel
+function verify_patchlevel() {
+  case "$PATCHLEVEL" in
+    e*|E*) PATCHLEVEL="EXTENSIONS";;
+    p*|P*) PATCHLEVEL="PATCHES";;
+    *)     PATCHLEVEL="PLAIN";;
+  esac
+  ANALOGTV=`verify_input "$ANALOGTV"`
+  ATSC=`verify_input "$ATSC"`
+  CHANNELSCAN=`verify_input "$CHANNELSCAN"`
+  CMDRECCMDI18N=`verify_input "$CMDRECCMDI18N"`
+  CMDSUBMENU=`verify_input "$CMDSUBMENU"`
+  CUTTERLIMIT=`verify_input "$CUTTERLIMIT"`
+  CUTTERQUEUE=`verify_input "$CUTTERQUEUE"`
+  CUTTIME=`verify_input "$CUTTIME"`
+  DELTIMESHIFTREC=`verify_input "$DELTIMESHIFTREC"`
+  DDEPGENTRY=`verify_input "$DDEPGENTRY"`
+  DOLBYINREC=`verify_input "$DOLBYINREC"`
+  DVBPLAYER=`verify_input "$DVBPLAYER"`
+  DVBSETUP=`verify_input "$DVBSETUP"`
+  DVDARCHIVE=`verify_input "$DVDARCHIVE"`
+  DVDCHAPJUMP=`verify_input "$DVDCHAPJUMP"`
+  DVLFRIENDLYFNAMES=`verify_input "$DVLFRIENDLYFNAMES"`
+  DVLRECSCRIPTADDON=`verify_input "$DVLRECSCRIPTADDON"`
+  DVLVIDPREFER=`verify_input "$DVLVIDPREFER"`
+  EM84XX=`verify_input "$EM84XX"`
+  GRAPHTFT=`verify_input "$GRAPHTFT"`
+  HARDLINKCUTTER=`verify_input "$HARDLINKCUTTER"`
+  JUMPPLAY=`verify_input "$JUMPPLAY"`
+  LIEMIEXT=`verify_input "$LIEMIEXT"`
+  LIRCSETTINGS=`verify_input "$LIRCSETTINGS"`
+  LIVEBUFFER=`verify_input "$LIVEBUFFER"`
+  LNBSHARE=`verify_input "$LNBSHARE"`
+  MAINMENUHOOKS=`verify_input "$MAINMENUHOOKS"`
+  MENUORG=`verify_input "$MENUORG"`
+  NOEPG=`verify_input "$NOEPG"`
+  OSDMAXITEMS=`verify_input "$OSDMAXITEMS"`
+  PARENTALRATING=`verify_input "$PARENTALRATING"`
+  PINPLUGIN=`verify_input "$PINPLUGIN"`
+  PLUGINAPI=`verify_input "$PLUGINAPI"`
+  PLUGINMISSING=`verify_input "$PLUGINMISSING"`
+  PLUGINPARAM=`verify_input "$PLUGINPARAM"`
+  ROTOR=`verify_input "$ROTOR"`
+  SETTIME=`verify_input "$SETTIME"`
+  SETUP=`verify_input "$SETUP"`
+  SOFTOSD=`verify_input "$SOFTOSD"`
+  SOURCECAPS=`verify_input "$SOURCECAPS"`
+  SORTRECORDS=`verify_input "$SORTRECORDS"`
+  STREAMDEVEXT=`verify_input "$STREAMDEVEXT"`
+  SYNCEARLY=`verify_input "$SYNCEARLY"`
+  TIMERCMD=`verify_input "$TIMERCMD"`
+  TIMERINFO=`verify_input "$TIMERINFO"`
+  TTXTSUBS=`verify_input "$TTXTSUBS"`
+  VALIDINPUT=`verify_input "$VALIDINPUT"`
+  VOLCTRL=`verify_input "$VOLCTRL"`
+  WAREAGLEICON=`verify_input "$WAREAGLEICON"`
+  YAEPG=`verify_input "$YAEPG"`
+}
+
+###########################################################
+##  VDR - BACKUP - CLEAN
+
+# backup vdr
+function backup_vdr_bin() {
+  [ -d $BACKUPPATH ] || mkdir -p $BACKUPPATH
+  [ -d $BACKUPDIR ] && rm -rf $BACKUPDIR
+  mkdir -p $BACKUPDIR
+  # vdr
+  cp -pfR --parents $VDRCONFDIR $BACKUPDIR
+# cp -pfR --parents $VDRVARDIR $BACKUPDIR
+  cp -pfR --parents $VDRLIBDIR $BACKUPDIR
+  cp -pfR --parents $VDRSCRIPTDIR $BACKUPDIR
+  cp -pf --parents $VDRPRG $BACKUPDIR
+  cp -pf --parents $VDRBINDIR/runvdr $BACKUPDIR
+  cp -pf --parents $VDRBINDIR/svdrpsend.pl $BACKUPDIR
+  cp -pf --parents $VDRMANDIR/man1/vdr.1.gz $BACKUPDIR
+  cp -pf --parents $VDRMANDIR/man5/vdr.5.gz $BACKUPDIR
+  cp -pf --parents /etc/default/vdr $BACKUPDIR
+  cp -pf --parents /etc/init.d/vdr $BACKUPDIR
+  # burn
+  [ -f $VDRBINDIR/burn-bc ] && cp -pf --parents $VDRBINDIR/burn-bc $BACKUPDIR
+  [ -f $VDRBINDIR/burn-buffers ] && cp -pf --parents $VDRBINDIR/burn-buffers $BACKUPDIR
+  [ -f $VDRBINDIR/vdrburn-archive.sh ] && cp -pf --parents $VDRBINDIR/vdrburn-archive.sh $BACKUPDIR
+  [ -f $VDRBINDIR/vdrburn-dvd.sh ] && cp -pf --parents $VDRBINDIR/vdrburn-dvd.sh $BACKUPDIR
+  # extrecmenu
+  [ -f $VDRBINDIR/dvdarchive.sh ] && cp -pf --parents $VDRBINDIR/dvdarchive.sh $BACKUPDIR
+  # pin (fskcheck)
+  [ -f $VDRBINDIR/fskcheck ] && cp -pf --parents $VDRBINDIR/fskcheck $BACKUPDIR
+  # softdevice (ShmClient)
+  [ -f $VDRBINDIR/ShmClient ] && cp -pf --parents $VDRBINDIR/ShmClient $BACKUPDIR
+  # xineliboutput (frontends and xine plugins)
+  [ -f $VDRBINDIR/vdr-fbfe ] && cp -pf --parents $VDRBINDIR/vdr-fbfe $BACKUPDIR
+  [ -f $VDRBINDIR/vdr-sxfe ] && cp -pf --parents $VDRBINDIR/vdr-sxfe $BACKUPDIR
+  # tarball
+  BACKUPFILE=$BACKUPPATH/`date +%y%m%d-%H%M`-vdr-bin.tar.gz
+  cd $BACKUPDIR
+  tar -zcf $BACKUPFILE * && log --silent "$BACKUPFILE created"
+  cd $SOURCEDIR/x-vdr
+  rm -rf $BACKUPDIR
+}
+
+function backup_vdr_src() {
+  [ -d $BACKUPPATH ] || mkdir -p $BACKUPPATH
+  [ -d $BACKUPDIR ] && rm -rf $BACKUPDIR
+  mkdir -p $BACKUPDIR
+  cp -pfR --parents $SOURCEDIR/VDR $BACKUPDIR
+  if [ -d "$SOURCEDIR/vdr-$VDRVERSION" ]; then
+    cp -pfR --parents $SOURCEDIR/vdr-$VDRVERSION $BACKUPDIR
+  else
+    cp -pfR --parents $SOURCEDIR/vdr-* $BACKUPDIR
+  fi
+  BACKUPFILE=$BACKUPPATH/`date +%y%m%d-%H%M`-vdr-src.tar.gz
+  cd $BACKUPDIR
+  tar -zcf $BACKUPFILE * && log --silent "$BACKUPFILE created"
+  cd $SOURCEDIR/x-vdr
+  rm -rf $BACKUPDIR
+}
+
+
+function backup_vdr_conf() {
+  [ -d $BACKUPPATH ] || mkdir -p $BACKUPPATH
+  [ -d $BACKUPDIR ] && rm -rf $BACKUPDIR
+  mkdir -p $BACKUPDIR
+  cp -pfR --parents $VDRCONFDIR $BACKUPDIR
+  cp -pfR --parents $VDRSCRIPTDIR $BACKUPDIR
+  cp -pf --parents $VDRBINDIR/runvdr $BACKUPDIR
+  cp -pf --parents /etc/default/vdr $BACKUPDIR
+  cp -pf --parents /etc/init.d/vdr $BACKUPDIR
+
+  local _AllUser="$(ls /home)"
+  for _User in $_AllUser; do
+    [ -d /home/$_User/.xine ] &&  cp -pfR --parents /home/$_User/.xine $BACKUPDIR
+    [ -f /home/$_User/vdrplayer.conf ] &&  cp -pf --parents /home/$_User/vdrplayer.conf $BACKUPDIR
+  done
+  [ -d /root/.xine ] &&  cp -pfR --parents /root/.xine $BACKUPDIR
+  [ -f /root/vdrplayer.conf ] &&  cp -pf --parents /root/vdrplayer.conf $BACKUPDIR
+
+  BACKUPFILE=$BACKUPPATH/`date +%y%m%d-%H%M`-vdr-conf.tar.gz
+  cd $BACKUPDIR
+  tar -zcf $BACKUPFILE * && log --silent "$BACKUPFILE created"
+  cd $SOURCEDIR/x-vdr
+  rm -rf $BACKUPDIR
+}
+
+# clean vdr
+function clean_vdr() {
+  VDRCONF=`basename $VDRCONFDIR`
+  VDRVAR=`basename $VDRVARDIR`
+  VDRLIB=`basename $VDRLIBDIR`
+  VDRSCRIPT=`basename $VDRSCRIPTDIR`
+  # vdr
+  [ "$VDRCONF" = "vdr" ] && rm -rf "$VDRCONFDIR"
+  [ "$VDRVAR" = "epgdata" ] && rm -rf "$VDRVARDIR"
+  [ "$VDRLIB" = "plugins" ] && rm -rf "$VDRLIBDIR"
+  [ "$VDRSCRIPT" = "scripts" ] && rm -rf "$VDRSCRIPTDIR"
+  rm -f "$VDRPRG"
+  rm -f "$VDRBINDIR/runvdr"
+  rm -f "$VDRBINDIR/svdrpsend.pl"
+  rm -f "$VDRMANDIR/man1/vdr.1.gz"
+  rm -f "$VDRMANDIR/man5/vdr.5.gz"
+  rm -f /etc/default/vdr
+  # burn
+  rm -f "$VDRBINDIR/burn-bc"
+  rm -f "$VDRBINDIR/burn-buffers"
+  rm -f "$VDRBINDIR/vdrburn-archive.sh"
+  rm -f "$VDRBINDIR/vdrburn-dvd.sh"
+  # extrecmenu
+  rm -f "$VDRBINDIR/dvdarchive.sh"
+  # pin (fskcheck)
+  rm -f "$VDRBINDIR/fskcheck"
+  # softdevice (ShmClient)
+  rm -f "$VDRBINDIR/ShmClient"
+  # xineliboutput (frontends and xine plugins)
+  rm -f "$VDRBINDIR/vdr-fbfe"
+  rm -f "$VDRBINDIR/vdr-sxfe"
+  # init rc
+  local AUTOSTART="off"
+  make_autostart
+  rm -f /etc/init.d/vdr
+  log --silent "VDR removed"
+}
+
+# vdr sourcen entfernen
+function clean_vdr_src() {
+  rm -rf "$SOURCEDIR/VDR"
+  if [ -d "$SOURCEDIR/vdr-$VDRVERSION" ]; then
+    rm -rf "$SOURCEDIR/vdr-$VDRVERSION"
+    log --silent "VDR Source removed"
+  fi
+}
+
+# vdr scripte und config entfernen - nur fuer start_reactivate (x-vdr.sh)
+function clean_vdr_conf() {
+  VDRCONF=`basename $VDRCONFDIR`
+  VDRSCRIPT=`basename $VDRSCRIPTDIR`
+  [ "$VDRCONF" = "vdr" ] && rm -rf "$VDRCONFDIR"
+  [ "$VDRSCRIPT" = "scripts" ] && rm -rf "$VDRSCRIPTDIR"
+  rm -f $VDRBINDIR/runvdr
+  rm -f /etc/default/vdr
+  rm -f /etc/init.d/vdr
+  log --silent "VDR Scripts and Config removed"
+}
+###########################################################
+##  Utilitie Functions
+
+# download util
+function download_util() {
+  cd $DIR
+  if [ -f "$FILES/utilities/$VAR" ]; then
+    log "$VAR gefunden"
+  elif [ -f "$VAR" ]; then
+    log "$VAR gefunden"
+    cp "$VAR" "$FILES/utilities"
+  else
+    log "$VAR nicht gefunden"
+    log "Starte download von $VAR"
+    for i in $WEB; do
+      wget --tries=2 "$i" --directory-prefix="$FILES/utilities" && log "Download von $VAR erfolgreich" && break
+    done
+    [ ! -f "$FILES/utilities/$VAR" ] && log "Download von $VAR nicht erfolgreich" && exit 1
+  fi
+}
+
+# extrahiere util
+function extract_util() {
+  if echo "$FILES/utilities/$VAR" | grep ".bz2$" &>/dev/null; then
+    tar xjf "$FILES/utilities/$VAR" -C $SOURCEDIR && log "Extrahiere $VAR"
+  else
+    tar xzf "$FILES/utilities/$VAR" -C $SOURCEDIR && log "Extrahiere $VAR"
+  fi
+}
+
+# check utilitie
+function utilitie_check() {
+  KERNEL=`uname -r`
+  case $1 in
+    cdfs)
+      if [ -f /lib/modules/$KERNEL/extra/cdfs.ko ]; then
+        echo ""
+        echo "cdfs"
+        echo "/lib/modules/$KERNEL/extra/cdfs.ko"
+        return 2
+      fi
+      ;;
+    em8300)
+      EM8300="/lib/modules/$KERNEL/em8300"
+      if [ -f $EM8300/adv717x.ko ] && [ -f $EM8300/bt865.ko ] && [ -f $EM8300/em8300.ko ]; then
+        echo ""
+        echo "adv717x.ko  bt865.ko  em8300.ko"
+        echo "$EM8300"
+        return 2
+      fi
+      ;;
+    ffmpeg)
+      var=`which ffmpeg`
+      if [ "$var" ]; then
+        echo ""
+        echo "ffmpeg"
+        echo "$var"
+        return 2
+      fi
+      ;;
+    genindex)
+      var=`which genindex`
+      if [ "$var" ]; then
+        echo ""
+        echo "genindex"
+        echo "$var"
+        return 2
+      fi
+      ;;
+    graphlcd_base)
+      if [ -f $PREFIX/lib/libglcddrivers.so ]; then
+        echo ""
+        echo "graphlcd-base"
+        echo "$PREFIX/lib/libglcddrivers.so"
+        return 2
+      fi
+      ;;
+    LCDproc)
+      var=`which LCDd`
+      if [ "$var" ]; then
+        echo ""
+        echo "LCDd"
+        echo "$var"
+        return 2
+      fi
+      ;;
+    lirc)
+      var=`which lircd`
+      if [ "$var" ]; then
+        echo ""
+        echo `lircd -v`
+        echo "$var"
+        return 2
+      fi
+      ;;
+    mplayer)
+      var=`which mplayer`
+      if [ "$var" ]; then
+        echo ""
+        echo "Mplayer"
+        echo "$var"
+        return 2
+      fi
+      ;;
+    noad)
+      var=`which noad`
+      if [ "$var" ]; then
+        echo ""
+        echo `noad -V`
+        echo "$var"
+        return 2
+      fi
+      ;;
+    nvram-wakeup)
+      var=`which nvram-wakeup`
+      if [ "$var" ]; then
+        echo ""
+        echo `nvram-wakeup -v`
+        echo "$var"
+        return 2
+      fi
+      ;;
+    projectx)
+      if [ -f $PREFIX/bin/ProjectX/ProjectX.jar ]; then
+        echo ""
+        echo "ProjectX"
+        echo "$PREFIX/bin/ProjectX/ProjectX.jar"
+        return 2
+      fi
+      ;;
+    vdradmin)
+      var=`which vdradmind.pl`
+      if [ "$var" ]; then
+        echo ""
+        echo "VDRadmin"
+        echo "$var"
+        return 2
+      fi
+      ;;
+    vdrfonts)
+      if [ -d /usr/share/fonts/truetype/vdrsymbols ]; then
+        echo ""
+        echo "vdrfonts"
+        echo "/usr/share/fonts/truetype/vdrsymbols"
+        return 2
+      fi
+      ;;
+    vidix)
+      if [ -f $PREFIX/include/vidix/fourcc.h ] && [ -f $PREFIX/include/vidix/vidix.h ] && [ -f $PREFIX/include/vidix/vidixlib.h ]; then
+        echo ""
+        echo "vidix"
+        echo "$PREFIX/include/vidix"
+        return 2
+      fi
+      ;;
+    xine_lib)
+      var=`which xine`
+      if [ "$var" ]; then
+        echo ""
+        echo `xine -v`
+        echo "$var"
+        return 2
+      fi
+      ;;
+    y4mscaler)
+      var=`which y4mscaler`
+      if [ "$var" ]; then
+        echo ""
+        echo `y4mscaler -V`
+        echo "$var"
+        return 2
+      fi
+      ;;
+  esac
+}
+
+# utilitie commands
+function cmd_util() {
+  case $cmd in
+    --clean|-c)
+      clean_util
+      ;;
+    --make|-m)
+      make_util
+      ;;
+    --remake|-r)
+      clean_util
+      make_util
+      ;;
+    --status|-s)
+      status_util
+      exit 0
+      ;;
+    --version|-v)
+      echo "$VERSION"
+      exit 0
+      ;;
+    *)
+      echo "Moegliche Parameter sind:"
+      echo "--clean|-c               -> Utilitie wird entfernt"
+      echo "--make|-m                -> Utilitie wird installiert"
+      echo "--remake|-r              -> wie --clean und --make"
+      echo "--status|-s              -> 0=nicht gefunden, 1=gefunden 2=1+Source gefunden"
+      echo "--version|-v             -> Zeigt die Utilitie-Version des Skripts"
+      echo ""
+      echo "Es ist immer nur ein Parameter erlaubt."
+      echo ""
+      exit 1
+      ;;
+  esac
+}
+
+###########################################################
+## Plugin Functions
+
+# plugin helper function
+function xPlugins() {
+    cmd="$1"
+    plugin_list=
+    # read libdir and create a pluginlist
+    plugs=$(ls -B "$SOURCEDIR/x-vdr/plugins")
+    if [ -n "$plugs" ]; then
+      for plug in $plugs ; do
+        if [ -z "${!plug}" ]; then
+          echo "" >> $SOURCEDIR/x-vdr/x-vdr.conf
+          echo "# $plug" >> $SOURCEDIR/x-vdr/x-vdr.conf
+          echo "${plug}=\"off"\" >> $SOURCEDIR/x-vdr/x-vdr.conf
+          eval ${plug}="off"
+        fi
+        if [ "x${!plug}" = "xon" ] || [ "x${!plug}" = "xoff" ]; then
+          args="${plug}_args"
+          plug_args="${!args}"
+          desc="${plug}_desc"
+          if [ -n "${!desc}" ]; then
+            plug_desc="${!desc}"
+          else
+            plug_desc="no description available"
+          fi
+          plug_name="${plug}"
+          plug_stat="${!plug}"
+          # menues
+          case $cmd in
+            -d) # write current config to /etc/default/vdr
+                echo ""
+                echo "# $plug_name"
+                case $plug_name in
+                  vdr_plugins)
+                    echo "hello=\"$plug_stat\""
+                    echo "osddemo=\"$plug_stat\""
+                    echo "svccli=\"$plug_stat\""
+                    echo "svcsvr=\"$plug_stat\""
+                    echo "skincurses=\"$plug_stat\""
+                    echo "sky=\"$plug_stat\""
+                    echo "status=\"$plug_stat\""
+                    echo "svdrpdemo=\"$plug_stat\"" ;;
+                  streamdev)
+                    echo "streamdev_client=\"$streamdev_client\""
+                    echo "streamdev_server=\"$streamdev_server\""
+                    echo "streamdev_server_args=\"$streamdev_server_args\"" ;;
+                  mp3)
+                    echo "$plug_name=\"$plug_stat\""
+                    echo "$args=\"$plug_args\""
+                    echo ""
+                    echo "# mplayer"
+                    echo "mplayer=\"$mplayer\""
+                    echo "mplayer_args=\"$mplayer_args\"" ;;
+                  epgsearch)
+                    echo "$plug_name=\"$plug_stat\""
+                    echo "$args=\"$plug_args\""
+                    echo "epgsearchonly=\"$epgsearchonly\""
+                    echo "conflictcheckonly=\"$conflictcheckonly\""
+                    echo "quickepgsearch=\"$quickepgsearch\"" ;;
+                  *)
+                    echo "$plug_name=\"$plug_stat\""
+                    [ "$plug_name" = "remote" ] && echo "remote_event=\"$remote_event\""
+                    [ -n "$plug_args" ] && echo "$args=\"$plug_args\"" ;;
+                esac ;;
+            -l) # create a list for sd_plugins
+                plugin_list="$plugin_list $plug_name \"$plug_desc\" $plug_stat " ;;
+            -m) # create a list for PluginMenu
+                var="inaktiv"
+                [ "$plug_stat" = "on" ] && var="aktiv"
+                plugin_list="$plugin_list $plug_name $var " ;;
+            -o) # set all plugins to off
+                eval $plug_name=off ;;
+            -s) # write to (x-vdr) setup.conf
+                echo "$plug_name=\"$plug_stat\"" ;;
+          esac
+
+        else
+          plug_args=""
+          plug_desc=""
+          plug_name=""
+          plug_stat=""
+          eval ${plug}="off"
+        fi
+      done
+    fi
+}
+
+# download plugin
+function download_plugin() {
+  cd $DIR
+  if [ -f "$FILES/plugins/$VAR" ]; then
+    log "$VAR gefunden"
+  elif [ -f "$VAR" ]; then
+    log "$VAR gefunden"
+    cp "$VAR" "$FILES/plugins"
+  else
+    log "$VAR nicht gefunden"
+    log "Starte download von $VAR"
+    for i in $WEB; do
+      wget --tries=2 "$i" --directory-prefix="$FILES/plugins" && log "Download von $VAR erfolgreich" && break
+    done
+    [ ! -f "$FILES/plugins/$VAR" ] && log "Download von $VAR nicht erfolgreich" && exit 1
+  fi
+}
+
+# extrahiere plugin
+function extract_plugin() {
+  [ -d "$SOURCEDIR/VDR/PLUGINS/src/$VERSION" ] && exit 0
+  if echo "$FILES/plugins/$VAR" | grep ".bz2$" &>/dev/null; then
+    tar xjf "$FILES/plugins/$VAR" -C "$SOURCEDIR/VDR/PLUGINS/src" && log "Extrahiere $VAR"
+  else
+    tar xzf "$FILES/plugins/$VAR" -C "$SOURCEDIR/VDR/PLUGINS/src" && log "Extrahiere $VAR"
+  fi
+}
+
+# patch plugin
+function patch_plugin() {
+  [ ! -d "$DIR/patches" ] && mkdir "$DIR/patches" && return 0
+  [ ! -d "$SOURCEDIR/VDR/PLUGINS/src/$LINK" ] && log "ERROR - $LINK not found" && return 1
+  cd "$SOURCEDIR/VDR/PLUGINS/src/$LINK"
+  for i in `ls $DIR/patches | grep ".bz2$"`; do log "apply patch $i"; bzcat $DIR/patches/$i|patch; done
+  for i in `ls $DIR/patches | grep ".diff$"`; do log "apply patch $i"; patch < $DIR/patches/$i; done
+  for i in `ls $DIR/patches | grep ".patch$"`; do log "apply patch $i"; patch < $DIR/patches/$i; done
+}
+
+# patch-p1 plugin
+function patch_p1_plugin() {
+  [ -d "$DIR/patches/p1" ] || return 0
+  cd "$SOURCEDIR/VDR/PLUGINS/src/$LINK"
+  for i in `ls $DIR/patches/p1 | grep ".bz2$"`; do log "apply patch $i"; bzcat $DIR/patches/p1/$i|patch -p 1; done
+  for i in `ls $DIR/patches/p1 | grep ".diff$"`; do log "apply patch $i"; patch -p 1 < $DIR/patches/p1/$i; done
+  for i in `ls $DIR/patches/p1 | grep ".patch$"`; do log "apply patch $i"; patch -p 1 < $DIR/patches/p1/$i; done
+}
+
+# patch-p2 plugin
+function patch_p2_plugin() {
+  [ -d "$DIR/patches/p2" ] || return 0
+  cd "$SOURCEDIR/VDR/PLUGINS/src/$LINK"
+  for i in `ls $DIR/patches/p2 | grep ".bz2$"`; do log "apply patch $i"; bzcat $DIR/patches/p2/$i|patch -p 2; done
+  for i in `ls $DIR/patches/p2 | grep ".diff$"`; do log "apply patch $i"; patch -p 2 < $DIR/patches/p2/$i; done
+  for i in `ls $DIR/patches/p2 | grep ".patch$"`; do log "apply patch $i"; patch -p 2 < $DIR/patches/p2/$i; done
+}
+
+# patch-p3 plugin
+function patch_p3_plugin() {
+  [ -d "$DIR/patches/p3" ] || return 0
+  cd "$SOURCEDIR/VDR/PLUGINS/src/$LINK"
+  for i in `ls $DIR/patches/p3 | grep ".bz2$"`; do log "apply patch $i"; bzcat $DIR/patches/p3/$i|patch -p 3; done
+  for i in `ls $DIR/patches/p3 | grep ".diff$"`; do log "apply patch $i"; patch -p 3 < $DIR/patches/p3/$i; done
+  for i in `ls $DIR/patches/p3 | grep ".patch$"`; do log "apply patch $i"; patch -p 3 < $DIR/patches/p3/$i; done
+}
+
+# patch-p2 plugin
+function patch_p4_plugin() {
+  [ -d "$DIR/patches/p4" ] || return 0
+  cd "$SOURCEDIR/VDR/PLUGINS/src/$LINK"
+  for i in `ls $DIR/patches/p4 | grep ".bz2$"`; do log "apply patch $i"; bzcat $DIR/patches/p4/$i|patch -p 4; done
+  for i in `ls $DIR/patches/p4 | grep ".diff$"`; do log "apply patch $i"; patch -p 4 < $DIR/patches/p4/$i; done
+  for i in `ls $DIR/patches/p4 | grep ".patch$"`; do log "apply patch $i"; patch -p 4 < $DIR/patches/p4/$i; done
+}
+
+
+# make plugin
+function make_plugin() {
+  cd "$SOURCEDIR/VDR/PLUGINS/src/$LINK"
+  log "starte mit $LINK"
+  make all
+  case "$LINK" in
+    mp3)       LIB="mp3";; # mplayer
+    streamdev) LIB="streamdev-server";; # streamdev-client
+    *)         LIB="$LINK";;
+  esac
+  if [ -f $VDRLIBDIR/libvdr-$LIB.so* ]; then
+    # copy locale
+    if [ -d $SOURCEDIR/VDR/locale ]; then
+      [ ! -d $VDRLOCDIR ] && mkdir -p $VDRLOCDIR && log "Erstelle $VDRLOCDIR"
+      cd "$SOURCEDIR/VDR/locale"
+      cp -fR --parents */LC_MESSAGES/vdr-$LINK.mo $VDRLOCDIR >/dev/null 2>&1
+      [ "$LIB" = "mp3" ] && cp -fR --parents */LC_MESSAGES/vdr-mplayer.mo $VDRLOCDIR >/dev/null 2>&1
+    fi
+    log "$LINK erfolgreich erstellt"
+  else
+    log "$LINK konnte nicht erstellt werden"
+  fi
+}
+
+# plugin status
+function status_plugin() {
+  case "$LINK" in
+    mp3)       LIB="mp3";; # mplayer
+    streamdev) LIB="streamdev-server";; # streamdev-client
+    *)         LIB="$LINK";;
+  esac
+  if [ -f $VDRLIBDIR/libvdr-$LIB.so* ]; then
+    echo "1"
+  else
+    if [ -d "$SOURCEDIR/VDR/PLUGINS/src/$LINK" ]; then
+      echo "2"
+    else
+      echo "0"
+    fi
+  fi
+}
+
+# plugin commands
+function cmd_plugin() {
+  case $cmd in
+    --clean|-c)
+      clean_plugin
+      ;;
+    --install|-i)
+      install_plugin
+      ;;
+    --make|-m)
+      install_plugin
+      make_plugin
+      ;;
+    --remake|-r)
+      clean_plugin
+      install_plugin
+      make_plugin
+      ;;
+    --status|-s)
+      status_plugin
+      exit 0
+      ;;
+    --version|-v)
+      echo "$VERSION"
+      exit 0
+      ;;
+    *)
+      echo "Moegliche Parameter sind:"
+      echo "--clean|-c               -> entfernt das Plugin"
+      echo "--install|-i             -> entpackt das Plugin etc."
+      echo "--make|-m                -> wie --install aber das Plugin wird sofort uebersetzt"
+      echo "--remake|-r              -> wie --clean und --install und --make"
+      echo "--status|-s              -> 0=nicht gefunden, 1=gefunden"
+      echo "--version|-v             -> Zeigt die Plugin-Version des Skripts"
+      echo ""
+      echo "Es ist immer nur ein Parameter erlaubt."
+      echo ""
+      exit 1
+      ;;
+  esac
+}
+
+function list_plugins() {
+  PLUGINDIR="$SOURCEDIR/VDR/PLUGINS"
+  anzahl=`ls $PLUGINDIR/src | grep -v '[^a-z0-9]' | wc -l`
+  version_vdr=`egrep '.*VDRVERSION.*"' $SOURCEDIR/VDR/config.h | sed -e 's/.* "//' | sed -e 's/[";]//g' | tr -d '\015' | tr -d '\012'`
+  version_api=`egrep '.*APIVERSION.*"' $SOURCEDIR/VDR/config.h | sed -e 's/.* "//' | sed -e 's/[";]//g' | tr -d '\015' | tr -d '\012'`
+
+  echo "Es folgt eine Liste von $anzahl Plugins"
+  echo "Kennzeichen * --> uebersetzt fuer VDR-Version $version_vdr"
+  echo "Kennzeichen ! --> nicht uebersetzt (laesst sich nicht uebersetzen?)"
+  echo
+  echo "Plugin-Name                 Version (Version von Verzeichniss) / Hinweis"
+  echo
+
+  for i in `ls $PLUGINDIR/src | grep -v '[^a-z0-9]'`
+  do
+    plugin_name=`egrep -m 1 '^[[:space:]]*PLUGIN[1=[:space:]]' $PLUGINDIR/src/$i/Makefile | sed -e 's/[\t ]*PLUGIN.*=//' | cut -f 1 -d "#" | sed -e 's/ //g'`
+    [ "$i" = "atmo" ] && plugin_name="atmo" # dirty hack for the atmolight-plugin
+    [ "$i" = "sport" ] && plugin_name="sport" # dirty hack for the sport-plugin
+    plugin_file1=""
+    for testfile in version.h src/version.h plugin.c $plugin_name.c $plugin_name.cpp $plugin_name.cc
+    do
+      if [ -z "$plugin_file1" -a -r $PLUGINDIR/src/$i/$testfile ]; then
+        plugin_file1="$testfile"
+        plugin_file2=`echo $plugin_file1 | sed -e 's/\.c/\.h/'`
+      fi
+    done
+
+    case "$i" in
+      gngb2vdr)        plugin_file1="cGngbPlugin.h";;
+      ipod)            plugin_file1="$plugin_name.hpp";;
+      live)            plugin_file1="setup.h";;
+      mailbox)         plugin_file1="AxPluginMailBox.cpp";;
+      mediamvp)        plugin_file1="mvp/config.h";;
+      mldkgui)         plugin_file1="cMLdkGUIPlugin.h";;
+      reelchannelscan) plugin_file1="channelscan.h";;
+      streamdev)       plugin_file1="common.c";;
+      servicedemo)     plugin_file1="svccli.c";;
+      vodcatcher)      plugin_file1="src/Version.h";;
+    esac
+
+    plugin_version=""
+    if [ -r $PLUGINDIR/src/$i/$plugin_file1 ]; then
+      plugin_version=`egrep -m 1 '.*VERSION.*"' $PLUGINDIR/src/$i/$plugin_file1 | sed -e 's/.* "//' |  sed -e 's/[";]//g' | tr -d '\015' | tr -d '\012'`
+    fi
+    if [ -z "$plugin_version" -a -r $PLUGINDIR/src/$i/$plugin_file2 ]; then
+      plugin_version=`egrep -m 1 '.*VERSION.*"' $PLUGINDIR/src/$i/$plugin_file2 | sed -e 's/.* "//' |  sed -e 's/[";]//g' | tr -d '\015' | tr -d '\012'`
+    fi
+    if [ -z "$plugin_version" ]; then
+      plugin_version=`egrep -m 1 '^[[:space:]]*VERSION' $PLUGINDIR/src/$i/Makefile | sed -e 's/[\t ]*VERSION.*=//' | sed -e 's/ //g' | tr -d '\015' | tr -d '\012'`
+    fi
+    if [ -z "$plugin_version" ]; then
+      plugin_version="N/A"
+    fi
+    plugin_versiondir=""
+    if [ -L $PLUGINDIR/src/$i ]; then
+      plugin_versiondir=`readlink $PLUGINDIR/src/$i | sed -e 's/.*\///g'`
+      plugin_versiondir="${plugin_versiondir:${#plugin_name}:255}"
+      plugin_versiondir="${plugin_versiondir:1:255}"
+    fi
+    if [ -z "$plugin_versiondir" ]; then
+      plugin_versiondir="N/A"
+    fi
+    plugin_libs=1
+    case "$plugin_name" in
+      mp3)         plugin_libname="mp3 mplayer"
+                   plugin_libs=2;;
+      mp3ng)       plugin_libname="mp3ng mplayer"
+                   plugin_libs=2;;
+      music)       plugin_libname="music mplayer"
+                   plugin_libs=2;;
+      servicedemo) plugin_libname="svccli svcsvr"
+                   plugin_libs=2;;
+      streamdev)   plugin_libname="streamdev-client streamdev-server"
+                   plugin_libs=2;;
+    esac
+    plugin_anzahl=`ls -d $PLUGINDIR/src/$i-* 2>/dev/null | wc -l`
+    if [ $plugin_libs = 1 ]; then
+       if [ -r "$VDRLIBDIR/libvdr-$plugin_name.so.$version_vdr" ] || [ -r "$VDRLIBDIR/libvdr-$plugin_name.so.$version_api" ]; then
+         echo -n "* "
+       else
+         echo -n "! "
+       fi
+    else
+       echo -n "X "
+    fi
+    echo $plugin_name $plugin_version $plugin_versiondir $plugin_anzahl | awk '{ printf "%-25s %s", $1, $2; if ($2 != $3 && $3 != "N/A") printf " (%s)", $3; if ($4 > 1) printf " es sind %d Versionen vorhanden", $4; printf "\n"; }'
+    if [ $plugin_libs -gt 1 ]; then
+       for j in $plugin_libname ; do
+          if [ -r "$VDRLIBDIR/libvdr-$j.so.$version_vdr" ] || [ -r "$VDRLIBDIR/libvdr-$j.so.$version_api" ]; then
+            echo " * $j"
+          else
+            echo " ! $j"
+          fi
+       done
+    fi
+    if [ -z "$plugin_name" ]; then
+      echo "Fehler: kein plugin_name fuer Verzeichniss $i" >&2
+      exit 1
+    fi
+  done
+}

@@ -1,0 +1,105 @@
+#!/bin/sh
+
+# x-vdr (Installations-Skript fuer einen VDR mit Debian als Basis)
+# von Marc Wernecke - www.zulu-entertainment.de
+# 24.01.2009
+
+# /etc/init.d/vdradmin-am
+
+# Default settings
+if [ -f /etc/default/vdr ]; then
+  . /etc/default/vdr
+  USER=$VDRUSER
+  GROUP=$VDRGROUP
+else
+  USER=root
+  GROUP=root
+fi
+
+# Script settings
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/vdradmind
+NAME=vdradmin
+DESC="VDR Webadministration interface"
+PIDFILE=/var/run/vdradmin.pid
+NICE="10"
+
+test -x $DAEMON || exit 0
+
+set -e
+
+# Check if the logfile exists allready, if not, create it and set 
+# group and owner to $USER:$GROUP
+function create_logfile () {
+  LOGFILE="/var/log/vdradmind.log"
+  if [ ! -e $LOGFILE ] ; then
+    touch $LOGFILE
+    chown $USER:$GROUP $LOGFILE
+  fi
+}
+
+function init_language_environment() {
+  if [ -f /etc/environment ]; then
+    for var in LANG LC_ALL LC_CTYPE ; do
+      value=$(egrep "^[^#]*${var}=" /etc/environment | tail -n1 | cut -d= -f2)
+      eval $var=$value
+    done
+  fi
+}
+
+function start_daemon() {
+  if [ "$vdradmin" != "off" ] && [ "$AUTOSTART" != "off" ]; then
+    init_language_environment
+    create_logfile
+    LANG=$LANG start-stop-daemon --start \
+    -c $USER:$GROUP -b -m --nicelevel $NICE --pidfile $PIDFILE \
+    --exec $DAEMON -- -nf
+    echo "$NAME."
+  else
+    echo -n "- aborted (to enable the daemon, edit /etc/default/vdr)"
+  fi
+}
+
+function get_status() {
+  if start-stop-daemon --start --startas $DAEMON --test \
+     --name $(basename $DAEMON) --pidfile $PIDFILE >/dev/null
+  then
+    echo " - is not running."
+    exit 3
+  else
+    echo " - is running."
+    exit 0
+  fi
+}
+
+function stop_daemon() {
+  start-stop-daemon --stop -q -o --pidfile $PIDFILE > /dev/null
+}
+
+case "$1" in
+  start)
+    echo -n "Starting $DESC: "
+    start_daemon
+    ;;
+  stop)
+    echo -n "Stopping $DESC: "
+    stop_daemon
+    echo "$NAME."
+    ;;
+  restart|force-reload)
+    echo -n "Restarting $DESC: "
+    stop_daemon
+    start_daemon
+    ;;
+  status)
+    echo -n "Getting status of $DESC: $NAME"
+    get_status
+    ;;
+  *)
+    N=/etc/init.d/$NAME
+    echo "Usage: $N {start|stop|restart|force-reload}" >&2
+    exit 1
+    ;;
+esac
+
+exit 0

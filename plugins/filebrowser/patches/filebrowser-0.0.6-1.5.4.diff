@@ -1,0 +1,127 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 90_filebrowser-0.0.6-1.5.4.dpatch by Thomas Günther <tom@toms-cafe.de>
+## http://toms-cafe.de/vdr/download/filebrowser-0.0.6-1.5.4.diff
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Changes for VDR >= 1.5.4.
+
+@DPATCH@
+--- filebrowser-0.0.6/statebag.c
++++ filebrowser-0.0.6/statebag.c
+@@ -27,10 +27,10 @@ cFilebrowserStatebag::cFilebrowserStateb
+ #ifdef FILEBROWSER_PLUGIN_BUILD
+   Threads=new cThreadList();
+ #endif
+-  SelectedFiles=new cStringList();
++  SelectedFiles=new cStringListFilebrowser();
+   Commands=new cFilebrowserCommands();
+   BaseDir[0]='\0';
+-  CurrentFiles=new cStringList();
++  CurrentFiles=new cStringListFilebrowser();
+ }
+ 
+ cFilebrowserStatebag::~cFilebrowserStatebag()
+--- filebrowser-0.0.6/statebag.h
++++ filebrowser-0.0.6/statebag.h
+@@ -22,7 +22,7 @@
+ #include <vdr/plugin.h>
+ 
+ //Forward declarations for used classes
+-class cStringList;
++class cStringListFilebrowser;
+ #ifdef FILEBROWSER_PLUGIN_BUILD
+ class cThreadList;
+ #endif
+@@ -31,7 +31,7 @@ class cFilebrowserCommands;
+ class cFilebrowserStatebag
+ {
+   protected:
+-    cStringList* SelectedFiles;
++    cStringListFilebrowser* SelectedFiles;
+ #ifdef FILEBROWSER_PLUGIN_BUILD
+     cThreadList* Threads;
+ #endif
+@@ -41,7 +41,7 @@ class cFilebrowserStatebag
+     cFilebrowserStatebag();
+     ~cFilebrowserStatebag();
+ 
+-    cStringList* GetSelectedFiles() { return SelectedFiles; };
++    cStringListFilebrowser* GetSelectedFiles() { return SelectedFiles; };
+ #ifdef FILEBROWSER_PLUGIN_BUILD
+     cThreadList* GetThreads() { return Threads; };
+ #endif
+@@ -54,7 +54,7 @@ class cFilebrowserStatebag
+     cString Filter;
+     cString CurrentDirectory;
+     cString ConfigDirectory;
+-    cStringList* CurrentFiles;
++    cStringListFilebrowser* CurrentFiles;
+ 
+ #ifdef FILEBROWSER_PLUGIN_BUILD
+     /*
+--- filebrowser-0.0.6/threads.c
++++ filebrowser-0.0.6/threads.c
+@@ -35,7 +35,7 @@ cCommandThread::cCommandThread(cFilebrow
+   this->CurrentFile=CurrentFile ? strdup(CurrentFile) : NULL;
+   this->Statebag=Statebag;
+   //deep copy of Selected files
+-  SelectedFiles=new cStringList();
++  SelectedFiles=new cStringListFilebrowser();
+   for(int i=0; i<Statebag->GetSelectedFiles()->Count(); i++)
+   {
+     SelectedFiles->Add(new cStringContainer(strdup((char*)Statebag->GetSelectedFiles()->Get(i)->GetObject())));
+@@ -304,7 +304,7 @@ cOsdMenu* cConfigCommandThread::GetMenu(
+ 
+ char* cConfigCommandThread::SelectedFilesHandler(const char* OrgString, const char* CurrentPos, const cCommandParser::cHandlerParameters* Params)
+ {
+-  cStringList* SelectedFiles=(cStringList*)Params->Data;
++  cStringListFilebrowser* SelectedFiles=(cStringListFilebrowser*)Params->Data;
+   char* Text=NULL;
+   int TextLength=0;
+   
+--- filebrowser-0.0.6/threads.h
++++ filebrowser-0.0.6/threads.h
+@@ -41,7 +41,7 @@ class cCommandThread : public cThread
+     char* DestinationFile;
+     char* CurrentFile;
+     char* Description;
+-    cStringList* SelectedFiles;
++    cStringListFilebrowser* SelectedFiles;
+     ThreadState State;
+     bool RemoveRequested;
+   public:
+--- filebrowser-0.0.6/tools.c
++++ filebrowser-0.0.6/tools.c
+@@ -19,10 +19,10 @@
+ #include "tools.h"
+ 
+ /*
+-  Implementation cStringList
++  Implementation cStringListFilebrowser
+ */
+ 
+-bool cStringList::Contains(const char* String)
++bool cStringListFilebrowser::Contains(const char* String)
+ {
+   for(cStringContainer *i = First(); i; i=Next(i))
+   {
+@@ -34,7 +34,7 @@ bool cStringList::Contains(const char* S
+   return false;
+ }
+ 
+-void cStringList::Remove(const char* String)
++void cStringListFilebrowser::Remove(const char* String)
+ {
+   for(cStringContainer *i = First(); i!=NULL; i=Next(i))
+   {
+--- filebrowser-0.0.6/tools.h
++++ filebrowser-0.0.6/tools.h
+@@ -55,7 +55,7 @@ class cStringContainer : public cListCon
+     ~cStringContainer() {};
+ };
+ 
+-class cStringList : public cList<cStringContainer>
++class cStringListFilebrowser : public cList<cStringContainer>
+ {
+   public:
+     bool Contains(const char* String);

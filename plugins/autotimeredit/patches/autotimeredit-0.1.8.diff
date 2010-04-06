@@ -1,0 +1,84 @@
+diff -Nur autotimeredit-0.1.8/autotimeredit.c autotimeredit-0.1.8-n/autotimeredit.c
+--- autotimeredit-0.1.8/autotimeredit.c	2005-11-07 16:47:18.000000000 +0100
++++ autotimeredit-0.1.8-n/autotimeredit.c	2006-11-18 23:17:15.000000000 +0100
+@@ -44,7 +44,11 @@
+ tParamInt  update_b_e             = { false, false, false, 0x1, 0x0 }; // begin
+ tParamInt  updatemethod           = { false, false, false, 0x0, 0x0 }; // none
+ tParamInt  updatetimerecords      = { false, false, false, -1 };
++#if VDRVERSNUM >= 10338
++tParamUInt use_defaultdictionary  = { false, false, false, 0x1F, 0x00 }; // all source for default dictionary
++#else
+ tParamInt  use_defaultdictionary  = { false, false, false, 0x1F, 0x00 }; // all source for default dictionary
++#endif
+ tParamInt  use_except_repeat      = { false, false, false, false };
+ tParamInt  use_weekdays           = { false, false, false, false };
+ tParamFile vdradminconfig         = { false, false, false, "/etc/vdradmin/vdradmind.conf" };
+diff -Nur autotimeredit-0.1.8/autotimeredit.h autotimeredit-0.1.8-n/autotimeredit.h
+--- autotimeredit-0.1.8/autotimeredit.h	2005-10-19 23:22:17.000000000 +0200
++++ autotimeredit-0.1.8-n/autotimeredit.h	2006-11-18 23:17:15.000000000 +0100
+@@ -37,6 +37,17 @@
+   int i;                // ignore extentions for vdradmin.at 
+   };
+ 
++struct tParamUInt {
++  bool c;               // read command line
++  bool r;               // read config file
++  bool h;               // hide in setup menu
++  uint d;               // default
++  uint u;               // used
++  uint s;               // config file
++  uint o;               // old value for setup menu
++  uint i;               // ignore extentions for vdradmin.at 
++  };
++
+ struct tParamFile {
+   bool c;               // read command line
+   bool r;               // read config file
+@@ -63,7 +74,11 @@
+ extern tParamInt  update_b_e;
+ extern tParamInt  updatemethod;
+ extern tParamInt  updatetimerecords;
++#if VDRVERSNUM >= 10338
++extern tParamUInt use_defaultdictionary;
++#else
+ extern tParamInt  use_defaultdictionary;
++#endif
+ extern tParamInt  use_except_repeat;
+ extern tParamInt  use_weekdays;
+ extern tParamFile vdradminconfig;
+diff -Nur autotimeredit-0.1.8/autotimers.h autotimeredit-0.1.8-n/autotimers.h
+--- autotimeredit-0.1.8/autotimers.h	2005-10-19 23:22:17.000000000 +0200
++++ autotimeredit-0.1.8-n/autotimers.h	2006-11-18 23:17:15.000000000 +0100
+@@ -24,7 +24,11 @@
+ private:
+   int      active;
+   char     search[MaxFileName];
++#if VDRVERSNUM >= 10338
++  uint     options;
++#else
+   int      options;
++#endif
+   int      useStart;
+   int      startTime;
+   int      useStop;
+diff -Nur autotimeredit-0.1.8/Makefile autotimeredit-0.1.8-n/Makefile
+--- autotimeredit-0.1.8/Makefile	2005-11-07 16:47:18.000000000 +0100
++++ autotimeredit-0.1.8-n/Makefile	2006-11-18 23:17:15.000000000 +0100
+@@ -31,7 +31,7 @@
+ 
+ ### The version number of VDR (taken from VDR's "config.h"):
+ 
+-VDRVERSION = $(shell grep 'define VDRVERSION ' $(VDRDIR)/config.h | awk '{ print $$3 }' | sed -e 's/"//g')
++APIVERSION = $(shell grep 'define APIVERSION ' $(VDRDIR)/config.h | awk '{ print $$3 }' | sed -e 's/"//g')
+ VDRVERSNUM = $(shell grep 'define VDRVERSNUM ' $(VDRDIR)/config.h | awk '{ print $$3 }' | sed -e 's/"//g')
+ 
+ ### The name of the distribution archive:
+@@ -85,7 +85,7 @@
+ 
+ libvdr-$(PLUGIN).so: $(OBJS)
+ 	$(CXX) $(CXXFLAGS) -shared $(OBJS) -o $@
+-	@cp $@ $(LIBDIR)/$@.$(VDRVERSION)
++	@cp $@ $(LIBDIR)/$@.$(APIVERSION)
+ 
+ dist: clean
+ 	@-rm -rf $(TMPDIR)/$(ARCHIVE)

@@ -1,0 +1,19 @@
+[Desktop Entry]
+Comment=VDR Player
+Comment[de]=VDR Player
+Encoding=UTF-8
+Exec=vdrplayer
+GenericName=VDR Player
+GenericName[de]=VDR Player
+Icon=tv
+MimeType=
+Name=VDR Player
+Name[de]=VDR Player
+Path=
+StartupNotify=false
+Terminal=false
+TerminalOptions=
+Type=Application
+X-DCOP-ServiceType=
+X-KDE-SubstituteUID=false
+X-KDE-Username=

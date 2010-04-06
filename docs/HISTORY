@@ -1,0 +1,1461 @@
+# x-vdr (Installations-Skript fuer einen VDR mit Debian als Basis)
+# von Marc Wernecke - www.zulu-entertainment.de
+# 13.04.2009
+
+21.07.2005 x-vdr-0.0.1
+erste Version
+
+22.07.2005 x-vdr-0.0.2
+Fehler beim games-plugin gefixt
+
+Erste Anpassungen fuer kanotix-vdr1.2  umgesetzt:
+Vom xine-plugin zum xine-net-plugin gewechselt
+Kleinen Setup-Dialog in die x-vdr.sh eingebaut
+first-update.sh (bloeder name ;) fuer das erste Update von kanotix-vdr zu Kanotix mit VDR
+vdr-config dateien angepasst.
+x-vdr.conf angepasst
+
+23.07.2005 x-vdr-0.0.2a
+Update auf graphlcd-base-0.1.2-pre6.tgz und Link gefixt.
+mp3sources.conf angepasst
+
+24.07.2005 x-vdr-0.0.3
+neu dabei channelscan-plugin 
+und screenshot-plugin 
+Versionen von xinelib1, xine-ui und xine-plugin werden im Setup Dialog gewaehlt.
+graphlcd-plugin gefixt und update auf
+Fehler im Setup-Dialog behoben
+
+26.07.2005 x-vdr-0.0.3a
+Update auf BigPatch-Final
+Kleiner Aenderungen
+
+27.07.2005 x-vdr-0.0.3b
+Angefangen und dann doch ...
+
+27.07.2005 x-vdr-0.4.0
+... gaaanz viel ueberarbeitet 
+erste Versuche ein install.log erstellen zulassen :)
+neu dabei osdteletext- und mediamvp-plugin
+Neuer Versionen-Code
+
+27.07.2005 x-vdr-0.4.1
+x-vdr.log jetzt in /var/log/x-vdr.log
+xine-plugin sollte jetzt auch mit der ct version gehen
+
+30.07.2005 x-vdr-0.4.2
+README ein wenig erweitert
+update auf femon-0.9.1
+utilities ueberarbeitet
+functionen fuer utilities
+xine-net jetzt mit variabler IP-Adresse
+Klitzekleinen Fehler in apt.sh behoben
+
+01.08.2005 x-vdr-0.4.3
+vdr init-script ueberarbeitet
+runvdr ueberarbeitet
+burn-plugin sollte es nun auch tun 
+Setup-Dialog erweitert
+
+01.08.2005 x-vdr-0.4.4
+Hoffendlich alle Bugs gefunden!
+
+05.08.2005 x-vdr-0.4.5
+ Setup-Dialog weiter ausgebaut.
+ Update beim mp3-plugin NEU: nach dem Eintragen von: /dev/cdrom /cdfs cdfs ro,noauto,user 0 0
+ in der /etc/fstab koennen nun Audio-CDs abgespielt werden !!!Die abschliessende leer Zeile in der fstab nicht vergessen ;)
+ update beim dvd plugin
+ neue libs in apt.sh und first-update.sh
+ screenshot funktioniert jetzt, die Bilder liegen in /tmp
+ uninstall-vdr.sh gibt es nicht mehr - dafuer NEU: 
+ ./install-vdr.sh alive
+ ./install-vdr.sh backup
+ ./install-vdr.sh clean
+ ./install-vdr.sh clean-src
+ ./install-vdr.sh clean-vdr
+ 
+ Script fuer Skins nun mit log-funktion
+ 
+ Experiment !!!!!
+ In der x-vdr.conf kann nun DOALLWEB=1 gesetzt werden. Dann es wird erstmal alles nur geladen (apt-get wird aufgefuehrt) und nicht installiert.
+ Die Funktion ist ungetestet !!!!!!
+
+06.08.2005 x-vdr-0.4.6
+NEU: vdradmin-am
+kleiner fixes
+
+09.08.2005 x-vdr-0.4.7pre1
+Die MediaMVP ans laufen gebracht :)
+Update auf vdr-1.3.28
+Setup-Dialog
+kleinere fixes
+
+10.08.2005 x-vdr-0.4.7pre2
+Am Setup-Dialog und der apt.sh gearbeitet
+
+10.08.2005 x-vdr-0.4.7pre3
+Ganz bloeden Fehler in der Update Funktion behoben
+
+11.08.2005 x-vdr-0.4.7
+NEU: Radio-Plugin
+x-vdr.sh fix
+
+12.08.2005 x-vdr-0.4.8
+Bugfix - Danke an kalium aus dem vdr-portal fuer das aufspueren
+
+13.08.2005 x-vdr-0.4.9pre1
+NEU: vdrsettime - Zeit ueber Transponder einstellen
+Update auf vdr-1.3.28-bigpatch-test2
+Update xine
+Update Plugin xine-0.7.5
+Update Plugin burn-0.0.6g
+Viele, viele kleine Korekturen und der Versuch, das Script wieder ein bisschen zu ordnen.
+
+15.08.2005 x-vdr-0.4.9pre2
+Update auf vdr-1.3.29
+Update auf vdr-1.3.29-bigpatch-test1
+kleine Korektur an der Update Funktion
+
+17.08.2005 x-vdr-0.4.9pre3
+Update Plugin xine-net-0.7.5
+Update Plugin osdteletext-0.5.1
+
+17.08.2005 x-vdr-0.4.9pre4
+Neues Plugin vdr-ffnetdev-0.0.3
+
+kwrite /usr/local/bin/runvdr
+ PLUGINS="$PLUGINS -Pffnetdev"
+ hinzufuegen.
+ 
+ #PLUGINS="$PLUGINS -P'xine -r'"
+ auskommentieren
+
+Danke sagen bei peter_weber69 aus dem vdr-portal 
+
+18.08.2005 x-vdr-0.4.9pre5
+Update -> xine-lib_for_xine-0.7.5-network
+Update -> xine-ui_for_xine-0.7.5-network
+
+19.08.2005 x-vdr-0.4.9pre6
+xine-lib_for_xine-0.7.5-network -> Voruebergehend NUR FESTE IP bzw. 127.0.0.1
+xine-lib_for_xine-0.7.4-network, xine-ui_for_xine-0.7.4-network, vdr-xine-network-0.7.4 erstmal mit ins tar gepackt
+So kann optional auch xine-net-0.7.4 installiert werden.
+
+26.08.2005 x-vdr-0.4.9pre7
+Fix acpi-wakeup in vdr2root und vdrshutdown
+NEU bei den Utilities -> acpi-wakeup-0.1
+Fix kanotix-vdr-first-update-xine-bug :))
+
+29.08.2005 x-vdr-0.4.9pre8
+TEST: dxr3 Plugin und em8300 Module
+NEU: Plugin image-0.2.3
+Update: Plugin epgsearch-0.9.6
+Update: Plugin radio-0.0.7e
+Update: Plugin streamdev auf cvs vom 29.08.2005
+Update: Plugin text2skin  auf cvs vom 29.08.2005
+
+29.08.2005 x-vdr-0.4.9pre9
+Kleiner fix in der first-update.sh bzl. xine-0.7.5
+
+29.08.2005 x-vdr-0.4.9
+vdr init script gefixed
+Update: Plugin ffnetdev-0.0.4
+Parameter fuer das dxr3-plugin werden nun mit in die Make.config geschrieben (x-vdr/functions -> make_makeconfig)
+dxr3 und em8300 ueber Menu auswaehlbar
+graphlcd und graphlcd-base ueber Menu auswaehlbar
+
+31.08.2005 x-vdr-0.4.10pre1
+Update auf vdr-1.3.31 + bigpatch + submenu-patch
+Update auf femon-0.9.3
+Update auf radio-0.0.7f
+
+05.09.2005 x-vdr-0.4.10pre2
+Update auf burn-0.0.6i-pre2 
+Update auf epgsearch-0.9.7
+Kleine fixes in der runvdr und den runvdr templates
+
+12.09.2005 x-vdr-0.4.10pre3
+Update auf vdr-1.3.31-bigpatch-test7_with_LiveBuffer
+New    nordlichtsepg-0.2
+Update auf burn-0.0.6i
+Update auf radio-0.0.8b
+Update auf xine-0.7.6
+
+13.09.2005 x-vdr-0.4.10pre4
+Update auf radio-0.0.8c
+Update auf xine-network-0.7.6
+
+15.09.2005 x-vdr-0.4.10
+x-vdr-0.4.10pre4 wird zu x-vdr-0.4.10
+Update auf nordlichtsepg-0.3
+Downgrade auf burn-0.0.6g
+
+15.09.2005 x-vdr-0.4.11pre1
+Update auf vdr-1.3.32 + bigpatch + submenu-patch
+Neue function zum patchen von Plugins
+Es wird nicht mehr mit VFAT=1 compiliert!!!
+Diese Option steht seit vdr-1.3.32 als Komando zur Verfuegung und kann in der runvdr angegeben werden.
+Extra plugin patches fuer 1.3.32
+- vdr-1.3.32-channelscan-0.0.4b.diff
+- vdr-1.3.32-osdpip-0.0.8.diff
+- vdr-1.3.32-pilot-0.0.8.diff
+- vdr-1.3.32-sleeptimer-0.6.diff
+- vdr-1.3.32-streamdev-cvs.diff
+
+17.09.2005 x-vdr-0.4.11
+x-vdr-0.4.10 wird zu x-vdr-0.4.11
+Fixes in x-vdr/extra/sources.list und x-vdr/extra/preferences
+
+17.09.2005 x-vdr-0.4.12pre1
+x-vdr-0.4.11pre1 wird zu x-vdr-0.4.12pre1
+Fixes in x-vdr/extra/sources.list und x-vdr/extra/preferences
+mplayer script zum test mit beigelegt.
+Fuer mplayer muss die runvdr ergaenzt werden:
+PLUGINS="$PLUGINS -P'mplayer -m $VDRSCRIPTDIR/vdrmount -M $VDRSCRIPTDIR/mplayer.sh'"
+
+17.09.2005 x-vdr-0.4.12pre2
+Update auf vdr-1.3.33 + bigpatch + submenu-patch
+Update auf channelscan-0.0.5
+Scripte fuer dvdselect geaendert
+TEST: New Plugin vdrcd-0.0.10.1
+TEST: mplayer Installation ueber Setup-Dialog 
+apt.sh und first-update.sh fuer mplayer angepasst
+
+06.10.2005 x-vdr-0.4.12
+Update auf vdr-1.3.34 + bigpatch + submenu-patch
+Update dxr3-plugin und em8300 module (fuer Overlay kann in der ldm activate_loopback=1 gesetzt werden)
+Update streamdev auf cvs-20051006
+Update text2skin auf cvs-20051006
+fixes in der runvdr und den runvdr-templates
+fixes in apt.sh und firstupdate.sh
+fix in vdrwritedvd, vdrreaddvd und vdr2root
+
+06.10.2005 x-vdr-0.4.13
+ACHTUNG: Wichtige Bugfixes in vdrwritedvd, vdrreaddvd und vdr2root
+Mehr hat sich nicht geaendert aber diese Skripte sollten aufjedenfall getauscht werden!
+
+08.10.2005 x-vdr-0.4.14
+BUGFIX fuer xine 0.7.6 (die patches in .../xine/xine-0.7.6 wurden nicht gefunden!)
+Update auf vdradmin-0.97-am3.4.1
+Nur fuer kanotix-vdr
+- first-update.sh ueberarbeitet
+- neue kanotix-vdr sources.list und preferences
+- mjpegtools werden nun kompiliert
+
+21.10.2005 x-vdr-0.4.15
+NEU: Laeuft mit Kanotix 2005-04-LITE (getestet mit RC12)
+Update auf bigpatch_test2 
+Update auf screenshot-0.0.7
+Update auf radio-0.0.8d
+TEST: Plugin vdrsoftdevice
+TEST: Plugin rotor (siehe README in x-vdr/plugins/rotor)
+NEU: Bei den Web Adressen fuer die Plugins und Utilities koennen nun Mirrors angegeben werden.
+NEU: apt.sh ueberprueft das installieren der libs und beendet x-vdr bei einem Fehler
+NEU fuer kanotix-vdr1.2: first-update.sh ist rausgeflogen. apt.sh entfernt den  "kanotix-vdr" beim ersten Durchgang automatisch und laed dann die libs.
+
+Folgende Scripte fuer den VDR ueberarbeitet:
+- vdr
+- vdr2root
+- vdrshutdown + shutdown.conf (acpi-wakeup funktioniert nun ohne unix2iso8601)
+- settime
+
+Folgende Scripte fuer x-vdr VDR ueberarbeitet:
+- apt.sh
+- x-vdr.sh
+- functions
+- install-vdr.sh
+- install-skins.sh
+
+27.10.2005 x-vdr-0.4.16
+NEU: Laeuft mit Kanotix 2005-04-LITE (getestet mit RC13)
+install-vdr.sh -> INS_USER angepasst
+
+02.11.2005 x-vdr-0.4.17
+Update auf vdr-1.3.35 + bigpatch + submenu-patch
+Update auf radio-0.0.8e
+Update auf vdradmin-0.97-am3.4.2rc2 
+runvdr -> mplayer mit xine
+apt.sh -> libs fuer vdrburn auf stable gesetzt und lirc gefixt
+
+05.11.2005 x-vdr-0.4.18
+apt.sh -> Bug mit falschen "SUCCESS" Meldungen behoben.
+       -> update von imlib1 auf imlib11-dev
+       -> update von libmagick++6-dev auf libmagick++9-dev
+       -> das hat zu Folge das die libs fuer vdrburn (libmjpegtools0, libmjpegtools-dev, transcode, mjpegtools) wieder aus sid 
+          kommen und vdrburn wahrscheinlich nicht funktioniert. 
+          Wegen dem Update der mjpegtools sollte y4mscaler auch neu uebersetzt werden. 
+          Dafuer vor dem Ausfuehren der apt.sh /usr/bin/y4mscaler und /usr/local/src/y4mscaler* loeschen.
+
+11.11.2005 x-vdr-0.4.19
+Update auf vdr-1.3.36 + bigpatch-test2 + submenu-patch
+dxr3 und em8300 -> installer ueberarbeitet, neue ldm und rmm, aufruf des plugins in der runvdr gefixed 
+Update auf burn-0.0.6k
+Update auf femon-0.9.4
+Update auf streamdev-cvs-20051108.tar.gz
+Update auf text2skin-cvs-20051108.tar.gz
+Update auf vdradmin-0.97-am3.4.2rc3 
+
+12.11.2005 x-vdr-0.4.20
+Update auf vdradmin-0.97-am3.4.2rc4 
+apt.sh -> bei einem ERROR wird nun abgefragt ob das Skript beendet werden soll
+       -> fuer kanotix 2005-04 wird nun auch die "normale" Lirc Version installiert
+
+13.11.2005 x-vdr-0.4.21
+Update auf bigpatch-test3
+Update auf burn-0.0.009
+Update auf femon-0.9.5
+TEST: Plugin vdrsoftdevice-0.2.1 
+	-> damit das Plugin uebersetzt wird muss es in die x-vdr.conf eingetragen werden.
+	-> dann noch in die runvdr: PLUGINS="$PLUGINS -P'softdevice -vo xv:'"
+
+21.11.2005 x-vdr-0.4.22
+Laeuft mit Kanotix 2005-04-LITE (getestet mit RC17)
+Update auf bigpatch-test3a
+Update auf image-0.2.4
+Update auf nordlichtsepg-0.4
+NEU: Plugin mp3-0.9.13-MKIII
+TEST: Plugin softdevice-0.2.1 -> Damit das Plugin funktioniert, muss nach der Installation in /etc/default/vdr VDRUSER="root" gesetzt werden.
+
+18.02.2006 x-vdr-0.4.23
+Skripte aufgeraeumt und kleinere fixes fuer Kanotix 2005-04-LITE (final)
+Versionen die aelter als Kanotix 2005-04 sind, werden nicht mehr unterstuetzt.
+Update auf vdr-1.3.42 + bigpatch-build16 + settime + vdr-submenu-0.7-1.3.42
+Updates bei Plugins:
+	dxr3-0.2.5
+	epgsearch-0.9.12
+	femon-0.9.7
+	mp3-0.9.14
+	nordlichtsepg-0.6
+	radio-0.0.9
+	remote-0.3.5
+	softdevice-0.2.2
+	streamdev-cvs-20060215
+	text2skin-cvs-20060215
+Updates bei Utilities:
+	em8300-0.15.2
+	lirc-0.8.0
+	mplayer-1.0pre7try2
+	vdradmin-am-3.4.3rc3
+	y4mscaler-9.0
+
+19.02.2006 x-vdr-0.4.24
+Neue Funktion zum patchen des vdr mit patch -p1 
+Patches die mit dieser Option ausgefuehrt werden muessen, einfach nach x-vdr/vdr/patches/p1 kopieren.
+Update auf bigpatch-build19 + settime + vdr-submenu
+BP-Build19.diff habe ich in zwei Teile geteilt, BP-Build19-no-libsi.diff und /p1/BP19-libsi.diff
+
+Da sich das Debian-Paket nicht installieren laesst, koennen die mjpegtools-1.8.0 nun kompiliert werden.
+cd /usr/local/src/x-vdr/utilities/mjpegtools
+chmod 0755 install.sh
+install.sh
+
+Leider funktionieren dann das screenshot-plugin und der Fernseher in vdradmin trotzdem nicht zusammen mit dem xine-plugin :(
+Dafuer geht die Cover-Anzeige in mp3-MKIII wieder. 
+
+19.02.2006 x-vdr-0.4.25
+mjpegtools werden jetzt mit apt-get aus debian-marillat (unstable) installiert.
+Kleinere Erweiterungen im Setup-Dialog und bei den Utilities
+
+19.02.2006 x-vdr-0.4.26
+Update auf vdr-1.3.43 + bigpatch-test1 + settime + submenu
+
+20.02.2006 x-vdr-0.4.27
+Neuer Skin: vdrskin-enigma-0.4pre7
+Updates bei Plugins:
+	vdr-channelscan-0.0.5a
+	vdr-dvd-snapshot-20060121
+	vdr-games-0.6.2
+
+20.02.2006 x-vdr-0.4.28
+Update auf vdr-muggle-0.1.9 # muss von Hand in der x-vdr.conf und in der runvdr eingetragen werden!
+TEST: vdr-dvdswich-0.0.3 # muss von Hand in der runvdr eingetragen werden!
+Zwei kleine Bugs beim lirc-installer behoben (fuer Com2 wurden falsche Werte in /etc/modprobe.d/lirc eingetragen
+und in /etc/default/lirc war der Pfad zur lircmd.conf falsch)
+
+22.02.2006 x-vdr-0.4.29
+Update auf vdr-xine-0.7.7
+Update auf xine-lib-cvs-20060212215500 und xine-ui-cvs-20060212215500
+
+22.02.2006 x-vdr-0.4.30
+Die apt.sh hat einen "ERROR" gemeldet. Grund dafuer waren die nicht mehr verfuegbaren:
+libavcodeccvs-dev libavutilcvs-dev libpostproccvs-dev
+Habe das dann erstmal so geaendert:
+libavcodeccvs51-dev libavutilcvs49-dev libpostproccvs51-dev
+
+26.02.2006 x-vdr-0.4.31
+Update auf vdr-1.3.43 + bigpatch-test2 + settime + submenu
+Update auf ffnetdev-0.1.0
+Update auf nordlichtsepg-0.7
+Neuer DL-Mirror fuer screenshot
+Fix fuer xine-net (vdr-xine-0.7.6-compatibility.patch)
+
+28.02.2006 x-vdr-0.4.32
+Update auf vdr-1.3.44 + bigpatch-test1 + settime + submenu
+Der vdr wird jetzt mit gcc-4.0.3 uebersetzt (mplayer aber noch mit gcc-3.3)
+Update auf vdr-epgsearch-0.9.13
+Fix fuer Noad (wurde nicht automatisch installiert)
+Fix fuer mjpegtools (in apt.sh) - libquicktime0 und libquicktime-dev werden jetzt mit apt-get aus debian-sid installiert.
+
+05.03.2006 x-vdr-0.4.33
+Update auf bigpatch-test2
+Update auf vdr-epgsearch-0.9.14a
+Update auf vdr-dvdswitch-0.1.1 (die Scripte fuer das Einlesen und Schreiben und die entsprechende Anpassung in der vdr2root habe ich noch nicht fertig)
+-> Das Plugin muss in der runvdr und in der x-vdr.conf aktiviert werden.
+Neu: vompserver-0.2.1 + client (am besten vor der Installation die Mac-Adresse aendern ->  /x-vdr/plugins/vomp/vomp-00-00-00-00-00-00.conf)
+-> Das Plugin muss in der runvdr aktiviert werden.
+Neu: vdr-graphtft-0.0.8 -> Das Plugin muss in der runvdr aktiviert werden.
+SUCCESS-Meldungen fuer xine geaendert.
+Neue channels.conf
+Update auf vdradmin-am-3.4.3 (laeuft nicht richtig mit vdr-1.3.44)
+
+07.03.2006 x-vdr-0.4.34
+Update auf vdr-screenshot-0.0.8
+Fix und Erweiterung fuer text2skin -> text2skin_extensions-0.8.diff
+
+08.03.2006 x-vdr-0.4.35
+Update auf vdradmin-am-3.4.4beta
+
+12.03.2006 x-vdr-0.4.36
+Getestet mit KANOTIX-2006-CeBIT-RC3
+Update auf vdr-femon-0.9.8
+Update auf vdr-xine-network-0.7.7-1 
+-> xine und xine-network werden jetzt mit dem selben Skript erzeugt. Auswahl in der x-vdr.conf bzw. setup.conf 0=nein, 1=xine , 2=xine-network  (0/1/2)
+Fix: vdr-vompserver-0.2.1 -> Neue download-adresse eingetragen
+Neu: vdr-skinsoppalusikka-0.0.3
+Neu: vdr-undelete-0.0.5
+
+22.03.2006 x-vdr-0.4.37
+Kleinere Korekturen an der README
+Kleinere Korekturen an der runvdr
+Update auf screenshot-0.0.9
+Update auf undelete-0.0.6
+Update auf nordlichtsepg-0.8
+Update auf weatherng-0.0.8-pre1 (neuer Aufruf in der runvdr)
+Update auf vdr-vompserver-0.2.2
+Update auf vdradmin-am-3.4.4beta2
+Update auf xine-0.7.8 (mit xine-lib-cvs-20060319194500 + xine-ui-cvs-20060319194500)
+
+30.03.2006 x-vdr-0.4.38
+Update auf vdr-1.3.45 mit bigpatch-test1 + settime + submenu 
+Update auf vdr-nordlichtsepg-0.8a
+Update auf vdr-skinsoppalusikka-0.0.6
+Fix fuer dxr3 -> dxr3-0.2.5.patch
+Neu vdr-sudoku-0.1.1
+
+02.04.2006 x-vdr-0.4.39
+Update auf vdr-rotor-0.1.4
+Update auf vdr-skinsoppalusikka-0.0.7
+Fix fuer vdr-softdevice -> neue Makefile
+
+11.04.2006 x-vdr-0.5pre1
+Alles anders und vieles neu :)
+
+13.04.2006 x-vdr-0.5pre2
+Update auf vdr-1.3.46 mit bigpatch-spezial + settime + submenu
+Fix fuer die runvdr -> laden der em8300 Module
+
+18.04.2006 x-vdr-0.5pre3
+Update auf vdr-1.3.47 mit bigpatch-spezial + settime + submenu
+Patches fuer burn und streamdev (die Plugins kompilieren - Funktion ist aber ungetestet)
+Update auf vdr-epgsearch-0.9.15
+Update auf vdr-screenshot-0.0.10
+Update auf vdr-skinsoppalusikka-0.2.0
+Update auf vdr-xine-0.7.9
+Update auf em8300-0.15.3
+Neue vdr/setup.conf
+Neue vdr/remote.conf
+Und ein bisschen kosmetik...
+
+Fehler: ffnetdev laesst sich nicht mit vdr-1.3.47 uebersetzen
+
+23.04.2006 x-vdr-0.5pre4
+Aenderungen an apt.sh, functions, x-vdr.sh
+Update auf vdr-1.3.48 mit bigpatch-test1 + settime + submenu + api
+Update auf vdr-dvd-snapshot-20060404
+Update auf vdr-epgsearch-0.9.16
+Update auf vdr-femon-0.9.10
+Update auf vdr-image-0.2.6
+Update auf vdr-radio-0.1.1
+Update auf vdr-skinsoppalusikka-0.4.0
+Update auf vdr-softdevice-snapshot-20060404
+Update auf vdr-streamdev-snapshot-20060404
+TEST: vdr-burn-0.1.0-pre8
+TEST: vdrrip-0.3.0
+
+25.04.2006 x-vdr-0.5pre5
+Aenderungen an functions, x-vdr.sh, install-vdr.sh und runvdr
+Neue VDR-Update Funktionen
+Update auf vdr-burn-0.1.0-pre9
+Update auf vdr-sudoku-0.1.2
+Fix fuer ffnetdev
+
+26.04.2006 x-vdr-0.5pre6
+Aenderungen an functions, x-vdr.sh
+Neue VDR-Backup Funktionen
+Fix fuer xine_lib/utilitie.sh (beim nachtraeglichen installieren wird xine jetzt erst mit apt-get entfernt)
+
+28.04.2006 x-vdr-0.5pre7
+Update auf vdr-1.3.49 mit bigpatch-test1 + settime + submenu + api
+Update auf vdr-graphlcd-snapshot-20060404.tgz
+Update auf vdr-graphlcd-base-snapshot-20060404.tgz
+Update auf vdr-graphlcd-media-snapshot-20060404.tgz
+Update auf vdr-muggle-0.1.10
+Dateien werden nicht mehr von http://gentoo.fh-luh.de/files/ geladen
+
+30.04.2006 x-vdr-0.5.0
+Update auf vdr-1.4.0 mit bigpatch-test1 + settime + submenu + api
+Update auf vdr-channelscan-0.1.0
+Update auf vdr-mp3-0.9.15pre9
+Neu: vdr-extrecmenu-0.10-test2
+Aenderungen an functions, x-vdr.sh, x-vdr.conf, runvdr und diversen vdr-configs
+Plugin-Auswahl geaendert
+Backup - Fehler beim zurueckspielen der Sourcen behoben
+
+08.05.2006 x-vdr-0.5.1
+Aenderungen an functions, x-vdr.sh, x-vdr.conf und runvdr
+-> Parameter fuer x-vdr.sh koennen jetzt zusammen gesetzt werden zB: x-vdr -d /root/x-vdr -i
+-> das Menu wird jetzt mit Xdialog dargestellt (falls xdialog installiert ist und X laeuft). Wer weiter dialog benutzen moechte: --no-xdialog oder kurz: -n
+Fix fuer apt.sh -> libdvdread-dev
+Fix fuer vdr-graphlcd-0.1.3 -> ppdev0: negotiated back to compatibility mode because user-space forgot
+Update auf vdr-burn-0.1.0-pre10
+Update auf vdr-dvdswitch-0.1.2
+Update auf vdr-dxr3-0.2.6
+Update auf vdr-extrecmenu-0.10
+Update auf vdr-femon-1.0.0
+Update auf vdr-remote-0.3.7
+Update auf vdr-skinsoppalusikka-1.0.0
+Neu: vdr-pilotskin-0.0.2
+Neu: vdr-director-0.2.6
+
+09.05.2006 x-vdr-0.5.2
+Aenderungen an apt.sh, functions, x-vdr.sh, x-vdr.conf, install-vdr.sh und runvdr
+-> ueberpruefen der on/off settings aus x-vdr.conf und setup.conf
+Neue Option -> wenn vor einem Update das alte x-vdr Verzeichnis in x-vdr_old umbenannt wird, sucht das Skript dort nach Plugins und Utilities
+
+10.05.2006 x-vdr-0.5.3
+Aenderungen an x-vdr.sh -> Da bei einigen Xdialog Probleme gemacht hat, ist jetzt wieder dialog als standard eingetragen. Ich Versuche aber weiter herraus zu finden was das sein koennte. Getestet werden kann mit: x-vdr.sh -x
+
+18.05.2006 x-vdr-0.5.4
+Aenderungen an apt.sh, functions, x-vdr.sh und install-vdr.sh
+- Diverse neue Funktionen und andere Basteleien
+- x-vdr kann jetzt vom User (nicht root) mit der Maus gestartet werden :)
+- root muss sich dafuer einen Link setzen (~/x-vdr/x-vdr.sh -x)
+Update auf vdr-1.4.0-1 mit bigpatch-test1 + settime + submenu + api
+Update auf vdr-burn-0.1.0-pre13
+
+27.05.2006 x-vdr-0.5.5
+Aenderungen an functions, x-vdr.sh und runvdr
+Neu: vdr-mp3ng-0.0.9
+Update auf vdr-vompserver-0.2.3
+
+17.06.2006 x-vdr-0.5.6
+Update auf vdr-1.4.0-3 mit bigpatch + settime + submenu + api
+Aenderungen an apt.sh, functions, x-vdr.sh und install-vdr.sh
+Update auf xine-lib-cvs-20060616093600 und xine-ui-cvs-20060616093600
+Update auf vdr-burn-0.1.0-pre18
+Update auf vdr-director-0.2.8
+Update auf vdr-epgsearch-0.9.17b
+Update auf vdr-extrecmenu-0.12
+Update auf vdr-mp3ng-0.0.9a
+Update auf vdr-vompserver-0.2.4
+Update auf vdr-xineliboutput-0.99rc5
+Patches fuer channelscan, graphtft, mp3ng, newsticker, osdpip
+
+19.06.2006 x-vdr-0.5.7
+Update auf vdr-1.4.1-1 mit bigpatch + settime + submenu + api
+Adresse fuer debian-marillat in der apt.sh geaendert. (Die alte Adresse muss von Hand aus /etc/apt/sources.list entfernt werden.)
+
+06.07.2006 x-vdr-0.5.8
+Update auf vdr-1.4.1-1 mit bigpatch(ohne lnb-sharing) + settime + submenu + api
+Aenderungen an apt.sh, x-vdr.sh und install-vdr.sh
+Update auf vdr-burn-0.1.0-pre20
+Update auf vdr-epgsearch-0.9.17c
+Update auf vdr-screenshot-0.0.11
+Update auf vdr-tvonscreen-1.0.141
+Fix fuer muggle
+Update auf MPlayer-1.0pre8
+
+07.07.2006 x-vdr-0.5.9
+Leider sind beim packen von x-vdr-0.5.8 ein paar Verzeichnisse verschwunden.
+Darum jetzt noch mal komplett
+
+12.07.2006 x-vdr-0.5.10
+Aenderungen an functions und runvdr
+Update auf vdr-skinsoppalusikka-1.0.1
+Update auf vdr-softdevice-0.2.3a
+Fix fuer burn-0.1.0-pre20 -> genindex wird jetzt installiert wenn es nicht gefunden wird
+Kleinere fixes fuer graphlcd, graphtft und install-skins.sh
+
+18.07.2006 x-vdr-0.6.0
+Aenderungen an x-vdr.sh, functions,install-vdr.sh, install-skins.sh, mplayer/utilitie.sh,
+graphlcd/plugin.sh, graphtft/plugin.sh, screenshot/plugin.sh, vompserver/plugin.sh
+
+Die Sourcen werden jetzt zentral in x-vdr/files/* gespeichert. 
+Damit bei einem Update von 0.5.10 keine Dateien erneut geladen werden muessen, wird zusaetzlich in dem jeweiligen Plugin oder Utilitie Verzeichnis gesucht. Dafuer kann x-vdr-0.5.10 mit dieser Version ueberschrieben werden.
+Die Funktion "x-vdr_old" habe ich wieder entfernt.
+Es gibt eine neue Funktion im Installations Menu - "Einzelnes Plugin bearbeiten"
+Im wesendlichen werden hier die Befehle --clean, --make und --remake der jeweiligen plugin.sh fuer das Plugin angeboten.
+Dazu kann das Plugin-Verzeichnis im Browser geoeffnet und bearbeitet werden.
+Als Anpassung an Parsix funktionieren Browser und Editor jetzt auch mit gnome.
+
+24.07.2006 x-vdr-0.6.1
+Bugfix -> In /usr/local/src wurde anstatt des Symlinks zu x-vdr, ein Verzeichnis "x-vdr" angelegt.
+Aenderungen an x-vdr.sh, x-vdr.conf, functions und install-vdr.sh
+Aenderungen an runvdr, vdr2root und vdrnoad
+Neu: Unterstuetzung fuer parsix-0.81 (http://parsix.org)
+Neu: audiorecorder (0.1.0-pre4) - floods your disc with music
+Update auf vdr-femon-1.0.1
+Fix fuer graphlcd (neuer patch)
+Fix fuer muggle (libmysqlclient12-dev -> libmysqlclient15-dev)
+Neu: ProjectX fuer burn
+ffmpeg: Fix fuer libavcodeccvs51-3:20060720-0.1 (x-vdr/extra/ffmpeg.diff wird innerhalb der apt.sh angewendet)
+Optional kann jetzt auch die aktuelle Version aus dem SVN installiert werden. 
+Dafuer einfach, vor der Installation, in apt.sh oder x-vdr.conf ffmpeg="on" eintragen.
+
+Folgende Dateien werden jetzt dynamisch mit x-vdr/vdr/make-conf.sh erstellt
+x-vdr/vdr/conf
+ -commands.conf
+ -reccmds.conf
+ -setup.conf
+Wer eigene Versionen benutzen moechte kann diese in x-vdr/vdr/conf ablegen
+Das Skript erstellt die Dateien erst und ueberschreibt diese dann - falls in x-vdr/vdr/conf vorhanden
+
+Aenderung an der Verzeichnis Struktur:
+ - es werden keine Symlinks mehr zu Verzeichnissen wie $VIDEODIR, $MUSICDIR etc. angelegt
+ - aus diesem Grund muessen die neuen Versionen von runvdr, vdr2root und vdrnoad verwendet werden
+
+Weiter werden, bei folgenden Plugins bzw. Utilities, Teile der Konfiguration durch x-vdr erzeugt - wenn diese nicht im jeweiligen Verzeichnis liegen
+ -image (imagesources.conf)
+ -mediamvp (picturesources.conf)
+ -mp3 (mp3sources.conf, mplayersources.conf)
+ -mp3ng (mp3sources.conf, mplayersources.conf)
+ -vdradmin-am (vdradmind.conf)
+
+Aenderung an runvdr und /etc/default/vdr:
+Die Plugin-Optionen und die DVB-Module werden jetzt nicht mehr in der runvdr sondern in /etc/default/vdr gespeichert.
+
+Neu: x-vdr/extra/symsalabim (Skript zum anlegen von Symlinks zu dem ganzen VDR Kram)
+Kann erst nach der Installation verwendet werden!
+Dem Skript kann als Parameter das Verzeichnis uebergeben werden, in dem die Symlinks erzeugt werden sollen.
+cd /usr/local/src/x-vdr/extra
+./symsalabim ~/symlinks
+... erstellt im Heimatverzeichnis ein Verzeichnis "symlinks" und erzeugt darin dann die Symlinks
+Wird kein Parameter uebergeben, wird das momentane Verzeichnis verwendet.
+cd ~
+/usr/local/src/x-vdr/extra/symsalabim
+... erstellt im Heimatverzeichnis ein Verzeichnis "vdrsyms" und darin dann die Symlinks
+
+31.07.2006 x-vdr-0.6.2
+Aenderung an functions und x-vdr.sh - Einstellungen in /etc/default/vdr, setup.conf und x-vdr.conf sind jetzt alle mit "" Ausrufezeichen
+Aenderung an der runvdr - VDR Settings aus /etc/default/vdr werden bei einem Neustart erneut eingelesen
+Bugfix: "./../functions: line 88: [: missing `]'" - Danke an Chris fuers melden.
+Update auf vdr-radio-0.1.3
+Zwei neue Plugins: admin und console
+Fuer admin habe ich Skripte und Conf an x-vdr angepasst. 
+Leider dauert das Speichern der Einstellungen so 10-15 Sekunden. Bis jetzt koennen Verzeichnisse geaendert werden. Plugins aktiviert oder deaktiviert werden. Plugin Argumente angepasst werden.
+Fix fuer graphtft -> laeuft jetzt mit ffmpeg-0.4.9 und damit ist auch die Ausgabe ueber eine FF moeglich.
+Alle Utilities ueberarbeitet - "*" wildcard beim uninstall entfernt, um das loeschen anderer Versionen zu unterbinden
+Diverse Plugins ueberarbeitet.
+
+07.08.2006 x-vdr-0.6.3
+Update auf vdr-1.4.1-3 mit bigpatch(ohne lnb-sharing) + settime + submenu + api
+Aenderungen an install-vdr.sh - Patches in x-vdr/vdr/patches werden jetzt immer mit "patch -f -p 1" angewendet.
+Update auf xineliboutput-1.0.0pre1
+Neue channels.conf
+admin-plugin - Skripte geaendert, das Speichern der Einstellungen dauert nun deutlich weniger als 10 Sekunden
+
+14.08.2006 x-vdr-0.6.4
+Update auf vdr-1.4.1-4 mit bigpatch(ohne lnb-sharing) + settime + submenu + api
+Aenderungen an x-vdr.conf - tvonscreen pfad zu logos eingetragen
+Update auf vdr-epgsearch-0.9.17d
+Fix fuer skinelchi - vdr-skinelchi-0.1.1pre2.PatchCollection.diff
+
+Aenderungen fuer dvdselect und dvdswitch
+  - Update auf vdr-dvdswitch-0.1.3
+  - vdr2root, vdrreaddvd und vdrwritedvd angepasst
+  - vdrreaddvd und vdrwritedvd werden jetzt durch install-vdr.sh installiert und nicht mehr durch die plugins
+
+Code cleaning...
+
+15.08.2006 x-vdr-0.6.5
+Update auf vdr-radio-0.1.4
+Loesungen fuer Probleme mit der Lautstaerkeregelung:
+ - graphlcd (Lautstaerke wurde nicht richtig angezeigt(vdr-graphlcd-volume.diff))
+ - mp3 (Update auf vdr-mp3-0.9.15pre14)
+ - mp3ng (Aenderung aus mp3-0.9.15pre14 in player-mplayer.c eingebaut (mp3ng-volume.diff))
+
+Admin-Plugin
+ - setvdr.sh aendert nun auch die *sources.conf fuer mp3-, mplayer- und image-plugin
+
+16.08.2006 x-vdr-0.6.6
+text2skin
+ - neue Version: vdr-text2skin-1.1-cvs_ext-0.8.tgz
+ - Bugfix fuer "Absturz bei WH-Timern"    -> x-vdr/plugins/text2skin/patches/text2skin-wh_timer.diff
+ - Bugfix fuer "keine Schrift mit Enigma" -> x-vdr/plugins/text2skin/patches/p1/text2skin-font.diff
+
+18.08.2006 x-vdr-0.6.7
+admin-plugin
+ - Durch falsch gesetzte Rechte auf das Verzeichnis x-vdr/plugins/admin/admin wurden die Skripte und die Konfig
+   fuer das Plugin nicht nach /var/lib/vdr/plugins kopiert.
+
+19.08.2006 x-vdr-0.6.8
+burn  - transcode in der apt.sh auf unstable gesetzt
+
+20.08.2006 x-vdr-0.6.9
+Update auf vdr-1.4.1-5 mit bigpatch(ohne lnb-sharing) + settime + submenu + api
+Aenderungen an functions, x-vdr.sh, x-vdr.conf und runvdr
+Neu: premiereepg (0.0.6) - Parses extended Premiere EPG data
+burn - falsche ERROR Meldungen fuer genindex, requant und vdrsync.pl beseitigt
+mplayer - Skin Blue wurde nicht installiert -> Skin im Skript auf Version 1.6 umgestellt
+Kleinere Korrekturen fuer folgende Plugins (plugin.sh):
+ - admin (plus neue admin.conf)
+ - control
+ - epgsearch
+ - ffnetdev
+ - mp3
+ - mp3ng
+ - pilot
+
+27.08.2006 x-vdr-0.6.10
+Update auf vdr-1.4.2 mit bigpatch(ohne lnb-sharing) + settime + submenu + api
+Aenderungen an x-vdr.sh, x-vdr.conf, apt.sh, functions, runvdr und diversen anderen
+Neu: LCDproc 0.5.0
+Neue Plugins:
+ - cdda (0.1.0) - music cd player
+ - filebrowser (0.0.6) - Plugin to browse through files and execute actions on them
+ - fussball (0.0.3b) - Zeigt die 1.Bundesliga Fussball Ergebnisse an
+ - lcdproc (0.0.10) - LCDproc output
+Update auf xineliboutput-1.0.0pre3 (und plugin.sh ueberarbeitet)
+mp3ng -> wird nun mit OSS unterstuetzung gebaut
+MPlayer-1.0pre8 -> fix fuer vdrrip und neue Downloadadresse
+
+29.08.2006 x-vdr-0.6.11
+Update des bigpatch auf Version 33.1
+Aenderungen an x-vdr.sh, x-vdr.conf, functions, runvdr, make-conf.sh und diversen anderen
+Default Plugins (hello, osddemo, servicedemo, skincurses, sky, status, svdrpdemo) koennen jetzt ueber das Menu aktiviert werden
+Updates bei folgenden Plugins:
+ - dvd-snapshot-20060828
+ - graphlcd-snapshot-20060828
+ - streamdev-snapshot-20060828
+Updates bei folgenden Utilities:
+ - graphlcd-base-snapshot-20060828
+
+01.09.2006 x-vdr-0.6.12
+Aenderungen an x-vdr.sh, x-vdr.conf, functions, runvdr
+Neue Plugins:
+ - digicam (1.0.1) - Plugin to access a digital camera
+ - pin (0.0.20) - Pin code plugin
+ - recstatus (0.0.3) - recording status monitor
+Updates bei folgenden Plugins:
+ - filebrowser - skripte und configs werden jetzt installiert
+ - softdevice-cvs-20060831
+Neu: vidix-cvs-20060831
+
+03.09.2006 x-vdr-0.6.13
+Update auf vdr-1.4.2-1 mit bigpatch (ohne lnb-sharing) + settime + submenu + api
+Aenderungen an x-vdr.sh
+Update auf:
+ - audiorecorder-0.1.0pre5
+Downgrade auf:
+ - vdr-softdevice-0.2.3a (Mit der CVS Version funktioniert die Ausgabe ueber xv nicht)
+ - graphlcd-base-snapshot-20060404 (Messages werden mit der neuen Version nicht angezeigt)
+
+09.09.2006 x-vdr-0.6.14
+Update auf vdr-1.4.2-2 mit bigpatch (bp-33.5) + settime + submenu + api
+Aenderungen an x-vdr.sh -> Fix fuer "Backup zurueck spielen" (VDR wurde unter bestimmten Bedingungen nicht mehr automatisch gestartet)
+Aenderungen an x-vdr.sh, x-vdr.conf, functions, runvdr -> span-plugin
+Neu: span (0.0.3) - Spectrum Analyzer for music-data 
+ -> die patches fuer cdda, mp3, graphlcd und lcdproc werden angewendet
+Update auf:
+ - audiorecorder-0.1.0pre6
+ - xine-lib-1.1.2
+Fix fuer mp3ng -> mplayer-plugin wird jetzt nicht mehr entfernt, wenn mp3=on ist.
+Fix fuer admin -> streamdev-server und streamdev-client + neue Plugins ergaenzt.
+
+23.09.2006 x-vdr-0.6.15
+Update auf vdr-1.4.3 mit bigpatch (bp-33.7) + settime + submenu + api + lnb sharing (optional)
+Aenderungen an x-vdr.sh, x-vdr.conf, apt.sh, install-vdr.sh und make-conf.sh
+Plugin Updates:
+- vdr-burn-0.1.0-pre21 -> apt.sh (libboost-dev libgd2-xpm-dev)
+- vdr-femon-1.1.0
+- vdr-mp3-0.9.15
+- vdr-pin-0.1.0
+- vdr-skinsoppalusikka-1.0.2
+- vdr-softdevice-cvs-20060923
+
+08.10.2006 x-vdr-0.6.16
+Update auf vdr-1.4.3-1 mit bigpatch (bp-33.8) + settime + submenu + api + lnb sharing (optional)
+ACHTUNG: Die Patche fuer den VDR (/x-vdr/vdr/patches) sind umbenannt worden. Dies ist bei einem Update zu beruecksichtigen.
+Plugin Updates:
+- vdr-epgsearch-0.9.18
+- vdr-pin-0.1.1
+- vdr-xineliboutput-1.0.0pre5
+Update auf VDRAdmin-AM v3.4.7
+
+09.10.2006 x-vdr-0.6.17
+Bugfix -> fehlenden Patch fuer das Submenu-Plugin ergaenzt.
+       -> lnbs_after_bp-33.7.diff wieder aus x-vdr/vdr/patches entfernt. Wer den Patch nutzen moechte findet diesen in x-vdr/vdr
+Plugin Update:
+- vdr-softdevice-0.3.0
+
+10.10.2006 x-vdr-0.6.18
+Update auf vdr-1.4.3-1 mit bigpatch (bp-33.9) + settime + submenu + api + lnb sharing (optional)
+-> Fix fuer vdr-1.4.3-1 eingebaut
+Neuen Menupunkt "VDR Patchlevel" im "Installationsmenu" eingebaut
+-> Patche koennen an und ab gewaehlt werden
+-> lnbs_after_bp-33.7.diff liegt jetzt in x-vdr/vdr/patches-all und ueber das Menu aktiviert werden
+-> damit das "VDR Patchlevel Menu" auch in der "Dialog gefuehrten Installation" erscheint, kann x-vdr.sh mit dem Parameter -p gestartet werden
+
+13.10.2006 x-vdr-0.7.0
+Anpassungen an KANOTIX 2006-01-RC4
+- neue init-skripte fuer vdr und vdradmin-am
+- neue runvdr und vdr2root
+- fix fuer lirc
+- fix fuer mplayer (bei fehlenden lirc sourcen)
+- fix fuer vdr-graphlcd(span-patched) und gcc-4.1
+- vidix wird jetzt als erstes utilitie uebersetzt
+- alle deutschen umlaute ersetzt und ein bisschen aufgeraeumt
+TODO:
+- dual installation ist noch experimental
+- cdfs geht noch nicht
+- dxr3 ist ungetestet
+
+15.10.2006 x-vdr-0.7.1
+Update auf vdr-1.4.3-2 mit bigpatch (bp-33.10) + api + settime + submenu + lnb sharing (optional)
+Kleine Korrektur bei burn-bc
+
+18.10.2006 x-vdr-0.7.2
+Update auf vdr-1.4.3-2 mit bigpatch (bp-33.11) + api + settime + submenu + lnb sharing (optional)
+Aenderungen an x-vdr.sh -> USELIRC-Schalter
+Aenderungen an install-vdr.sh -> USELIRC-Schalter und autopatch fuer subtitles-plugin
+Fix fï¿½r Lirc mit Kernel 2.6.18 -> lirc/utilitie.sh, mplayer/utilitie.sh
+Update auf lirc-0.8.1pre2
+Fix bei den init-skripten fuer vdr und vdradmin-am
+Kleinere Korrekturen an vdrshutdown
+Neue Plugins:
+-> subtitles-0.4.0 (fuer das Plugin muss der VDR neu erstellt werden, der notwendige Patch wird automatisch eingespielt)
+-> ripit-0.0.1a (muss von Hand eingerichtet und in der x-vdr.conf angeschaltet werden)
+
+22.10.2006 x-vdr-0.7.3
+Update auf vdr-1.4.3-3 mit bigpatch (bp-33.12) + api + settime + submenu + lnb sharing (optional)
+Korrekturen an folgenden Skripten: runvdr, vdr, vdradmin-am, vdrshutdown und shutdown.conf
+vidix -> symlink zu /usr/lib/libdha-0.4.so wird jetzt automatisch angelegt
+
+30.10.2006 x-vdr-0.7.4
+Update auf vdr-1.4.3-4 mit bigpatch (bp-33.13) + api + settime + submenu + lnb sharing (optional)
+Fix fuer vdrshutdown -> Timer wurden nicht gesetzt (Dank an kay1234@vdr-portal fuer die Meldung!)
+Fix fuer b2c2_flexcop_pci in der runvdr
+Update auf vdr-epgsearch-0.9.19
+Update auf vdr-premiereepg-0.0.7
+Neues Plugin -> playlist-0.0.2rc3
+Lirc installer ueberarbeitet
+
+01.11.2006 x-vdr-0.7.5
+Aenderungen an x-vdr.sh und x-vdr.conf -> VFAT-Schalter
+Aenderung an install-vdr.sh -> autopatch fuer graphtft
+Update auf graphtft-0.0.10a
+Update auf vdradmin-am-3.5.0beta
+admin-plugin -> fehlende Plugins ergaenzt
+
+03.11.2006 x-vdr-0.7.6
+Update auf vdr-1.4.3-4 mit bigpatch (bp-33.14) + api + settime + submenu + lnb sharing (optional)
+bigpatch -> Fix fuer Audio/Video Repacker
+ï¿½nderungen an x-vdr.sh, x-vdr.conf, functions, install-vdr.sh und runvdr
+runvdr -> Fix fuer KEYB_TTY="" (Danke an wundertuete@vdr-portal fuer die Meldung)
+Neues Plugin: ttxtsubs-0.0.5
+Update auf graphtft-0.0.12
+Update auf vdradmin-am-3.5.0rc
+
+05.11.2006 x-vdr-0.7.7
+Update auf vdr-1.4.4 mit bigpatch (bp-33.15) + api + settime + lnb sharing (optional)
+install-vdr.sh -> update auf vdr-1.4.4 und autopatch fuer submenu-plugin
+functions -> Fix fuer make_autostart (Fehler bei vdradmin-am)
+epgsearch-plugin -> Fix fï¿½r graphtft-patch
+graphtft-plugin -> Patch fuer VDR umbenannt
+radio-plugin -> Hintergrundbild wird jetzt aus den Plugin-Sourcen kopiert
+
+19.11.2006 x-vdr-0.7.8
+Update auf vdr-1.4.4 mit bigpatch (bp-33.16) + lnb sharing (optional)
+- bzw. auf vdr-1.4.4 mit vdr-1.4.4_extensions.diff (alle Patche optional)
+bigpatch -> Settime-Patch, Update auf liemikuutio-1.13, Fix fuer AV-Repacker
+x-vdr.sh -> Test ob dialog installiert ist und /bin/sh auf /bin/bash zeigt
+         -> Neue Funktion "Konfiguration speichern" in "Einzelnes Plugin bearbeiten"...
+         -> Neue Backup-Funktion
+         -> Neue Patchlevel-Funktion
+vdradmin -> VDRUSER darf jetzt in /etc/vdradmin schreiben
+Plugin-Updates:
+- extrecmenu-0.12a
+- graphtft-0.0.14
+- remote-0.3.8
+- ripit-0.0.2
+- softdevice-0.3.1
+- xineliboutput-1.0.0pre6
+Utilitie-Updates:
+ - em8300-snapshot-20061117
+ - vdradmin-am-3.5.0
+
+21.11.2006 x-vdr-0.7.9
+apt.sh -> Fix fuer libfaad2-dev
+bigpatch (bp-33.17) -> Fix fuer DVDCHAPJUMP
+install-vdr.sh -> Fix fuer BIGPATCH mit DVDCHAPJUMP
+-x-vdr.sh -> Plugin Funktion ueberarbeitet
+Plugin-Updates:
+ - text2skin-1.1-cvs_ext-0.9a (mit DeepBlue und Neu: Enigma-0.4pre8)
+
+12.12.2006 x-vdr-0.7.10
+Update auf vdr-1.4.4-2 mit bigpatch (bp-33.18) + lnb sharing (optional)
+- bzw. auf vdr-1.4.4-2 mit vdr-1.4.4_extensions.diff (alle Patche optional)
+Total viele neue Plugins (Danke fï¿½r die Vorarbeit an wino@vdr-portal)
+Diverse kleinere Bugs behoben und gaaanz viel geaendert!!
+intern:
+Bei der ersten Installation werden durch die apt.sh jetzt nur noch Pakete installiert die wirklich fehlen. Wenn es sich vermeiden laesst, werden keine Pakete aktuallisiert. Im System Menu kann aber mit Punkt '4' 'System aktualisieren (apt.sh)' eine Aktuallisierung aller in der apt.sh eingetragenen Pakete durchgefuehrt werden.
+Der Forschrittsbalken fï¿½r die Plugin-Vorbereitungen ist raus geflogen. Die Funktionen zum erstellen der Plugins sind in ein eigenes Skript (plugins.sh) gewandert. Damit koennen die Plugins in nur einem rxvt Fenster erstellt werden und eine uebersichtliches Logging ist mï¿½glich.
+kanotix:
+getestet mit kanotix-2006-01-RC4 (KANOTIX-2006-01-RC4.iso)
+parsix:
+getestet mit parsix-0.85-2 (parsix_085-test-2.iso)
+ubuntu:
+getestet mit ubuntu-6.10 (ubuntu-6.10-desktop-i386.iso)
+
+17.12.2006 x-vdr-0.7.11
+EXTENSIONS ist jetzt das Default-Patchlevel
+Update auf vdr-extensions.diff Version 3 (jetzt mit noepgmenu-plugin)
+Update auf vdr-reelchannelscan-0.4.0
+Update auf vdr-xine-0.7.10 (mit xine-lib-1.1.3)
+Downgrade zu vdr-burn-0.1.0-pre21 mit 90_i18n-fix.patch
+Doppelten mplayer Eintrag in der x-vdr.conf entfernt
+
+23.12.2006 x-vdr-0.7.12
+Ein paar interne Aenderungen und ...
+Plugin-Updates:
+- vdr-atmo-0.1.1
+- vdr-mousemate-0.1.3pre4
+- vdr-xineliboutput-cvs-20061223
+
+31.12.2006 x-vdr-0.7.13
+Update des VDR-Extensions Patch auf Version 4 (jetzt mit cuttime-vdr-1.4.0.diff)
+Update auf vdr-radio-0.2.0
+Fix fuer vdr-streamplayer-0.1.3
+News:
+# x-vdr laeuft nun auch mit sidux
+# vdrplayer ersetzt vdrxine und kann jetzt zum starten von xine, xine-network, vdr-sxfe (xineliboutput), ShmClient (softdevice) oder tvtime (FF-Karte) benutzt werden. Das Skript kann auch einen X Server starten. Damit das auch der vdruser darf, habe ich bei mir in /etc/X11/Xwrapper.config "allowed_users" auf "anybody" gesetzt (allowed_users=anybody). In x-vdr/extra liegt ein Desktop-Button fuer den vdrplayer. Um zB tvtime aus dem OSD zustarten, um auf dem Projektor einen Film zu schauen, kann ein Eintrag in die commands.conf eingefuegt werden:
+- Tvtime starten?                   : echo "/usr/bin/vdrplayer --player tvtime"|at now
+- Tvtime beenden?                   : echo "/usr/bin/vdrplayer --exit"|at now
+- Tvtime und X-Server beenden?      : echo "/usr/bin/vdrplayer --killall"|at now
+Der Eintrag kann aber auch fuer zB Xine benutzt werden, dann allerdings nur zum neustarten :)
+- VDR Player neustarten?            : echo "/usr/bin/vdrplayer --player xine"|at now
+oder fuer vdr-sxfe:
+- VDR Player neustarten?            : echo "/usr/bin/vdrplayer --player vdr-sxfe --ip 127.0.0.1"|at now
+# nvram-wakeup kann jetzt (endlich) auch mit grub eingesetzt werden.
+Dafuer muessen die neuen Versionen von vdr2root, vdrshutdown und shutdown.conf verwendet werden!
+In vdr2root wird "grub-set-default 2" ausgeloest. Der Eintrag in /boot/grub/menu.lst muss also der dritte sein (Zaehlweise dort ist 0,1,2) oder vdr2root muss angepasst werden.
+Falls der VDR mit dem "halt" nicht aufwacht (wie bei mir), kann eventuell ein poweroff-kernel helfen. Dazu den Kernel am besten nach /boot kopierern und den Eintrag in /boot/grub/menu.lst ensprechend anpassen:
+title		Poweroff
+root		(hd0,0)
+savedefault	0
+#kernel		/boot/bzImage.2.6.9.poweroff root=/dev/hda1 ro quiet
+halt
+
+03.01.2007 x-vdr-0.7.14
+Die em8300-module und das dxr3-plugin laufen jetzt mit sidux ...
+utilitie.sh fuer em8300 ueberarbeitet und das laden der Module aus der runvdr genommen
+Erste Gehversuche mit tvmovie2vdr und vdrconvert
+Neues Plugin:
+- vdr-pvrinput-0.1.1 (da ich keine passende Hardware habe, konnte ich die Funktion nicht testen)
+Plugin Updates:
+- vdr-dxr3-0.2.7-cvs
+- vdr-extrecmenu-0.12c
+- vdr-image-0.2.7
+- vdr-mousemate-0.1.3
+- vdr-tvtv-0.3.2
+
+05.01.2007 x-vdr-0.7.15
+Update auf vdr-1.4.4-3 mit VDR-Extensions Patch v6 (alle Patche optional)
+- bzw.  auf vdr-1.4.4-3 mit Bigpatch (bp-33.19) + lnb sharing (optional)
+Neues Plugin: vdr-setup-0.3.1 (Das Plugin ist nicht konfiguriert. Wird das Plugin augewaehlt, wird das Submenu-Plugin abgeschaltet.)
+Neue Komandos beim vdrplayer (--reset, --help und --version)
+
+07.01.2007 x-vdr-0.7.16
+Update auf vdr-1.4.5 mit VDR-Extensions-Patch-8 (alle Patche optional)
+- bzw.  auf vdr-1.4.5 mit Bigpatch (bp-33.20) + lnb sharing (optional)
+Plugin Updates:
+ - vdr-pin-0.1.5
+Plugin Konfiguration -> jetzt koennen auch die "zweit-plugins" wie streamdev-client oder mplayer konfiguriert werden.
+setup-plugin -> neue Konfiguration (die sysconfig muss selber in die runvdr eingebunden werden), Patch gegen die fehlenden Plugins in der Pluginauswahl
+
+08.01.2007 x-vdr-0.7.17
+Update auf VDR-Extensions-Patch-9
+Im Paket ist jetzt noch eine zweite Version des VDR-Extensions-Patch, angepasst an die neue VDR Developer Version 1.5.0
+Ganz kleine ï¿½nderung am Patch fï¿½r das neue Setup-Plugin
+
+10.01.2007 x-vdr-0.7.18
+Update auf VDR-Extensions-Patch-11 -> TimerMenu, SwitchTimer, ValidInput
+
+13.01.2007 x-vdr-0.7.19
+Fehlenden Eintrag fï¿½r DOLBYINREC im Patchlevel Menï¿½ ergï¿½nzt.
+Plugin Updates:
+- vdr-avolctl-0.3b
+- vdr-pin-0.1.5a
+
+17.01.2007 x-vdr-0.7.20
+Update auf VDR-Extensions-Patch-12 -> CutterBandwidthLimit & CutterQueue_and_CutterAutoDelete & LiveBuffer ...
+Update auf Bigpatch 33.21 -> kleinere Fixes
+Plugin Updates:
+- vdr-admin-0.6.0
+- vdr-extb-0.2.14
+- vdr-femon-1.1.1
+- vdr-graphtft-0.0.15
+- vdr-pin-0.1.5b
+- vdr-streamdev-snapshot-20070117
+- vdr-xineliboutput-1.0.0pre7
+
+23.01.2007 x-vdr-0.7.21
+Update auf VDR-Extensions-Patch-13 -> update auf sortrec_v3 & optrename-1.13, fix fuer graphtft, Aenderung am Make.config.template
+epgsearch -> patch fuer das pin-plugin aktualisiert
+
+27.01.2007 x-vdr-0.7.22
+Update auf VDR-Extensions-Patch-14 -> livebuffer, jumpplay und subtitles funktionieren nun auch zusammen, neu dabei ist der dvbplayer5 patch
+Update auf vdradmin-am-3.5.3
+osdpip -> Patch beigelegt der das automatische schliessen des PIP verhindert
+
+11.02.2007 x-vdr-0.7.23
+Update auf vdr-1.4.5-1 mit VDR-Extensions-Patch-19
+Der Bigpatch wird nicht mehr unterstuetzt.
+Update auf
+- vdr-epgsearch-0.9.20
+- vdr-extrecmenu-0.13
+- vdr-graphlcd-0.1.4 (graphlcd-base)
+- vdr-graphtft-0.0.16
+- vdr-pin-0.1.7
+- vdr-subtitles-0.5.0
+- vdr-touchtft-0.0.3
+- vdr-tvtv-0.3.3
+- vdr-vompserver-0.2.6
+- vdr-wirbelscan-0.0.2
+
+13.02.2007 x-vdr-0.7.24
+Update auf VDR-Extensions-Patch-20
+Kleine Aenderung an der x-vdr.sh
+Fix fuer audiorecorder
+Fix fuer vdrrip
+
+22.02.2007 x-vdr-0.7.25
+Update auf VDR-Extensions-Patch-22
+Neu: skinenigmang-0.0.2
+Update auf dvd-snapshot-20070222
+Update auf streamdev-snapshot-20070221
+Update bei em8300 und dem dxr3-plugin
+Update beim mplayer-skin und der mplayer.sh (0.8.7)
+
+11.03.2007 x-vdr-0.7.26
+Update auf vdr-1.4.6 mit VDR-Extensions-Patch-23
+Update auf vdr-skinenigmang-0.0.3
+Update auf vdr-graphlcd-0.1.5 (mit graphlcd-base-0.1.5)
+Update auf lcdproc-0.5.1
+Fix fuer xine_lib mit neuem Patch fuer xine_ui
+Neues Menu zum Installieren der DVB-Firmware und ein paar kleinere Aenderungen...
+
+19.03.2007 x-vdr-0.7.27
+Aenderungen am Firmware-Menu
+Die Extensions-Patche sind jetzt in einem eigenen Verzeichnis abgelegt. Patche aus diesem Verzeichnis, die auf vdr-$VDRVERSION-ext*_*.diff passen, werden nach dem Extensions-Patch ausgefuehrt.
+Dual-Installation entfernt
+Fix fuer vdrshutdown
+epgsearech - E-Mail Benachrichtigung
+xine-lib -> patch gegen "xine: pcm.c:933: snd_pcm_state: Assertion `pcm' failed." eingebaut
+Update von fussball zu sport-0.0.1
+Updates bei:
+filebrowser-0.0.6b
+span-0.0.4
+softdevice-snapshot-20070319
+xineliboutput-1.0.0rc1
+und diverse Plugins an vdr-1.5.1 angepasst
+
+Neue Plugins:
+vdr-arghdirector-0.2.6a
+vdr-epgsync-0.0.2
+vdr-remoteosd-0.0.2
+vdr-remotetimers-0.0.1
+vdr-remoteosd-0.0.2
+vdr-svdrpext-0.0.1
+vdr-svdrpservice-0.0.3
+vdr-vcd-0.7
+
+01.04.2007 x-vdr-0.7.28
+Update auf VDR-Extensions-Patch-24
+Update auf lirc-0.8.1
+Plugin-Updates auf:
+- softdevice-snapshot-20070330
+- span-0.0.5
+- toutchtft-0.0.4
+Neuer span-patch fuer graphlcd
+Neuer Patch fï¿½r mp3ng (ersetzt alle anderen Patche)
+
+23.04.2007 x-vdr-0.7.29
+Update auf VDR-Extensions-Patch-25
+Anpassungen in der apt.sh
+Fix fï¿½r utilities/ffmpeg
+Neues Skript zum starten von projectx
+Neues Plugin music-0.1.0_wip
+Neues Plugin vdrtvtime-0.0.1e
+Update auf skinenigmang-0.0.4
+Update auf softdevice-0.4.0
+
+02.05.2007 x-vdr-0.7.30
+Update auf vdr-1.4.6-1 mit VDR-Extensions-Patch-26
+apt.sh fuer ubuntu/feisty angepasst
+vdrplayer fuer vdrtvtime ergaenzt
+Utilitie Updates auf...
+- MPlayer-1.0rc1
+- vidix-1.0.0
+Plugin Updates auf...
+- admin-0.6.2
+- alcd-1.2.2
+- epgsearch-0.9.21
+- skinsoppalusikka-1.0.4
+Plugin Erweiterungen bei ...
+extrecmenu-0.13  -> MainMenuHooks
+image-0.2.7      -> Bilder mit anderen Plugins angezeigen
+submenu-0.0.2    -> asprintf Patch
+muggle-0.1.11    -> image_convert.sh
+music-0.1.0_wip  -> Patch fuer vdr-1.5.2
+vdrtvtime-0.0.1e -> Patch fuer vdr-1.5.2
+
+13.05.2007 x-vdr-0.7.31
+Update auf vdr-1.4.7 mit VDR-Extensions-Patch-27
+REPLACEMENUS aus der install-vdr.sh entfernt und die neuen Patche des Ext27 eingebaut
+Update auf digicam-1.0.2 (das Plugin laesst sich z.Z. trotzdem nicht uebersetzen)
+Update auf vdr-text2skin-1.1-cvs_ext-0.10-patched-20070513
+
+13.05.2007 x-vdr-0.7.32
+Update auf VDR-Extensions-Patch-28
+
+11.06.2007 x-vdr-0.7.33
+Update auf VDR-Extensions-Patch-30
+Utilitie Updates auf...
+- xine-lib-1.1.6
+Plugin Updates auf...
+- burn-0.1.0-cvs20070530
+- epgsearch-0-9.22
+- femon-1.1.3
+- graphtft-0.0.20
+- music-0.2.0 (mit coverviewer und picselshow)
+- pin-0.1.9
+- reelchannelscan-0.4.3
+- skinenigmang-0.0.5rc2
+- span-0.0.6
+- streamdev-20070509
+Neue Plugins ...
+- avards-0.1.1-beta2
+- live-0.1.0-cvs20070607
+- loadepg-0.1.9
+
+24.06.2007 x-vdr-0.7.34
+Update auf VDR-Extensions-Patch-32
+Plugin Updates auf...
+- dxr3-0.2.7 (mit em8300-0.16.2)
+- epgsearch-0.9.23-beta1
+- graphtft-0.1.3.alpha (mit neuen Patches fuer epgsearch und extrecmenu)
+- mp3-0.10.0
+- spider-0.1.4
+- diverse Patches fuer vdr-1.5.5
+
+08.07.2007 x-vdr-0.7.35
+Update auf VDR-Extensions-Patch-34
+Kleine Aenderungen an burn-bc, runvdr und vdr2root
+Mehr Plugin-Patches fuer vdr-1.5.5
+Plugin Updates auf...
+- graphtft-0.1.5.alpha
+- mousemate-0.1.4pre1
+- skinenigmang-0.0.5
+- taste-cvs20070626
+Downgrade auf text2skin-1.1-cvs_ext-0.10
+Neu dabei ist fritzbox-0.0.4
+
+11.11.2007 x-vdr-0.7.36
+vdr-1.4.7 oder vdr-1.5.11 mit VDR-Extensions-Patch-37
+Die Pluginliste in der runvdr und die Menues zum Auswaehlen der Plugins werden jetzt dynamisch erstellt.
+So vereinfacht sich das Einbinden neuer Plugins und es ist ausreichend, ein Verzeichnis (mit angepasster plugin.sh) zu erstellen. Danach sollte das neue Plugin im x-vdr Menue zur Auswahl stehen.
+Zum konfigurieren des VDRs ueber das OSD ist ein neues Skript "vdrsetup" im Paket. vdrsetup laeuft mit dem osdserver-plugin und benoetigt einen Eintrag in der sudoers.
+Es ist jetzt aber auch moeglich, die sysconfig des setup-plugins in der runvdr zu laden und die Konfiguration des VDRs ueber das Plugin vorzunehmen.
+Dazu gibt es noch ein paar kleinere Erweiterungen, so kann zB die VDR Version im Installations Menue geaendert werden, LANG kann in der x-vdr.conf definiert werden, usw...
+
+Plugin Updates auf...
+- avards-0.1.1
+- epgsearch-0.9.24-beta6
+- extrecmenu-1.1
+- femon-1.1.4 bzw. femon-1.2.2
+- fritzbox-0.0.8
+- graphtft-0.1.9.alpha
+- iptv-0.0.4 (neu)
+- mailbox-0.5.0
+- menuorg-0.3 (neu)
+- mlist-0.0.4
+- mp3-0.10.1
+- osdserver-0.1.1
+- pilot-0.0.9
+- pilotskin-0.3.0
+- premiereepg-0.0.8
+- pim-0.0.7-rc2
+- radio-0.2.4
+- remote-0.4.0
+- skinenigmang-0.0.5 (cvs 20071024)
+- skinsoppalusikka-1.0.5 bzw. skinsoppalusikka-1.1.2
+- spider-0.2.0
+- streamplayer-0.1.4
+- vompserver-0.2.7
+- weatherng-0.0.8-pre3
+- wirbelscan-0.0.3_20070903
+- xine-0.8.0
+Utilitie Updates auf...
+- vdradmin-am-3.6.0
+- xine-lib und xine-ui aus dem cvs (2007-08-29)
+
+15.11.2007 x-vdr-0.7.37
+Erweiterung fuer ttxtsubs und volctrl im VDR-Extensions-Patch-38
+Plugin Updates auf...
+- fritzbox-0.0.9
+- ttxtsubs-0.0.5-raastinrauta-edition (nur vdr-1.5.11)
+
+25.11.2007 x-vdr-0.7.38
+Update auf vdr-1.4.7/1.5.12 mit VDR-Extensions-Patch-40
+Plugin Updates auf...
+- graphtft-0.1.13.alpha
+- live-0.1.0-cvs20071124
+- noepgmenu-0.0.wareagle
+Utilitie Updates auf...
+- em8300-cvs20071122
+- lirc-0.8.2
+- MPlayer-1.0rc2
+Neue Version des vdrsetup Skript.
+
+16.12.2007 x-vdr-0.7.39
+Update auf vdr-1.4.7 mit VDR-Extensions-Patch-41 und shutdown-rewrite.patch bzw.vdr-1.5.12 mit VDR-Extensions-Patch-41
+Plugin Updates auf...
+- avards-0.1.2
+- epgsearch-0.9.24-beta14
+- ffnetdev-svn20071205
+- graphtft-0.1.16.alpha
+- menuorg-0.3.1
+- xineliboutput-1.0.0rc2-cvs20071128
+... und neu dabei...
+- exec-0.0.2
+Skript...
+- kleinere korrekturen an functions, x-vdr.sh ...
+- apt.sh an das neue sidux angepasst
+- fix fuer runvdr
+- neue version des vdrsetup
+- und vertify ist jetzt verify :)
+
+13.01.2008 x-vdr-0.7.40
+vdr-1.4.7 + shutdown-rewrite.patch + VDR-Extensions-Patch-43
+vdr-1.5.13 + VDR-Extensions-Patch-43
+Plugins...
+- clock-0.0.8
+- fritzbox-0.0.10
+- live-0.1.0-cvs20071217
+- muggle-0.1.12
+- pim-0.0.8
+- recstatus-0.0.8-beta1
+- setup-0.3.1-zulu-edition
+- skinenigmang-0.0.5+cvs20080111
+- vcd-0.8
+- vodcatcher-0.1.1-2
+- xine-0.8.1
+- xineliboutput-1.0.0rc2-cvs20080104
+Utilities...
+- lirc-0.8.3pre1
+- vdradmin-am-3.6.1
+- xine-lib-1.1.9 und xine-ui-cvs-20080101171600
+Skript...
+- Anpassungen an sidux 2007-04.5 - christmas special
+- kleinere korrekturen an apt.sh, functions, x-vdr.sh ...
+- neue runvdr & vdrsetup
+
+27.01.2008 x-vdr-0.7.41
+vdr-1.4.7 + shutdown-rewrite.patch + VDR-Extensions-Patch-45
+vdr-1.5.13 + VDR-Extensions-Patch-45
+vdr-1.5.14 + api-emulate-0.1.diff + VDR-Extensions-Patch-45
+- Wer passende Treber fuer dvbs2 installiert hat kann x-vdr/vdr/extensions/api-emulate-0.1.diff loeschen
+VDR vom submenu-patch auf den setup-patch umgestellt
+- channellists-0.0.4
+- cinebars-0.0.5
+- femon-1.1.5 / 1.2.3
+- iptv-0.0.6
+- rssreader-1.0.3 / 1.1.3
+- setup-0.3.1-zulu-edition (new)
+- skinsoppalusikka-1.0.6 / 1.1.4
+
+28.01.2008 x-vdr-0.7.42
+Neues Untermenue "DVB Treiber und Firmware"
+fuer v4l-dvb, multiproto und Frimware
+Make.config angepasst (install-vdr.sh)
+install-dvb-bs.sh aktualisiert, danke an Moorviper@vdr-portal fuer den Link
+Plugins...
+- clock-0.0.10
+- chanman-0.0.6
+
+03.03.2008 x-vdr-0.7.43
+vdr-1.4.7 + shutdown-rewrite.patch + VDR-Extensions-Patch-46
+vdr-1.5.17 + VDR-Extensions-Patch-48
+xine-lib-1.1.10.1
+diverse fixes und ein paar Plugin updates
+
+03.03.2008 x-vdr-0.7.44
+vdr-1.5.17 + VDR-Extensions-Patch-49
+
+03.03.2008 x-vdr-0.7.45
+vdr-1.5.17 + VDR-Extensions-Patch-50
+patch fuer osdserver mit vdr >= 1.5.15 beigelegt
+
+11.03.2008 x-vdr-0.7.46
+vdr-1.5.17 + VDR-Extensions-Patch-52
+xine-lib + xine-ui cvs-20080310200000
+xine-0.8.2
+diverse fixes und ein paar Plugin updates
+
+06.04.2008 x-vdr-0.7.47
+Update auf vdr-1.6.0 + VDR-Extensions-Patch-57
+fix fuer ffmpeg-svn
+diverse fixes, Plugin updates und ...
+
+15.04.2008 x-vdr-0.7.48
+Update auf vdr-1.6.0-1 + VDR-Extensions-Patch-59
+Neu: vdr-1.7.0 + VDR-Extensions-Patch-59
+diverse Anpassungen, Plugin updates und ...
+
+17.04.2008 x-vdr-0.7.49
+Link fuer vdr-1.6.0 gefixed
+vdr-1.7.0-dvb-api-wrapper-0.3.diff wird jetzt automatisch ausgefuehrt
+
+21.04.2008 x-vdr-0.7.50
+Fix fuer api-wrapper-patch (Patch wird nur noch angewendet wenn DVB_API_VERSION_MINOR < 3)
+Fix fuer xinelibout (libextractor-dev in apt.sh und Patch fuer xine-lib)
+Update auf vdrplayer 0.0.4
+
+24.04.2008 x-vdr-0.7.51
+Anpassungen an sidux-2008-01
+multiproto gefixed
+vdr-1.7.0-ext59_h264.diff beigelegt
+- um den vdr-1.7.0 mit h264 Unterstuetzung zu kompilieren muss der Patch nach x-vdr/vdr/extensions kopiert werden
+  und vorher der multiproto-treiber installiert werden
+functions - make_plugin macht jetzt anstatt des 'make plugins' ein 'make all' im Plugin Verzeichnis
+
+26.04.2008 x-vdr-0.7.52
+Neues dvb-menu mit v4l-dvb, multiproto, multiproto_plus und firmware
+xine-lib kommt jetzt aus dem HG
+xine-lib kann jetzt wieder mit --with-external-ffmpeg erstellt werden
+Fix fuer mplayer mit selbst uebersetzten DVB-Treibern
+apt.sh an ubuntu angepasst
+und diverse Anpassungen...
+
+30.04.2008 x-vdr-0.7.53
+Update auf VDR-Extensions-Patch-60
+Fix für xine-lib-hg mit ubuntu (apt.sh - libdts-dev auskommentiert)
+Fix für xineliboutput (unter bestimmten Umstaenden wurde xineplug_inp_xvdr.so nicht installiert)
+Beim mplayer wird jetzt immer der aktuelle snapshot installiert
+/usr/local/src/vdr-1.*.* wird nur noch geloescht wenn alte und neue VDR Version identisch sind
+und diverse andere Anpassungen...
+
+09.05.2008 x-vdr-0.7.54
+Update auf VDR-Extensions-Patch-61
+Bei der Auswahl von vdr-1.7.x wird nun abgefragt ob die multiproto Treiber installiert werden sollen.
+Installations-Skripte fuer DVB-Treiber ueberarbeitet.
+Update auf lirc-0.8.3pre3
+Es werden keine Sourcen mehr von gentoo.fh-luh.de/files geladen
+vdrshutdown und vdrsetup erweitert
+und diverse andere Anpassungen...
+
+19.06.2008 x-vdr-0.7.55
+Update auf vdr-1.6.0-2 / vdr-1.7.1 und VDR-Extensions-Patch-63
+Diverse Plugin Updates
+Fixes bei einigen Skripten
+Neue Version des vdrsetup Skript
+
+14.01.2009 x-vdr-0.8.0
+VDR-Versionen kleiner 1.6.0 werden nicht mehr unterstuetzt
+Anpassungen an sidux-2008-04
+Update auf vdr-1.6.0-2 / vdr-1.7.2 und VDR-Extensions-Patch-65
+Updates bei den Plugins und Utilities
+Bei der Auswahl von vdr-1.7.2 wird nun abgefragt ob die v4l-dvb Treiber installiert werden sollen.
+
+28.01.2009 x-vdr-0.8.1
+VDR-Extensions-Patch-66 für
+- vdr-1.6.0-2
+- vdr-1.7.2   (es kann sein, das das ein oder andere Plugin noch nicht läuft)
+- vdr-1.7.4   (diverse Plugins laufen noch nicht, ohne Livebuffer, Ttxtsubs, Syncearly usw.)
+Die meisten 'utilities' werden jetzt mit checkinstall installiert.
+Können also mit dpkg oder apt wieder entfernt werden.
+Damit das Auflösen der Abhängigkeiten funktioniert wurde die apt.sh angepasst.
+ffmpeg und x264 werden bei der Erstinstallation (falls aktiviert) aus der apt.sh herraus installiert.
+apt_install und apt_remove in der functions repariert.
+install.sh und sd_vdrversion in x-vdr.sh überarbeitet.
+- DVB-Api Test und zuordnen der richtigen Patche sollte jetzt stabiler funktionieren.
+- DVB Symlink wird nur noch bei selbst installierten Treibern erstellt.
+- Make.config für die Plugins geändert: "DEFINES += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE"
+Plugin und Utilitie Updates gab es auch ein paar...
+
+16.02.2009 x-vdr-0.8.2
+Getestet mit sidux-2009-01
+Update auf VDR-Extensions-Patch-67
+Die neuen DEFINES in der Make.config werden nur noch mit vdr >= 1.7.3 angewendet.
+Unterstützung für vdr-1.7.0 mit H264 und S2 eingebaut.
+mplayer.sh angepasst.
+Neue Treiber: liplianindvb (laesst sich mit sidux-2009-01 nicht übersetzen) und s2-liplianin.
+Neue 'Autostart-Funktion' fuer Xserver und Player
+vdrsetup 0.0.8 - Setup für 'Autostart-Funktion' eingebaut.
+               - Installieren eines Plugins muss jetzt mit 'Ok' bestätigt werden.
+xineliboutput-1.0.4 geht jetzt auch mit vdr-1.7.4
+Patches für vdr-1.7.2 raus genommen.
+Eine Abfrage, ob der VDR mit HDTV-Unterstützung erstellt werden soll, gibt es nicht mehr.
+So stehen noch vdr-1.6.0-2-ext, vdr-1.7.0-ext-h264-s2 und vdr-1.7.4-ext zu Auswahl.
+Bugfix: Utilities wurden installiert, obwohl sie nicht aktiviert waren.
+
+04.03.2009 x-vdr-0.8.3
+Update auf VDR-Extensions-Patch-68
+Make.config erweitert ( DEFINES += -D__KERNEL_STRICT_NAMES )
+Plugins:
+- updates für xineliboutput, vodcatcher, ...
+- bei einem Update werden die Dateien für die VDR-Config nicht mehr überschrieben ( music, setup, etc. (noch nicht komplet!))
+Utilities:
+- xine-vdpau ist jetzt voreingestellt (in der utilitie.sh kann auf auf hg oder die Version von rnissl gewechselt werden )
+- die erstellten deb-files werden jetzt im Verzeichnis des jeweiligen Utilitie gesichert
+- utilitie.sh für mplayer angepasst
+- utilitie.sh für x264 angepasst
+- v4l-dvb wird gepatched, damit sich mplayer und Co übersetzen lassen
+Diverse kleinere Anpassungen...
+
+05.03.2009 x-vdr-0.8.4
+ffmpeg-svn - Test für die Optionen beim 'configure' eingebaut.
+burn-plugin - mit allen verfügbaren Patches eine neue Version zusammen geschustert.
+
+11.03.2009 x-vdr-0.8.5
+Neuer Sidux Mirror in der apt.sh
+Make.config DEFINES für tvm2vdr geändert 
+xineliboutput aus dem cvs
+Diverse Plugin updates (audiorecorder, iptv, vdrrip, ...)
+
+11.03.2009 x-vdr-0.8.6
+Bei xine-lib ist nun wieder die Version von rnissl voreingestellt.
+Wenn ffmpeg aus dem svn installiert wird, wählt das Skript für xine automatisch die HG-Version.
+xine-vdpau kann nach wie vor in der utilitie.sh aktiviert werden.
+Mit vdr-1.6.0 wird xineliboutput-1.0.4 installiert, sonst die Version aus dem cvs.
+
+29.03.2009 x-vdr-0.8.7
+vdr-1.7.0-ext-h264-s2ng
+Plugin updates
+Anpassungen an ubuntu 8.10
+xine Version jetzt über das Menü wählbar
+
+30.03.2009 x-vdr-0.8.8
+Höhere Versions-Nummer für die ffmpeg-deb's, damit Abhängige Pakete installiert werden können.
+
+13.04.2009 x-vdr-0.8.9
+Update auf vdr-1.7.5
+Extensions-Patch 70 mit (vdr-1.7.0-ext-h264-s2ng-speedup)
+v4l-dvb von Oliver Endriss.
+Firmwaremenü mit dvb-ttpci-01.fw-fe2624 erweitert
+Backup-Funktion überarbeitet.
+xine-0.9.1 mit neuer xine-lib und xine-ui
+Für vdr-1.7.0 wird jetzt wieder xineliboutput-1.0.4 installiert
+Fix für rotor-plugin mit s2api?
+

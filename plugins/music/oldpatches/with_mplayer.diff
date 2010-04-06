@@ -1,0 +1,11 @@
+--- Makefile.ORG
++++ Makefile
+@@ -36,7 +36,7 @@
+ 
+ # Uncomment one of these lines, if you don't want one of the plugins
+ #WITHOUT_MP3=1
+-WITHOUT_MPLAYER=1
++#WITHOUT_MPLAYER=1
+ 
+ # Uncomment the following line, if you don't have libsndfile installed
+ #WITHOUT_LIBSNDFILE=1

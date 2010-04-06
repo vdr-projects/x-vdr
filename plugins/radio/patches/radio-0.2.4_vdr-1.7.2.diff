@@ -1,0 +1,13 @@
+diff -ruNp radio-0.2.4~/radioaudio.h radio-0.2.4/radioaudio.h
+--- radio-0.2.4~/radioaudio.h	2007-10-06 19:42:00.000000000 +0200
++++ radio-0.2.4/radioaudio.h	2009-01-11 02:42:42.000000000 +0100
+@@ -84,6 +84,9 @@ private:
+     void RassDecode(uchar *Data, int Length);
+ protected:
+     virtual void Play(const uchar *Data, int Length, uchar Id);
++#if VDRVERSNUM >= 10702
++    virtual void PlayTs(const uchar *Data, int Length) {};
++#endif
+     virtual void Mute(bool On) {};
+     virtual void Clear(void) {};
+ public:

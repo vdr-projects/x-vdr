@@ -1,0 +1,177 @@
+diff -ruN softdevice-0.5.0/PicBuffer.c softdevice-0.5.0-fixed/PicBuffer.c
+--- softdevice-0.5.0/PicBuffer.c	2008-07-27 19:34:42.000000000 +0200
++++ softdevice-0.5.0-fixed/PicBuffer.c	2009-03-23 18:55:55.000000000 +0100
+@@ -84,8 +84,13 @@
+                         memset(Pic->pixel[2],(color&0xFF),
+                                         (Pic->max_height>>1)*Pic->stride[2]);
+                         break;
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+                 case PIX_FMT_RGBA32 :
+                 case PIX_FMT_YUV422 :
++#else
++                case PIX_FMT_RGB32 :
++                case PIX_FMT_YUYV422 :
++#endif
+                         {
+                                 uint32_t *tmp=(uint32_t *)Pic->pixel[0];
+                                 int i=Pic->max_height*
+@@ -109,7 +114,11 @@
+         int pixel_size=GetFormatBPP(Pic->format);
+ 
+         switch (Pic->format) {
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+                 case PIX_FMT_RGBA32 :
++#else
++                case PIX_FMT_RGB32 :
++#endif
+                 case PIX_FMT_RGB24 :
+                 case PIX_FMT_BGR24 :
+                 case PIX_FMT_RGB555 :
+@@ -123,7 +132,11 @@
+                         memset(Pic->pixel[2],128,
+                                         (Pic->max_height>>1)*Pic->stride[2]);
+                         break;
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+                 case PIX_FMT_YUV422 :
++#else
++                case PIX_FMT_YUYV422 :
++#endif
+                         {
+                                 uint32_t *tmp=(uint32_t *)Pic->pixel[0];
+                                 for (int i=0; i<Pic->max_height*
+@@ -140,7 +153,11 @@
+ 
+ yuv420_convert_fct GetYuv420ConvertFct(PixelFormat pix_fmt) {
+         switch (pix_fmt) {
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+                 case PIX_FMT_RGBA32:
++#else
++                case PIX_FMT_RGB32:
++#endif
+                         return &yuv420_to_rgb32;
+                 case PIX_FMT_BGR24:
+                         return &yuv420_to_bgr24;
+@@ -150,7 +167,11 @@
+                         return &yuv420_to_rgb15;
+                 case PIX_FMT_RGB565:
+                         return &yuv420_to_rgb16;
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+                 case PIX_FMT_YUV422:
++#else
++                case PIX_FMT_YUYV422:
++#endif
+                         return &yuv420_to_yuy2;
+                 default:
+                         fprintf(stderr,"unsupported format in GetYuv420ConvertFct \n");
+@@ -252,10 +273,18 @@
+         switch(fmt){
+         case PIX_FMT_RGB555:
+         case PIX_FMT_RGB565:
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+         case PIX_FMT_YUV422:
++#else
++        case PIX_FMT_YUYV422:
++#endif
+         case PIX_FMT_RGB24:
+         case PIX_FMT_BGR24:
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+         case PIX_FMT_RGBA32:
++#else
++        case PIX_FMT_RGB32:
++#endif
+                 return false;
+             break;
+         default:
+@@ -278,7 +307,11 @@
+         switch(fmt){
+         case PIX_FMT_RGB555:
+         case PIX_FMT_RGB565:
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+         case PIX_FMT_YUV422:
++#else
++        case PIX_FMT_YUYV422:
++#endif
+         //case PIX_FMT_UYVY422: // FIXME which ffmpeg version
+             pixel_size=2;
+             break;
+@@ -286,7 +319,11 @@
+         case PIX_FMT_BGR24:
+             pixel_size=3;
+             break;
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+         case PIX_FMT_RGBA32:
++#else
++        case PIX_FMT_RGB32:
++#endif
+             pixel_size=4;
+             break;
+         default:
+diff -ruN softdevice-0.5.0/video-fb.c softdevice-0.5.0-fixed/video-fb.c
+--- softdevice-0.5.0/video-fb.c	2008-02-26 11:53:22.000000000 +0100
++++ softdevice-0.5.0-fixed/video-fb.c	2009-03-23 18:57:58.000000000 +0100
+@@ -60,7 +60,11 @@
+             Bpp=15;
+     else Bpp=fb_vinfo.bits_per_pixel;
+     switch (Bpp) {
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+             case 32 : privBuf.format=PIX_FMT_RGBA32;
++#else
++            case 32 : privBuf.format=PIX_FMT_RGB32;
++#endif
+                       break;
+             case 24 : privBuf.format=PIX_FMT_RGB24;
+                       break;
+diff -ruN softdevice-0.5.0/video-shm.c softdevice-0.5.0-fixed/video-shm.c
+--- softdevice-0.5.0/video-shm.c	2007-10-13 13:17:48.000000000 +0200
++++ softdevice-0.5.0-fixed/video-shm.c	2009-03-23 19:02:56.000000000 +0100
+@@ -235,7 +235,11 @@
+                                         privBuf.stride[1]=ctl->stride1;
+                                         privBuf.stride[2]=ctl->stride2;
+                                         break;
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+                                 case PIX_FMT_YUV422:
++#else
++                                case PIX_FMT_YUYV422:
++#endif
+                                         SHMDEB("new format YUV422\n");
+                                         privBuf.pixel[0]=curr_pict+ctl->offset0;
+                                         privBuf.pixel[1]=privBuf.pixel[1]=NULL;
+diff -ruN softdevice-0.5.0/video-xv.c softdevice-0.5.0-fixed/video-xv.c
+--- softdevice-0.5.0/video-xv.c	2008-07-14 19:00:59.000000000 +0200
++++ softdevice-0.5.0-fixed/video-xv.c	2009-03-23 19:01:48.000000000 +0100
+@@ -1034,7 +1034,11 @@
+                           osd_max_width, osd_max_height,
+                           osd_image->bytes_per_line,osd_image->bits_per_pixel);
+           switch (osd_image->bits_per_pixel) {
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+                   case 32 : osdBuf.format=PIX_FMT_RGBA32;
++#else
++                  case 32 : osdBuf.format=PIX_FMT_RGB32;
++#endif
+                             break;
+                   case 24 : osdBuf.format=PIX_FMT_RGB24;
+                             break;
+@@ -1240,7 +1244,11 @@
+   attributeStore.Save();
+ 
+   switch (osdBuf.format) {
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+           case PIX_FMT_RGBA32:
++#else
++          case PIX_FMT_RGB32:
++#endif
+                   ARGB_TO_RGB(RGB32,&colorkey,COLOR_KEY);
+                   break;
+           case PIX_FMT_RGB24:
+@@ -1300,7 +1308,11 @@
+       privBuf.stride[1] = 0;
+       privBuf.stride[2] = 0;
+ 
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+       privBuf.format = PIX_FMT_YUV422;
++#else
++      privBuf.format = PIX_FMT_YUYV422;
++#endif
+       break;
+     default:
+       break;

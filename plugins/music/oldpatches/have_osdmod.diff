@@ -1,0 +1,11 @@
+--- Makefile.ORG
++++ Makefile
+@@ -26,7 +26,7 @@
+ HAVE_FFCARD=1
+ 
+ # Uncomment if you own enough ram for OSD (e.g modded FF-Card to 4MB ram or softdecoder)
+-#HAVE_OSDMOD=1
++HAVE_OSDMOD=1
+ 
+ # Default: Imlib2, otherwise uncomment
+ #HAVE_MAGICK=1

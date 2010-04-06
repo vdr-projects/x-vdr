@@ -1,0 +1,12 @@
+diff -ruN vcd-0.9-orig/Makefile vcd-0.9/Makefile
+--- vcd-0.9-orig/Makefile
++++ vcd-0.9/Makefile
+@@ -47,7 +47,7 @@
+ 
+ ### Includes and Defines (add further entries here):
+ 
+-INCLUDES = -I$(VDRINC) -I$(DVBDIR)
++INCLUDES += -I$(VDRDIR)/include
+ 
+ DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"' -D_GNU_SOURCE
+ 

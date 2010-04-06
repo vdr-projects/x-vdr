@@ -1,0 +1,11 @@
+--- Makefile.org	2007-03-27 20:14:55.000000000 +0200
++++ Makefile	2007-03-24 09:20:58.000000000 +0100
+@@ -20,7 +20,7 @@
+ 
+ #if you do not want to compile in code for embedded mysql,
+ #define this:
+-#HAVE_ONLY_SERVER=1
++HAVE_ONLY_SERVER=1
+ 
+ # Define what database you want to use, one of MySQL (HAVE_MYSQL=1),
+ # PostgreSQL (HAVE_PG=1) or SQLite (HAVE_SQLITE=1).  Default is MySQL.

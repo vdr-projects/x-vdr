@@ -1,0 +1,21 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 92_autotimeredit-0.1.8-1.5.3.dpatch by Thomas Günther <tom@toms-cafe.de>
+## http://toms-cafe.de/vdr/download/autotimeredit-0.1.8-1.5.3.diff
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Changes for VDR >= 1.5.3.
+
+@DPATCH@
+--- autotimeredit-0.1.8/menueditweekdays.c
++++ autotimeredit-0.1.8/menueditweekdays.c
+@@ -58,7 +58,9 @@ cMenuEditWeekDaysItem::cMenuEditWeekDays
+ void cMenuEditWeekDaysItem::Set(void)
+ {
+   if (weekdays && *weekdays) {
+-#if VDRVERSNUM >= 10323
++#if VDRVERSNUM >= 10503
++    SetValue(cTimer::PrintDay(0, *weekdays, false));
++#elif VDRVERSNUM >= 10323
+     SetValue(cTimer::PrintDay(0, *weekdays));
+ #else
+     SetValue(cTimer::PrintDay(*weekdays, 0));

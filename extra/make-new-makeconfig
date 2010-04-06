@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# x-vdr (vdr-installer für kanotix)
+# von Marc Wernecke - www.zulu-entertainment.de
+# 29.08.2005
+
+
+
+source ./../x-vdr.conf
+source ./../functions
+[ -f ./../setup.conf ] && source ./../setup.conf
+
+
+make_makeconfig
+exit 0
+

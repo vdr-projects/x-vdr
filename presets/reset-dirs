@@ -1,0 +1,23 @@
+# /dev/xxx
+CDROM="/dev/cdrom"
+CDBURNER="$CDROM"
+DVD="/dev/dvd"
+DVDBURNER="$DVD"
+
+# Medienverzeichnis ( fuer Verzeichnisse und Symlinks )
+MEDIADIR="/var/lib/vdrmedia"
+
+# Video Verzeichnis
+VIDEODIR="$MEDIADIR/video"
+
+# Musik Verzeichnis
+MUSICDIR="$MEDIADIR/mp3"
+
+# DivX Verzeichnis
+DIVXDIR="$MEDIADIR/divx"
+
+# Bilder Verzeichnis
+PICTUREDIR="$MEDIADIR/fotos"
+
+# DVD-Image Verzeichnis
+DVDISODIR="$MEDIADIR/isos"

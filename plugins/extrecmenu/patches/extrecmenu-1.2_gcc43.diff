@@ -1,0 +1,10 @@
+--- extrecmenu-1.1/tools.c
++++ extrecmenu-1.1/tools.c
+@@ -5,6 +5,7 @@
+ #include <string>
+ #include <fstream>
+ #include <iostream>
++#include <langinfo.h>
+ #include <vdr/plugin.h>
+ #include <vdr/videodir.h>
+ #include <vdr/recording.h>

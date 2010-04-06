@@ -1,0 +1,319 @@
+#!/bin/sh
+
+# x-vdr (Installations-Skript fuer einen VDR mit Debian als Basis)
+# von Marc Wernecke - www.zulu-entertainment.de
+# 06.11.2007
+# runvdr
+
+#export LD_ASSUME_KERNEL=2.4.1
+export LANG=de_DE.iso8859-1
+export LC_ALL=de_DE.iso8859-1
+
+KILL="/usr/bin/killall -q -TERM"
+KERNEL=`uname -r`
+
+function vdr_settings() {
+  # load vdr configuration
+  if [ -f /etc/default/vdr ]; then
+    . /etc/default/vdr
+  else
+    logger "$0 - error -> /etc/default/vdr does not exists"
+    exit 1
+  fi
+
+  # test if vdr exists and is executable
+  test -x "$VDRPRG" || exit 0
+
+  # export HOME
+  if [ "$VDRUSER" = "root" ]; then
+    export HOME="/root"
+  else
+    export HOME="$VDRCONFDIR"
+  fi
+
+  # java for burn
+  if [ "$burn" = "on" ]; then
+    [ -z "$JAVA_HOME" ] && export JAVA_HOME="/usr/lib/jvm/java-1.5.0-sun/jre"
+    [ -z "$PROJECTX_HOME" ] && export PROJECTX_HOME="/usr/local/src/ProjectX"
+  fi
+  
+  # set DISPLAY
+  # - activate automatic login
+  # - copy x-vdr/extra/xhost to ~/.kde/Autostart and set xhost executable
+  if [ "$softdevice" = "on" ] || [ "$xineliboutput" = "on" ]; then
+    [ -z "$DISPLAY" ] && export DISPLAY=:$XV_DISPLAY
+  fi
+  
+  # load nvram
+  if [ `which nvram-wakeup | wc -l` -gt 0 ] && [ `lsmod | grep -cw 'nvram'` -eq 0 ]; then
+    modprobe -q nvram
+  fi
+  
+  # load cdfs
+  if [ `lsmod | grep -cw 'cdfs'` -eq 0 ]; then
+    modprobe -q cdfs
+  fi
+  
+  # load av7710ir
+  if [ -e /proc/av7110_ir ] || [ -e /proc/budget_ci_ir ]; then
+    for FILE in av7110_ir budget_ci_ir; do
+      if [ -e "/proc/$FILE" ]; then
+        chown $VDRUSER:$VDRGROUP /proc/$FILE
+      fi
+    done
+    if [ `lsmod | grep -cw 'evdev'` -eq 0 ]; then modprobe -q evdev ; fi
+  fi
+  
+  # load em8300
+  if [ "$em8300" = "on" ]; then
+#    EM8300="/lib/modules/$KERNEL/em8300"
+#    if [ -f "$EM8300/adv717x.ko" ] && [ -f "$EM8300/bt865.ko" ] && [ -f "$EM8300/em8300.ko" ]; then
+#      $VDRSCRIPTDIR/rmm
+#      $VDRSCRIPTDIR/ldm
+      [ "$dxr3" != "on" ] && em8300setup
+#    fi
+  fi
+  
+  # load parport
+  if [ "$graphlcd_base" = "on" ]; then
+    [ `lsmod | grep -cw 'parport'` -eq 0 ] && modprobe -q parport
+    [ `lsmod | grep -cw 'parport_pc'` -eq 0 ] && modprobe -q parport_pc
+    [ `lsmod | grep -cw 'ppdev'` -eq 0 ] && modprobe -q ppdev
+  #  chmod 0666 /dev/parport0
+  fi
+  
+  # only for mplayer via xine
+  # - copy x-vdr/extra/xhost to ~/.kde/Autostart and set xhost executable
+  if [ "$VDRUSER" != "root" ] && [ "$xine" = "on" ] && [ "$mplayer" = "on" ]; then
+    chmod 666 /dev/rtc
+    echo 1024 > /proc/sys/dev/rtc/max-user-freq
+  fi
+  
+  
+  # plugins
+  PLUGINS=""
+  # video devices
+  [ "$dxr3" = "on" ] && PLUGINS="$PLUGINS -P'dxr3'"
+  [ "$softdevice" = "on" ] && PLUGINS="$PLUGINS -P'softdevice $softdevice_args'"
+  [ "$vdrtvtime" = "on" ] && PLUGINS="$PLUGINS -P'vdrtvtime $vdrtvtime_args'"
+  [ "$xine" = "on" ] && PLUGINS="$PLUGINS -P'xine $xine_args'"
+  [ "$xineliboutput" = "on" ] && PLUGINS="$PLUGINS -P'xineliboutput $xineliboutput_args'"
+  # other
+  [ "$admin" = "on" ] && PLUGINS="$PLUGINS -P'admin'"
+  [ "$adzap" = "on" ] && PLUGINS="$PLUGINS -P'adzap $adzap_args'"
+  [ "$alcd" = "on" ] && PLUGINS="$PLUGINS -P'alcd $alcd_args'"
+  [ "$analogradio" = "on" ] && PLUGINS="$PLUGINS -P'analogradio $analogradio_args'"
+  [ "$arghdirector" = "on" ] && PLUGINS="$PLUGINS -P'arghdirector'"
+  [ "$atmo" = "on" ] && PLUGINS="$PLUGINS -P'atmo $atmo_args'"
+  [ "$audiorecorder" = "on" ] && PLUGINS="$PLUGINS -P'audiorecorder $audiorecorder_args'"
+  [ "$autosort" = "on" ] && PLUGINS="$PLUGINS -P'autosort'"
+  [ "$autotimeredit" = "on" ] && PLUGINS="$PLUGINS -P'autotimeredit $autotimeredit_args'"
+  [ "$avards" = "on" ] && PLUGINS="$PLUGINS -P'avards $avards_args'"
+  [ "$avolctl" = "on" ] && PLUGINS="$PLUGINS -P'avolctl'"
+  [ "$beep" = "on" ] && PLUGINS="$PLUGINS -P'beep'"
+  [ "$bitstreamout" = "on" ] && PLUGINS="$PLUGINS -P'bitstreamout $bitstreamout_args'"
+  [ "$burn" = "on" ] && PLUGINS="$PLUGINS -P'burn $burn_args'"
+  [ "$calc" = "on" ] && PLUGINS="$PLUGINS -P'calc'"
+  [ "$cdda" = "on" ] && PLUGINS="$PLUGINS -P'cdda $cdda_args'"
+  [ "$chanorg" = "on" ] && PLUGINS="$PLUGINS -P'chanorg $chanorg_args'"
+  [ "$channelswitcher" = "on" ] && PLUGINS="$PLUGINS -P'channelswitcher'"
+  [ "$cinebars" = "on" ] && PLUGINS="$PLUGINS -P'cinebars'"
+  [ "$clock" = "on" ] && PLUGINS="$PLUGINS -P'clock'"
+  [ "$console" = "on" ] && PLUGINS="$PLUGINS -P'console $console_args'"
+  [ "$control" = "on" ] && PLUGINS="$PLUGINS -P'control $control_args'"
+  [ "$csf" = "on" ] && PLUGINS="$PLUGINS -P'csf'"
+  [ "$cutalot" = "on" ] && PLUGINS="$PLUGINS -P'cutalot'"
+  [ "$decruft" = "on" ] && PLUGINS="$PLUGINS -P'decruft'"
+  [ "$digicam" = "on" ] && PLUGINS="$PLUGINS -P'digicam'"
+  [ "$director" = "on" ] && PLUGINS="$PLUGINS -P'director'"
+  [ "$dummydevice" = "on" ] && PLUGINS="$PLUGINS -P'dummydevice'"
+  [ "$dvd" = "on" ] && PLUGINS="$PLUGINS -P'dvd $dvd_args'"
+  [ "$dvdconvert" = "on" ] && PLUGINS="$PLUGINS -P'dvdconvert $dvdconvert_args'"
+  [ "$dvdselect" = "on" ] && PLUGINS="$PLUGINS -P'dvdselect'"
+  [ "$dvdswitch" = "on" ] && PLUGINS="$PLUGINS -P'dvdswitch $dvdswitch_args'"
+  if [ "$epgsearch" = "on" ]; then
+    PLUGINS="$PLUGINS -P'epgsearch $epgsearch_args'"
+    [ "$epgsearchonly" = "on" ] && PLUGINS="$PLUGINS -P'epgsearchonly'"
+    [ "$conflictcheckonly" = "on" ] && PLUGINS="$PLUGINS -P'conflictcheckonly'"
+    [ "$quickepgsearch" = "on" ] && PLUGINS="$PLUGINS -P'quickepgsearch'"
+  fi
+  [ "$epgsync" = "on" ] && PLUGINS="$PLUGINS -P'epgsync'"
+  [ "$extb" = "on" ] && PLUGINS="$PLUGINS -P'extb $extb_args'"
+  [ "$extrecmenu" = "on" ] && PLUGINS="$PLUGINS -P'extrecmenu'"
+  [ "$femon" = "on" ] && PLUGINS="$PLUGINS -P'femon'"
+  [ "$ffnetdev" = "on" ] && PLUGINS="$PLUGINS -P'ffnetdev $ffnetdev_args'"
+  [ "$filebrowser" = "on" ] && PLUGINS="$PLUGINS -P'filebrowser'"
+  [ "$freecell" = "on" ] && PLUGINS="$PLUGINS -P'freecell'"
+  [ "$fritzbox" = "on" ] && PLUGINS="$PLUGINS -P'fritzbox'"
+  [ "$games" = "on" ] && PLUGINS="$PLUGINS -P'games'"
+  [ "$graphlcd" = "on" ] && PLUGINS="$PLUGINS -P'graphlcd $graphlcd_args'"
+  [ "$graphtft" = "on" ] && PLUGINS="$PLUGINS -P'graphtft $graphtft_args'"
+  [ "$image" = "on" ] && PLUGINS="$PLUGINS -P'image $image_args'"
+  [ "$ipod" = "on" ] && PLUGINS="$PLUGINS -P'ipod'"
+  [ "$iptv" = "on" ] && PLUGINS="$PLUGINS -P'iptv $iptv_args'"
+  [ "$launcher" = "on" ] && PLUGINS="$PLUGINS -P'launcher'"
+  [ "$lcdproc" = "on" ] && PLUGINS="$PLUGINS -P'lcdproc $lcdproc_args'"
+  [ "$lcr" = "on" ] && PLUGINS="$PLUGINS -P'lcr $lcr_args'"
+  [ "$live" = "on" ] && PLUGINS="$PLUGINS -P'live $live_args'"
+  [ "$loadepg" = "on" ] && PLUGINS="$PLUGINS -P'loadepg $loadepg_args'"
+  [ "$mailbox" = "on" ] && PLUGINS="$PLUGINS -P'mailbox $mailbox_args'"
+  [ "$manual" = "on" ] && PLUGINS="$PLUGINS -P'manual'"
+  [ "$mediamvp" = "on" ] && PLUGINS="$PLUGINS -P'mediamvp $mediamvp_args'"
+  [ "$menuorg" = "on" ] && PLUGINS="$PLUGINS -P'menuorg $menuorg_args'"
+  [ "$mlcd" = "on" ] && PLUGINS="$PLUGINS -P'mlcd'"
+  [ "$mlist" = "on" ] && PLUGINS="$PLUGINS -P'mlist'"
+  [ "$mousemate" = "on" ] && PLUGINS="$PLUGINS -P'mousemate $mousemate_args'"
+  [ "$mp3" = "on" ] && PLUGINS="$PLUGINS -P'mp3 $mp3_args'"
+  [ "$mplayer" = "on" ] && PLUGINS="$PLUGINS -P'mplayer $mplayer_args'"
+  [ "$muggle" = "on" ] && PLUGINS="$PLUGINS -P'muggle $muggle_args'"
+  [ "$music" = "on" ] && PLUGINS="$PLUGINS -P'music $music_args'"
+  [ "$coverviewer" = "on" ] && PLUGINS="$PLUGINS -P'coverviewer $coverviewer_args'"
+  [ "$netconfig" = "on" ] && PLUGINS="$PLUGINS -P'netconfig $netconfig_args'"
+  [ "$newsticker" = "on" ] && PLUGINS="$PLUGINS -P'newsticker'"
+  [ "$noepgmenu" = "on" ] && PLUGINS="$PLUGINS -P'noepgmenu'"
+  [ "$nordlichtsepg" = "on" ] && PLUGINS="$PLUGINS -P'nordlichtsepg'"
+  [ "$osdout" = "on" ] && PLUGINS="$PLUGINS -P'osdout'"
+  [ "$osdpip" = "on" ] && PLUGINS="$PLUGINS -P'osdpip'"
+  [ "$osdserver" = "on" ] && PLUGINS="$PLUGINS -P'osdserver'"
+  [ "$osdteletext" = "on" ] && PLUGINS="$PLUGINS -P'osdteletext $osdteletext_args'"
+  [ "$picselshow" = "on" ] && PLUGINS="$PLUGINS -P'picselshow $picselshow_args'"
+  [ "$pilot" = "on" ] && PLUGINS="$PLUGINS -P'pilot'"
+  [ "$pilotskin" = "on" ] && PLUGINS="$PLUGINS -P'pilotskin'"
+  [ "$pim" = "on" ] && PLUGINS="$PLUGINS -P'pim'"
+  [ "$pin" = "on" ] && PLUGINS="$PLUGINS -P'pin'"
+  [ "$playlist" = "on" ] && PLUGINS="$PLUGINS -P'playlist $playlist_args'"
+  [ "$podcatcher" = "on" ] && PLUGINS="$PLUGINS -P'podcatcher $podcatcher_args'"
+  [ "$powermate" = "on" ] && PLUGINS="$PLUGINS -P'powermate $powermate_args'"
+  [ "$prefermenu" = "on" ] && PLUGINS="$PLUGINS -P'prefermenu'"
+  [ "$premiereepg" = "on" ] && PLUGINS="$PLUGINS -P'premiereepg'"
+  [ "$pvrinput" = "on" ] && PLUGINS="$PLUGINS -P'pvrinput'"
+  [ "$radio" = "on" ] && PLUGINS="$PLUGINS -P'radio $radio_args'"
+  [ "$recstatus" = "on" ] && PLUGINS="$PLUGINS -P'recstatus'"
+  [ "$reelchannelscan" = "on" ] && PLUGINS="$PLUGINS -P'reelchannelscan'"
+  [ "$remote" = "on" ] && PLUGINS="$PLUGINS -P'remote $remote_args'" && chmod 0666 $remote_event
+  [ "$remoteosd" = "on" ] && PLUGINS="$PLUGINS -P'remoteosd'"
+  [ "$remotetimers" = "on" ] && PLUGINS="$PLUGINS -P'remotetimers'"
+  [ "$ripit" = "on" ] && PLUGINS="$PLUGINS -P'ripit'"
+  [ "$rotor" = "on" ] && PLUGINS="$PLUGINS -P'rotor $rotor_args'"
+  [ "$rssreader" = "on" ] && PLUGINS="$PLUGINS -P'rssreader'"
+  [ "$screenshot" = "on" ] && PLUGINS="$PLUGINS -P'screenshot'"
+  [ "$setup" = "on" ] && PLUGINS="$PLUGINS -P'setup'"
+  [ "$skinelchi" = "on" ] && PLUGINS="$PLUGINS -P'skinelchi $skinelchi_args'"
+  [ "$skinenigmang" = "on" ] && PLUGINS="$PLUGINS -P'skinenigmang $skinenigmang_args'"
+  [ "$skinreel" = "on" ] && PLUGINS="$PLUGINS -P'skinreel'"
+  [ "$skinsoppalusikka" = "on" ] && PLUGINS="$PLUGINS -P'skinsoppalusikka $skinsoppalusikka_args'"
+  [ "$sleeptimer" = "on" ] && PLUGINS="$PLUGINS -P'sleeptimer $sleeptimer_args'"
+  [ "$solitaire" = "on" ] && PLUGINS="$PLUGINS -P'solitaire'"
+  [ "$span" = "on" ] && PLUGINS="$PLUGINS -P'span'"
+  [ "$spider" = "on" ] && PLUGINS="$PLUGINS -P'spider'"
+  [ "$sport" = "on" ] && PLUGINS="$PLUGINS -P'sport $sport_args'"
+  [ "$streamdev_client" = "on" ] && PLUGINS="$PLUGINS -P'streamdev-client'"
+  [ "$streamdev_server" = "on" ] && PLUGINS="$PLUGINS -P'streamdev-server $streamdev_server_args'"
+  [ "$streamplayer" = "on" ] && PLUGINS="$PLUGINS -P'streamplayer'"
+  [ "$submenu" = "on" ] && PLUGINS="$PLUGINS -P'submenu'"
+  [ "$subtitles" = "on" ] && PLUGINS="$PLUGINS -P'subtitles'"
+  [ "$sudoku" = "on" ] && PLUGINS="$PLUGINS -P'sudoku'"
+  [ "$svdrpext" = "on" ] && PLUGINS="$PLUGINS -P'svdrpext'"
+  [ "$svdrpservice" = "on" ] && PLUGINS="$PLUGINS -P'svdrpservice'"
+  [ "$sysinfo" = "on" ] && PLUGINS="$PLUGINS -P'sysinfo'"
+  [ "$taste" = "on" ] && PLUGINS="$PLUGINS -P'taste'"
+  [ "$text2skin" = "on" ] && PLUGINS="$PLUGINS -P'text2skin'"
+  [ "$ttxtsubs" = "on" ] && PLUGINS="$PLUGINS -P'ttxtsubs'"
+  [ "$timeline" = "on" ] && PLUGINS="$PLUGINS -P'timeline'"
+  [ "$touchtft" = "on" ] && PLUGINS="$PLUGINS -P'touchtft $touchtft_args'"
+  [ "$tvonscreen" = "on" ] && PLUGINS="$PLUGINS -P'tvonscreen $tvonscreen_args'"
+  [ "$tvtv" = "on" ] && PLUGINS="$PLUGINS -P'tvtv'"
+  [ "$undelete" = "on" ] && PLUGINS="$PLUGINS -P'undelete $undelete_args'"
+  [ "$vdrcd" = "on" ] && PLUGINS="$PLUGINS -P'vdrcd $vdrcd_args'"
+  [ "$vdrrip" = "on" ] && PLUGINS="$PLUGINS -P'vdrrip $vdrrip_args'"
+  [ "$vompserver" = "on" ] && PLUGINS="$PLUGINS -P'vompserver $vompserver_args'"
+  [ "$wapd" = "on" ] && PLUGINS="$PLUGINS -P'wapd $wapd_args'"
+  [ "$weatherng" = "on" ] && PLUGINS="$PLUGINS -P'weatherng $weatherng_args'"
+  [ "$wirbelscan" = "on" ] && PLUGINS="$PLUGINS -P'wirbelscan'"
+  [ "$xxvautotimer" = "on" ] && PLUGINS="$PLUGINS -P'xxvautotimer $xxvautotimer_args'"
+  [ "$yaepg" = "on" ] && PLUGINS="$PLUGINS -P'yaepg'"
+  [ "$zaphistory" = "on" ] && PLUGINS="$PLUGINS -P'zaphistory'"
+  [ "$default_plugins" = "on" ] && PLUGINS="$PLUGINS -P'hello' -P'osddemo' -P'svccli' -P'svcsvr' -P'sky' -P'status' -P'svdrpdemo'"
+  
+  # scripts
+  VDRRECCMDS="$VDRSCRIPTDIR/vdrreccmds"
+  VDRSETTIME="$VDRSCRIPTDIR/vdrsettime"
+  VDRSHUTDOWN="$VDRSCRIPTDIR/vdrshutdown"
+  
+  # keyboard tty (terminal for vdr)
+  VDRKEYBTTY=""
+  if [ "$KEYB_TTY" != "" ]; then
+    VDRKEYBTTY="-t $KEYB_TTY"
+    [ "$VDRUSER" != "root" ] && chmod 0666 $KEYB_TTY
+  fi
+  
+  # cmd
+  VDRCMD="$VDRPRG -w $WATCHDOG -v $VIDEODIR -c $VDRCONFDIR -E $VDRVARDIR/epg.data -L $VDRLIBDIR \
+         -s $VDRSHUTDOWN -T $VDRSETTIME -r $VDRRECCMDS $VDRKEYBTTY -u $VDRUSER $PLUGINS $OPTIONS "
+}
+
+# modules
+function get_modulenames() {
+  KVERS=`uname -r | grep -e '2.6'`
+  if [ -z "$KVERS" ]; then
+    MODULES=`lsmod | grep 'dvb-core' | cut -d'[' -f2 | cut -d']' -f1`
+  else
+    MODULES=`lsmod | grep '^dvb_core' | awk '{print $4;}' | awk '{ gsub(/,/," ", $1); print }'`
+  fi
+}
+
+get_modulenames
+
+if [ -z "$MODULES" ]; then               # If no DVB-Modules were found, try to load
+    modprobe -q dvb                      # the module with the name dvb, this could
+    get_modulenames                      # be an alias for the dvb-ttpci-module or
+fi                                       # another dvb-module
+
+MODULES="$MODULES dvb-core"
+
+if [ `echo $MODULES | grep -cw 'b2c2_flexcop'` -gt 0 ] && [ `echo $MODULES | grep -cw 'b2c2_flexcop_pci'` -eq 0 ]; then
+   MODULES="b2c2_flexcop_pci $MODULES"
+fi
+
+# clear TTY
+if [ "$KEYB_TTY" != "" ]; then
+  clear > $KEYB_TTY
+fi
+
+# main script
+while (true) do
+  # load vdr settings
+  vdr_settings
+  # start vdr
+  logger "Starting Video Disk Recorder at `date`"
+  eval $VDRCMD >/dev/null 2>&1
+  if test $? -eq 0; then
+    logger "Video Disk Recorder stopped at `date`"
+    exit 0
+  fi
+  # stop vdr
+  logger "Stopping Video Disk Recorder at `date`"
+  $KILL $VDRPRG
+  n=10
+  echo -n "Waiting $n seconds ..."
+  for i in `seq 1 $n`; do
+    sleep 1
+    (( n=$n-1 ))
+    echo -n " $n"
+  done
+  echo ""
+  # unload modules
+  for MODULE in $MODULES; do
+    rmmod $MODULE >/dev/null 2>&1
+    wait `pidof rmmod`
+  done
+  # load modules
+  for MODULE in $MODULES; do
+    modprobe $MODULE >/dev/null 2>&1
+  done
+done
+
+# clear tty
+if [ "$KEYB_TTY" != "" ]; then
+  clear > $KEYB_TTY
+fi

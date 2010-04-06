@@ -1,0 +1,33 @@
+--- music/menubrowse.c~	2007-06-17 22:50:45.000000000 +0200
++++ music/menubrowse.c	2007-06-17 22:52:07.000000000 +0200
+@@ -245,7 +245,11 @@
+ 
+ void cMenuPlayList::Buttons(void)
+ {
++#if VDRVERSNUM >= 10503
++  SetHelp(tr("Add"), showid3?tr("Filenames"):tr("ID3 names"), tr("Remove"), tr("button$Mark"));
++#else
+   SetHelp(tr("Add"), showid3?tr("Filenames"):tr("ID3 names"), tr("Remove"), tr(BUTTON"Mark"));
++#endif
+ }
+ 
+ void cMenuPlayList::Refresh(bool all)
+@@ -425,10 +429,18 @@
+ {
+   switch(num) {
+     case 1:
++#if VDRVERSNUM >= 10503
++      SetHelp(tr("button$Edit"), tr("Source"), tr("Browse"), ">>");
++#else
+       SetHelp(tr(BUTTON"Edit"), tr("Source"), tr("Browse"), ">>");
++#endif
+       break;
+     case 2:
++#if VDRVERSNUM >= 10503
++      SetHelp("<<", tr("button$New"), tr("button$Delete"), tr("Rename"));
++#else
+       SetHelp("<<", tr(BUTTON"New"), tr(BUTTON"Delete"), tr("Rename"));
++#endif
+       break;
+     }
+   buttonnum=num; Display();

@@ -1,0 +1,9 @@
+--- Makefile~
++++ Makefile
+@@ -20,5 +20,5 @@
+ 
+ # If you use the mailbox plugin this will include support for it.
+-SKINENIGMA_USE_PLUGIN_MAILBOX = 1
++#SKINENIGMA_USE_PLUGIN_MAILBOX = 1
+ 
+ # Include code to support the Avards plugin:

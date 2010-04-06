@@ -1,0 +1,11 @@
+--- Makefile~
++++ Makefile
+@@ -24,7 +24,7 @@
+ # Include code to support the Avards plugin:
+ #  - Dynamic OSD size depending on current WSS mode.
+ #  - Display current WSS mode in channel info and replay OSDs.
+-SKINENIGMA_USE_PLUGIN_AVARDS = 1
++#SKINENIGMA_USE_PLUGIN_AVARDS = 1
+ 
+ # Disable any code that is used for scrolling or blinking text.
+ # NOTE: this is only useful if you want to save some bytes because you

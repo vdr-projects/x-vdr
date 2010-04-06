@@ -1,0 +1,12 @@
+--- sleeptimer-0.6/sleeptimer.c
++++ sleeptimer-0.6/sleeptimer.c
+@@ -22,3 +22,3 @@
+ int Shutdown_Minutes = 0;
+-char *Command = "/sbin/poweroff";
++char *Command = "svdrpsend.pl HITK Power";
+ 
+@@ -179,3 +179,3 @@
+   // Return a string that describes all known command line options.
+-	return "  -e command   shutdown command (default: /sbin/poweroff)\n";
++	return "  -e command   shutdown command (default: svdrpsend.pl HITK Power)\n";
+ }

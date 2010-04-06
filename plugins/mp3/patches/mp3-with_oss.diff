@@ -1,0 +1,11 @@
+--- Makefile.ORG
++++ Makefile
+@@ -32,7 +32,7 @@
+ #WITHOUT_LIBVORBISFILE=1
+ 
+ ### uncomment the following line, if you want OSS sound output
+-#WITH_OSS_OUTPUT=1
++WITH_OSS_OUTPUT=1
+ 
+ ### uncomment the following line, if you want to include debug symbols
+ #DBG=1

@@ -1,0 +1,25 @@
+--- install.sh.orig
++++ install.sh
+@@ -93,14 +93,18 @@
+ 	echo ""
+ 	echo "*** Optional ***"
+ 	echo "* Required for AutoTimer email notification"
+-	checkPerlModule Net::SMTP
+-	checkPerlModule Authen::SASL
++	echo "Perl module check for Net::SMTP is disabled by x-vdr"
++	echo "Perl module check for Authen::SASL is disabled by x-vdr"
++#	checkPerlModule Net::SMTP
++#	checkPerlModule Authen::SASL
+	echo "* Required for AutoTimer email notification and CRAM-MD5 authentication"
+-	checkPerlModule Digest::HMAC_MD5
++	echo "Perl module check for Digest::HMAC_MD5 is disabled by x-vdr"
++#	checkPerlModule Digest::HMAC_MD5
+ 	echo "* Required if VDR and VDRAdmin-AM use different character encoding"
+ 	checkPerlModule Encode
+ 	echo "* Required for IPv6 support"
+-	checkPerlModule IO::Socket::INET6
++	echo "Perl module check for IO::Socket::INET6 is disabled by x-vdr"
++#	checkPerlModule IO::Socket::INET6
+ 	echo "* Required if you want to use gzip'ed HTTP responses"
+ 	checkPerlModule Compress::Zlib
+ }

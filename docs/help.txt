@@ -1,0 +1,106 @@
+# x-vdr/docs/help.txt
+# Stand: 09.02.2007
+
+
+ERSTE VDR INSTALLATION:
+*****************************************************
+Im "Startmenu" Punkt 1 (Interaktive Installation) waehlen.
+Einstellungen vornehmen und Installation starten.
+Waerend apt-get das System aktualisiert muessen einige Fenster bedient werden. Danach kann das Script unbeaufsichtigt arbeiten.
+Erst wird der VDR installiert. Dann die Utilities. Als letztes die Plugins.
+
+Und bitte MIT VISUDO DIE SUDOERS BEARBEITEN!!!
+Mehr dazu steht weiter unten bei VISUDO.
+
+****** UPDATE DES VDR:
+Im "Startmenu" Punkt 1 (Interaktive Installation) waehlen.
+x-vdr erkennt einen installierten VDR und bietet ein Update an.
+Bei einem Update sind einige Menus abgestellt, da davon ausgegangen wird, das zB die Utilities schon installiert sind.
+
+****** PATCHLEVEL:
+Hier kann bestimmt werden, welche Patches auf den VDR angewendet werden sollen.
+
+****** INSTALLATIONS MENU:
+Utilities, Plugins und mehr...
+
+****** VDR-SETUP MENU:
+Konfiguration des VDR bearbeiten.
+
+****** SYSTEM MENU:
+Netzwerk, lilo und mehr...
+
+****** X-VDR PARAMETER:
+Moegliche Parameter fuer x-vdr.sh sind:
+--dir|-d /path/to/x-vdr  -> Muss als erster Parameter uebergeben werden! Gefolgt von einer Pfadangabe zum x-vdr Verzeichnis
+--config|-c              -> VDR wird nicht beendet (funktioniert nicht zusammen mit --install)
+--install|-i             -> entfernt alten vdr und startet eine direkte Installation
+--no-xdialog|-n          -> dialog verwenden
+--xdialog|-x             -> Xdialog verwenden
+--help|-h                -> Zeigt was du siehst und beendet x-vdr
+--version|-v             -> Zeigt die Versionsnummer und beendet x-vdr
+
+Einzelne Parameter muessen duch eine Leerstelle getrennt werden.
+
+In /usr/local/src wird ein Symlink "x-vdr" auf das x-vdr Verzeichnis angelegt. Weiter wird in /usr/local/bin ein Symlink "x-vdr" auf x-vdr.sh angelegt. Damit ist es moeglich, x-vdr ab dem zweiten Aufruf mit dem Befehl "x-vdr" zu starten.
+
+****** USER:
+Wird x-vdr mit seinen standard Einstellungen ausgefuehrt, legt das Skript einen neuen Benutzer "vdruser" und eine neue Gruppe "vdrgroup" an. Dann traegt es diesen Benutzer und die Gruppe in /etc/default/vdr ein.
+VDRUSER="vdruser"
+VDRGROUP="vdrgroup"
+
+Das VDR-Start-Skript "runvdr" liest /etc/default/vdr und startet den VDR dann als User "vdruser".
+Da aber einige Funktionen nur als root ausgefuehrt werden duerfen, wird noch das extra Skript "vdr2root" benoetigt.
+Es liegt nach der Installation in /usr/lib/vdr/scripts. Wer es sich vorher mal ansehen will, findet es in /x-vdr/vdr/scripts.
+
+****** VISUDO:
+Damit der VDR ohne Root-Rechte funktioniert muss "vdr2root" in die /etc/sudoers eingetragen werden.
+"vdrsetup" ist ein Skript zum Verwalten des mit x-vdr installierten VDRs (das osdserver plugin wird benoetigt).
+"vdrmount" wird von diversen Plugins zum Einbinden der Laufwerke benutzt.
+Zur Zeit muss noch /bin/ln fuer das dvd-select-plugin mit dazu.
+
+Kurze Anleitung:
+Als root eine Konsole oeffnen und "visudo" eingeben.
+
+Mit der Taste i kommt mensch in den EINFUEGEN Modus.
+Mit den Pfeiltasten navigieren und den Eintrag wie folgt ergaenzen:
+
+# User privilege specification
+root    ALL=(ALL) ALL
+vdruser ALL=NOPASSWD: /usr/lib/vdr/scripts/vdr2root, /usr/lib/vdr/scripts/vdrsetup, /usr/lib/vdr/scripts/vdrmount, /bin/ln
+
+Der Pfad zu vdr2root muss mit denn eigenen Angaben in der x-vdr.conf uebereinstimmen! Mit der Taste ESCAPE wird der EINFUEGEN Modus wieder beendet.
+Dann kann visudo mit der Eingabe von :wq also Doppelpunkt und w und q und Return beendet werden. vi speichert daraufhin die Aenderungen. Soll vi beendet werden ohne die Aenderungen zu uebernehmen, kann dies mit :q RETURN getan werden.
+
+****** PATCHES:
+Im Verzeichnis vdr und in den plugins gibt es je ein Verzeichnis "patches". Dateien mit den Endungen .bz2 , .patch und .diff die in einem solchen Verzeichnis liegen werden automatisch ausgefuehrt.
+
+****** NEUES PLUGIN HINZUFUEGEN:
+Dafuer kann zB das femon-plugin als Vorlage genommen werden.
+
+cd /usr/local/src/x-vdr/plugins
+cp -R femon NEUESPLUGIN
+cd NEUESPLUGIN
+kedit plugin.sh
+
+In der plugin.sh folgendes anpassen:
+
+WEB="http://www.saunalahti.fi/~rahrenbe/vdr/femon/files/vdr-femon-0.9.8.tgz"
+VERSION="femon-0.9.8"
+LINK="femon"
+
+Falls keine extras notwendig sind war es das, und das Plugin kann mit: 
+./plugin.sh --make
+installiert werden. Wird der Verzeichnisname von NEUESPLUGIN in die x-vdr.conf bei den Plugins eingetragen, wird das Neue beim naechsten mal gleich mit installiert.
+
+Weitere moegliche Parameter fuer plugin.sh sind:
+--clean|-c               -> entfernt das Plugin
+--install|-i             -> entpackt das Plugin etc.
+--make|-m                -> wie --install aber das Plugin wird sofort uebersetzt
+--remake|-r              -> wie --clean und --install und --make
+--status|-s              -> 0=nicht gefunden, 1=gefunden
+--version|-v             -> Zeigt die Plugin-Version des Skripts
+
+
+
+
+

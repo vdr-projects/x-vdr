@@ -1,0 +1,12 @@
+#!/bin/sh
+
+while (true) do
+	date
+	echo "vdr-no-shutdown"
+	echo "if this script is running"
+	echo "vdr can not shutdown the system"
+	sleep 60
+	done
+
+
+

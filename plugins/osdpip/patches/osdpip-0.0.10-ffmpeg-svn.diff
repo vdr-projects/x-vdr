@@ -1,0 +1,57 @@
+diff -ruN osdpip-0.0.10/decoder.c osdpip-0.0.10-fixed/decoder.c
+--- osdpip-0.0.10/decoder.c	2008-05-03 20:55:47.000000000 +0200
++++ osdpip-0.0.10-fixed/decoder.c	2009-03-23 14:37:40.000000000 +0100
+@@ -79,18 +79,33 @@
+     struct SwsContext * context;
+ 
+     av_picture_crop(&pic_crop, (AVPicture *) m_PicDecoded, PIX_FMT_YUV420P, OsdPipSetup.CropTop, OsdPipSetup.CropLeft);
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+     context = sws_getContext(m_Context->width - (OsdPipSetup.CropLeft + OsdPipSetup.CropRight),
+                              m_Context->height - (OsdPipSetup.CropTop + OsdPipSetup.CropBottom),
+                              PIX_FMT_YUV420P,
+                              m_Width, m_Height, ConvertToRGB ? PIX_FMT_RGBA32 : PIX_FMT_YUV420P,
+                              SWS_LANCZOS, NULL, NULL, NULL);
++#else
++    context = sws_getContext(m_Context->width - (OsdPipSetup.CropLeft + OsdPipSetup.CropRight),
++                             m_Context->height - (OsdPipSetup.CropTop + OsdPipSetup.CropBottom),
++                             PIX_FMT_YUV420P,
++                             m_Width, m_Height, ConvertToRGB ? PIX_FMT_RGB32 : PIX_FMT_YUV420P,
++                             SWS_LANCZOS, NULL, NULL, NULL);
++#endif
++
+     if (!context) {
+         printf("Error initializing scale context.\n");
+         return -1;
+     }
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+     avpicture_fill((AVPicture *) m_PicResample, m_BufferResample,
+                    ConvertToRGB ? PIX_FMT_RGBA32 : PIX_FMT_YUV420P,
+                    m_Width, m_Height);
++#else
++    avpicture_fill((AVPicture *) m_PicResample, m_BufferResample,
++                   ConvertToRGB ? PIX_FMT_RGB32 : PIX_FMT_YUV420P,
++                   m_Width, m_Height);
++#endif
+     sws_scale(context, pic_crop.data, pic_crop.linesize,
+               0, m_Context->height - (OsdPipSetup.CropTop + OsdPipSetup.CropBottom),
+               m_PicResample->data, m_PicResample->linesize);
+@@ -120,11 +135,19 @@
+     img_resample_close(contextResample);
+     if (ConvertToRGB)
+     {
++#if LIBAVCODEC_VERSION_INT < ((52<<16)+(21<<8)+0)
+         avpicture_fill((AVPicture *) m_PicConvert, m_BufferConvert,
+                 PIX_FMT_RGBA32, m_Width, m_Height);
+         img_convert((AVPicture *) m_PicConvert, PIX_FMT_RGBA32,
+                 (AVPicture *) m_PicResample, PIX_FMT_YUV420P,
+                 m_Width, m_Height);
++#else
++        avpicture_fill((AVPicture *) m_PicConvert, m_BufferConvert,
++                PIX_FMT_RGB32, m_Width, m_Height);
++        img_convert((AVPicture *) m_PicConvert, PIX_FMT_RGB32,
++                (AVPicture *) m_PicResample, PIX_FMT_YUV420P,
++                m_Width, m_Height);
++#endif
+     }
+ #endif
+ 

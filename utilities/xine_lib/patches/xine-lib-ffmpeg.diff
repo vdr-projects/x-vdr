@@ -1,0 +1,16 @@
+diff -ur xine-lib/src/libffmpeg/libavcodec/avcodec.h xine-lib/src/libffmpeg/libavcodec/avcodec.h
+--- xine-lib/src/libffmpeg/libavcodec/avcodec.h
++++ xine-lib/src/libffmpeg/libavcodec/avcodec.h
+@@ -31,7 +31,11 @@
+ extern "C" {
+ #endif
+ 
+-#include "avutil.h"
++#ifdef HAVE_FFMPEG_AVUTIL_H
++#  include "avutil.h"
++#else
++#  include "libavutil/avutil.h"
++#endif
+ #include <sys/types.h> /* size_t */
+ 
+ #define AV_STRINGIFY(s)         AV_TOSTRING(s)

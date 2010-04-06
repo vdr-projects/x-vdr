@@ -1,0 +1,74 @@
+--- lcdtranstbl.h.orig	2009-01-09 19:51:31.000000000 +0100
++++ lcdtranstbl.h	2009-02-20 11:17:13.000000000 +0100
+@@ -539,10 +539,11 @@ lcdtranstbl-CFontz.h
+ this table is used to map characters for output to
+ a Crystal Fontz LCD to display some special characters correctly.
+ newline,tab and friends are mapped to ' '
++!!! patched for CF-631 !!!
+ */
+ 
+ {
+-/*   0 ( '^@') */ (unsigned char)   0,
++/*   0 ( '^@') */ (unsigned char)  32,
+ /*   1 ( '^A') */ (unsigned char)   1,
+ /*   2 ( '^B') */ (unsigned char)   2,
+ /*   3 ( '^C') */ (unsigned char)   3,
+@@ -668,7 +669,7 @@ newline,tab and friends are mapped to ' 
+ /* 123 ( '{' ) */ (unsigned char) 253,
+ /* 124 ( '|' ) */ (unsigned char) 221,
+ /* 125 ( '}' ) */ (unsigned char) 255,
+-/* 126 ( '~' ) */ (unsigned char) 206,
++/* 126 ( '~' ) */ (unsigned char)  45,
+ /* 127 ( '^?') */ (unsigned char) 127,
+ /* 128 ( '~@') */ (unsigned char) 128,
+ /* 129 ( '~A') */ (unsigned char) 129,
+@@ -738,7 +739,7 @@ newline,tab and friends are mapped to ' 
+ /* 193 ( '�' ) */ (unsigned char) 226,
+ /* 194 ( '�' ) */ (unsigned char) 65,
+ /* 195 ( '�' ) */ (unsigned char) 65,
+-/* 196 ( '�' ) */ (unsigned char) 91,
++/* 196 ( '�' ) */ (unsigned char) 65,
+ /* 197 ( '�' ) */ (unsigned char) 174,
+ /* 198 ( '�' ) */ (unsigned char) 188,
+ /* 199 ( '�' ) */ (unsigned char) 169,
+@@ -756,13 +757,13 @@ newline,tab and friends are mapped to ' 
+ /* 211 ( '�' ) */ (unsigned char) 228,
+ /* 212 ( '�' ) */ (unsigned char) 236,
+ /* 213 ( '�' ) */ (unsigned char)  79,
+-/* 214 ( '�' ) */ (unsigned char)  92,
++/* 214 ( '�' ) */ (unsigned char)  79,
+ /* 215 ( '�' ) */ (unsigned char) 120,
+ /* 216 ( '�' ) */ (unsigned char) 171,
+ /* 217 ( '�' ) */ (unsigned char)  85,
+ /* 218 ( '�' ) */ (unsigned char) 229,
+ /* 219 ( '�' ) */ (unsigned char)  85,
+-/* 220 ( '�' ) */ (unsigned char)  94,
++/* 220 ( '�' ) */ (unsigned char)  85,
+ /* 221 ( '�' ) */ (unsigned char) 250,
+ /* 222 ( '�' ) */ (unsigned char) 178,
+ /* 223 ( '�' ) */ (unsigned char) 190,
+@@ -770,7 +771,7 @@ newline,tab and friends are mapped to ' 
+ /* 225 ( '�' ) */ (unsigned char) 231,
+ /* 226 ( '�' ) */ (unsigned char)  97,
+ /* 227 ( '�' ) */ (unsigned char)  97,
+-/* 228 ( '�' ) */ (unsigned char) 123,
++/* 228 ( '�' ) */ (unsigned char)  97,
+ /* 229 ( '�' ) */ (unsigned char) 175,
+ /* 230 ( '�' ) */ (unsigned char) 189,
+ /* 231 ( '�' ) */ (unsigned char) 200,
+@@ -788,13 +789,13 @@ newline,tab and friends are mapped to ' 
+ /* 243 ( '�' ) */ (unsigned char) 228,
+ /* 244 ( '�' ) */ (unsigned char) 237,
+ /* 245 ( '�' ) */ (unsigned char) 237,
+-/* 246 ( '�' ) */ (unsigned char) 124,
++/* 246 ( '�' ) */ (unsigned char) 111,
+ /* 247 ( '�' ) */ (unsigned char) 47,
+ /* 248 ( '�' ) */ (unsigned char) 172,
+ /* 249 ( '�' ) */ (unsigned char) 166,
+ /* 250 ( '�' ) */ (unsigned char) 234,
+ /* 251 ( '�' ) */ (unsigned char) 239,
+-/* 252 ( '�' ) */ (unsigned char) 126,
++/* 252 ( '�' ) */ (unsigned char) 117,
+ /* 253 ( '�' ) */ (unsigned char) 235,
+ /* 254 ( '�' ) */ (unsigned char) 178,
+ /* 255 ( '�' ) */ (unsigned char) 183},

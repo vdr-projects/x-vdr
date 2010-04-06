@@ -1,0 +1,26 @@
+#! /bin/sh
+# /etc/init.d/x-lcd
+
+# Load VDR configuration
+. /etc/default/vdr
+
+STARTLOGO=$VDRCONFDIR/plugins/graphlcd/splash/start
+STOPLOGO=$VDRCONFDIR/plugins/graphlcd/splash/stop
+
+case "$1" in
+  start)
+        echo "Displaying Startlogo"
+        /usr/bin/showpic -c /etc/graphlcd.conf -d ks0108 -s 200 $(ls $STARTLOGO/*.glcd) &
+        ;;
+  stop)
+        echo "Displaying Shutdownlogo"
+        /usr/bin/showpic -c /etc/graphlcd.conf -d ks0108 -s 200 $(ls $STOPLOGO/*.glcd) &
+        ;;
+  *)
+	echo "Usage: /etc/init.d/x-lcd {start|stop}"
+	exit 1
+	;;
+esac
+
+exit 0
+ 

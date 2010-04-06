@@ -1,0 +1,48 @@
+diff -ruN vdrtvtime-0.0.1e-orig/vdrcommands.c vdrtvtime-0.0.1e/vdrcommands.c
+--- vdrtvtime-0.0.1e-orig/vdrcommands.c	2007-03-24 21:11:52.000000000 +0100
++++ vdrtvtime-0.0.1e/vdrcommands.c	2007-04-24 00:09:22.000000000 +0200
+@@ -29,7 +29,7 @@
+ 
+ struct tKbdMap {
+   eKbdFunc func;
+-  uint64 code;
++  uint64_t code;
+   };  
+ 
+ static tKbdMap KbdMap[] = {
+@@ -76,7 +76,7 @@
+   rawMode = RawMode;
+ }
+ 
+-uint64 cTvtimeRemote::MapFuncToCode(int Func) {
++uint64_t cTvtimeRemote::MapFuncToCode(int Func) {
+   for (tKbdMap *p = KbdMap; p->func != kfNone; p++) {
+       if (p->func == Func)
+          return p->code;
+@@ -84,7 +84,7 @@
+   return (Func <= 0xFF) ? Func : 0;
+ }
+ 
+-int cTvtimeRemote::MapCodeToFunc(uint64 Code) {
++int cTvtimeRemote::MapCodeToFunc(uint64_t Code) {
+ #ifdef KBD_DEBUG
+   d(4,"MapCodeToFunc(Code %x)",(int) Code);
+ #endif
+diff -ruN vdrtvtime-0.0.1e-orig/vdrcommands.h vdrtvtime-0.0.1e/vdrcommands.h
+--- vdrtvtime-0.0.1e-orig/vdrcommands.h	2007-03-17 19:08:12.000000000 +0100
++++ vdrtvtime-0.0.1e/vdrcommands.h	2007-04-24 00:04:46.000000000 +0200
+@@ -25,12 +25,12 @@
+ private:
+   static bool kbdAvailable;
+   static bool rawMode;
+-  int MapCodeToFunc(uint64 Code);
++  int MapCodeToFunc(uint64_t Code);
+ public:
+   cTvtimeRemote(void);
+   virtual ~cTvtimeRemote();
+   static bool KbdAvailable(void) { return kbdAvailable; }
+-  static uint64 MapFuncToCode(int Func);
++  static uint64_t MapFuncToCode(int Func);
+   static void SetRawMode(bool RawMode);
+   void ProcessCommand(uint64_t command);
+   };

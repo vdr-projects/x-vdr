@@ -1,0 +1,30 @@
+diff -ur pvrinput-2008-10-04/example/channels.conf_newsyntax.example pvrinput-2008-12-24/example/channels.conf_newsyntax.example
+--- pvrinput-2008-10-04/example/channels.conf_newsyntax.example	2008-06-01 19:10:12.000000000 +0200
++++ pvrinput-2008-12-24/example/channels.conf_newsyntax.example	2008-12-24 15:21:31.000000000 +0100
+@@ -33,7 +33,9 @@
+ S26:343250:PVRINPUT|TV:P:0:301:300:305:0:5492:0:0:0
+ S27:351250:PVRINPUT|TV:P:0:301:300:305:0:5620:0:0:0
+ S28:359250:PVRINPUT|TV:P:0:301:300:305:0:5748:0:0:0
+-S30:343250:PVRINPUT|TV:P:0:301:300:305:0:6004:0:0:0
++S29:367250:PVRINPUT|TV:P:0:301:300:305:0:5876:0:0:0
++S30:375250:PVRINPUT|TV:P:0:301:300:305:0:6004:0:0:0
++S35:359250:PVRINPUT|TV:P:0:301:300:305:0:6644:0:0:0
+ k21:471250:PVRINPUT|TV:P:0:301:300:305:0:7540:0:0:0
+ k22:479250:PVRINPUT|TV:P:0:301:300:305:0:7668:0:0:0
+ k23:487250:PVRINPUT|TV:P:0:301:300:305:0:7796:0:0:0
+Nur in pvrinput-2008-12-24/example: channels.conf_newsyntax.example~.
+diff -ur pvrinput-2008-10-04/example/channels.conf_oldsyntax.example pvrinput-2008-12-24/example/channels.conf_oldsyntax.example
+--- pvrinput-2008-10-04/example/channels.conf_oldsyntax.example	2008-06-01 19:10:00.000000000 +0200
++++ pvrinput-2008-12-24/example/channels.conf_oldsyntax.example	2008-12-24 15:15:51.000000000 +0100
+@@ -33,7 +33,9 @@
+ S26:343250:C0:C:0:301:300:305:A1:5492:0:0:0
+ S27:351250:C0:C:0:301:300:305:A1:5620:0:0:0
+ S28:359250:C0:C:0:301:300:305:A1:5748:0:0:0
+-S30:343250:C0:C:0:301:300:305:A1:6004:0:0:0
++S29:367250:C0:C:0:301:300:305:A1:5876:0:0:0
++S30:375250:C0:C:0:301:300:305:A1:6004:0:0:0
++S35:415250:C0:C:0:301:300:305:A1:6644:0:0:0
+ k21:471250:C0:C:0:301:300:305:A1:7540:0:0:0
+ k22:479250:C0:C:0:301:300:305:A1:7668:0:0:0
+ k23:487250:C0:C:0:301:300:305:A1:7796:0:0:0
+Nur in pvrinput-2008-12-24/example: channels.conf_oldsyntax.example~.

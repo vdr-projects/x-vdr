@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# Start or stop the mvploader
+#
+
+. /etc/default/vdr
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+MVPLOADER="$VDRBINDIR/mvploader"
+FIRMWARE="$VDRCONFDIR/plugins/mediamvp/dongle.bin"
+
+test -s $MVPLOADER || exit 0
+
+[ -f /etc/default/rcS ] && . /etc/default/rcS
+
+
+case "$1" in
+    start)
+        echo -n "Starting mvp loader daemon: "
+        start-stop-daemon --start --quiet -b --exec $MVPLOADER -- \
+                $FIRMWARE
+        if [ $? = 0 ]; then
+            echo "mvploader."
+        else
+            echo "(failed.)"
+        fi
+        ;;
+    stop)
+        echo -n "Stopping mvp loader daemon: "
+        start-stop-daemon --stop --retry=1 --quiet --oknodo \
+                --exec $MVPLOADER
+        echo "mvploader."
+        ;;
+    restart|force-reload)
+        $0 stop && $0 start
+        exit
+        ;;
+    *)
+        echo "Usage: /etc/init.d/mvploader {start|stop|restart|force-reload}"
+        exit 1
+        ;;
+esac
+
+exit 0 

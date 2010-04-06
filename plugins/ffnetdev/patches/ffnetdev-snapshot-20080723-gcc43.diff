@@ -1,0 +1,73 @@
+diff -ruN ffnetdev.org/ffnetdev.c ffnetdev-snapshot-20080723/ffnetdev.c
+--- ffnetdev.org/ffnetdev.c	2008-07-23 07:02:23.000000000 +0200
++++ ffnetdev-snapshot-20080723/ffnetdev.c	2008-07-23 08:12:44.000000000 +0200
+@@ -33,10 +33,10 @@
+ 	
+ }
+ 
+-cOsd * cNetOSDProvider::CreateOsd(int Left, int Top)
++cOsd * cNetOSDProvider::CreateOsd(int Left, int Top, uint Layer)
+ {
+     
+-    osd = new cNetOSD(Left, Top);
++    osd = new cNetOSD(Left, Top, 0);
+     return osd;
+ }
+ 
+diff -ruN ffnetdev.org/netosd.c ffnetdev-snapshot-20080723/netosd.c
+--- ffnetdev.org/netosd.c	2008-07-23 07:02:23.000000000 +0200
++++ ffnetdev-snapshot-20080723/netosd.c	2008-07-23 08:12:44.000000000 +0200
+@@ -9,7 +9,7 @@
+ #include "osdworker.h"
+ 
+ //////////////////////////////////////////////////////////////////////////////////////////////////
+-cNetOSD::cNetOSD(int Left, int Top) : cOsd(Left, Top)
++cNetOSD::cNetOSD(int Left, int Top, uint Layer) : cOsd(Left, Top, Layer)
+ {
+ #ifdef DEBUG   
+    fprintf(stderr,"[ffnetdev] NetOSD: Constructor cNetOSD.\n");
+diff -ruN ffnetdev.org/netosd.h ffnetdev-snapshot-20080723/netosd.h
+--- ffnetdev.org/netosd.h	2008-07-23 07:02:23.000000000 +0200
++++ ffnetdev-snapshot-20080723/netosd.h	2008-07-23 08:14:40.000000000 +0200
+@@ -17,7 +17,7 @@
+ 	bool truecolor;
+ protected:
+ public:
+-    cNetOSD(int XOfs, int XOfs);
++    cNetOSD(int XOfs, int XOfs1, uint Layer);
+     virtual ~cNetOSD();
+     virtual eOsdError CanHandleAreas(const tArea *Areas, int NumAreas);
+     virtual void Flush(void);
+@@ -31,7 +31,7 @@
+     cNetOSD **NetOSD;
+ public:
+     cNetOSDProvider(void);
+-    virtual cOsd *CreateOsd(int Left, int Top);
++    virtual cOsd *CreateOsd(int Left, int Top, uint Layer);
+ };
+ 
+ #endif //_NETOSD__H
+diff -ruN ffnetdev.org/remote.c ffnetdev-snapshot-20080723/remote.c
+--- ffnetdev.org/remote.c	2008-07-23 07:02:23.000000000 +0200
++++ ffnetdev-snapshot-20080723/remote.c	2008-07-23 08:12:44.000000000 +0200
+@@ -27,7 +27,7 @@
+ 	return true;
+ }
+ 
+-bool cMyRemote::Put(uint64 Code, bool Repeat, bool Release)
++bool cMyRemote::Put(uint64_t Code, bool Repeat, bool Release)
+ {
+ #if VDRVERSNUM >= 10347
+     if ((cRemote::IsLearning()) && (Release))
+diff -ruN ffnetdev.org/remote.h ffnetdev-snapshot-20080723/remote.h
+--- ffnetdev.org/remote.h	2008-07-23 07:02:23.000000000 +0200
++++ ffnetdev-snapshot-20080723/remote.h	2008-07-23 08:12:44.000000000 +0200
+@@ -17,7 +17,7 @@
+   cMyRemote(const char *Name);
+   virtual bool Initialize(void);
+   virtual bool Ready(void);
+-  virtual bool Put(uint64 Code, bool Repeat, bool Release);
++  virtual bool Put(uint64_t Code, bool Repeat, bool Release);
+ };
+ 
+ 

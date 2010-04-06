@@ -1,0 +1,93 @@
+#!/bin/sh
+
+if [ -d /ramdisk ]; then # LiveCD Mode
+     export PFAD="/home/knoppix/vdr";
+  else  # after kanotix-installer
+     export PFAD="/var/lib/vdr";
+fi
+
+# Load VDR configuration
+if [ -f /etc/default/vdr ] ; then 
+	. /etc/default/vdr
+else
+	export VDRCONFDIR="$PFAD"
+fi
+
+export CHANNELSCONF="$VDRCONFDIR/channels.conf"
+
+if [ -d $VDRCONFDIR/channellists ] ; then export PFAD="$VDRCONFDIR/channellists"; fi
+ 
+
+#TMP="/tmp/channelswitch.tmp"
+
+K1="channels.conf.sat"
+K2="channels.conf.cable"
+K3="channels.conf.t.berlin"
+K4="channels.conf.t.braunschweig"
+K5="channels.conf.t.bremen"
+K6="channels.conf.t.hamburg"
+K7="channels.conf.t.luebeck"
+K8="channels.conf.t.hannover"
+K9="channels.conf.t.kiel"
+K10="channels.conf.t.koeln"
+K11="channels.conf.t.duesseldorf"
+K12="channels.conf.t.dortmund"
+K13="channels.conf.t.frankfurt"
+K14="channels.conf.t.mainz"
+K15="channels.conf.t.leipzig"
+K16="channels.conf.t.muenchen"
+K17="channels.conf.t.nuernberg"
+
+#ls $PFAD channels*.conf | awk -F ' ' '{print $8}'
+export KANALNR=`Xdialog --menubox "Kanalliste auswählen" 30 45 24 \
+"1)" "Sat (DVB-S)" \
+"2)" "Kabel (DVB-C)"  \
+"3)" "BVB-T Berlin-Brandenburg" \
+"4)" "BVB-T Norddeutschland: Braunschweig" \
+"5)" "BVB-T Bremen/Bremerhaven/Oldenburg" \
+"6)" "BVB-T Norddeutschland: Hamburg" \
+"7)" "BVB-T Norddeutschland: Lübeck" \
+"8)" "BVB-T Norddeutschland: Hannover" \
+"9)" "BVB-T Norddeutschland: Kiel" \
+"10)" "BVB-T NRW: Köln/Bonn" \
+"11)" "BVB-T NRW: Ruhrgebiet/Düsseldorf" \
+"12)" "BVB-T NRW: Ruhrgebiet/Dortmund" \
+"13)" "BVB-T Rhein-Main-Gebiet: Frankfurt a.M." \
+"14)" "BVB-T Rhein-Main-Gebiet: Mainz" \
+"15)" "BVB-T Mitteldeutschland: Leipzig" \
+"16)" "BVB-T Süddeutschland: München" \
+"17)" "BVB-T Süddeutschland: Nürnberg" \
+ 2>&1`
+# 2>"$TMP"
+#export KANALNR="$(<$TMP)"
+
+#echo $KANALNR
+case $KANALNR in
+"1)")   cp -f "$PFAD/$K1" "$CHANNELSCONF" ;;
+"2)")   cp -f "$PFAD/$K2" "$CHANNELSCONF" ;;
+"3)")   cp -f "$PFAD/$K3" "$CHANNELSCONF" ;;
+"4)")   cp -f "$PFAD/$K4" "$CHANNELSCONF" ;;
+"5)")   cp -f "$PFAD/$K5" "$CHANNELSCONF" ;;
+"6)")   cp -f "$PFAD/$K6" "$CHANNELSCONF" ;;
+"7)")   cp -f "$PFAD/$K7" "$CHANNELSCONF" ;;
+"8)")   cp -f "$PFAD/$K8" "$CHANNELSCONF" ;;
+"9)")   cp -f "$PFAD/$K9" "$CHANNELSCONF" ;;
+"10)")   cp -f "$PFAD/$K10" "$CHANNELSCONF" ;;
+"11)")   cp -f "$PFAD/$K11" "$CHANNELSCONF" ;;
+"12)")   cp -f "$PFAD/$K12" "$CHANNELSCONF" ;;
+"13)")   cp -f "$PFAD/$K13" "$CHANNELSCONF" ;;
+"14)")   cp -f "$PFAD/$K14" "$CHANNELSCONF" ;;
+"15)")   cp -f "$PFAD/$K15" "$CHANNELSCONF" ;;
+"16)")   cp -f "$PFAD/$K16" "$CHANNELSCONF" ;;
+"17)")   cp -f "$PFAD/$K17" "$CHANNELSCONF" ;;
+*)     echo "Kanalliste nicht gefunden"; exit 0 ;;
+esac
+
+sudo killall -9 xine
+sudo killall -9 vdr
+sleep 1
+sudo /etc/init.d/vdr start
+
+Xdialog --infobox "Bitte starten Sie das Symbol VDRxine (TV) auf dem Desktop" 10 60 10000
+
+exit 0

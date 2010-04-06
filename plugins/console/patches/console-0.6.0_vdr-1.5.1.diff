@@ -1,0 +1,33 @@
+diff -ruN console-0.6.0/menu.c console-0.6.0_vdr-1.5.1/menu.c
+--- console-0.6.0/menu.c	2004-09-12 00:10:57.000000000 +0200
++++ console-0.6.0_vdr-1.5.1/menu.c	2007-03-19 13:10:14.000000000 +0100
+@@ -1193,7 +1193,7 @@
+ 
+     switch (BASICKEY(Key)) {
+ 
+-    case kKbd:{     uint64 buf = cKbdRemote::MapFuncToCode(KEYKBD(Key));
++    case kKbd:{     uint64_t buf = cKbdRemote::MapFuncToCode(KEYKBD(Key));
+                     WriteToConsole(buf);
+ 
+                     // On every key press, we show the cursor immediately
+@@ -1425,7 +1425,7 @@
+ 
+ 
+ 
+-void cMenuConsole::WriteToConsole(const uint64& code) {
++void cMenuConsole::WriteToConsole(const uint64_t& code) {
+ 
+   unsigned char* data = (unsigned char*)(void*)&code;
+ 
+diff -ruN console-0.6.0/menu.h console-0.6.0_vdr-1.5.1/menu.h
+--- console-0.6.0/menu.h	2004-09-11 23:40:18.000000000 +0200
++++ console-0.6.0_vdr-1.5.1/menu.h	2007-03-19 13:10:47.000000000 +0100
+@@ -102,7 +102,7 @@
+ private:
+   void CaptureKeyboard();
+   void ReleaseKeyboard();
+-  void WriteToConsole(const uint64& code);
++  void WriteToConsole(const uint64_t& code);
+   bool TerminateConsole();
+ 
+   void AddSubMenu(cOsdObject* pSubMenu);

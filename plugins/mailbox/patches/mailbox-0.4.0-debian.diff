@@ -1,0 +1,27 @@
+--- mailbox-0.4.0/Makefile.orig
++++ mailbox-0.4.0/Makefile
+@@ -43,18 +43,18 @@
+ #  Gentoo
+ #  ------
+ #  emerge c-client
+-
+-IMAPINCDIR ?= /usr/include/imap
+-IMAPLFLAGS ?= -lc-client -lssl -lpam
++#
++# IMAPINCDIR ?= /usr/include/imap
++# IMAPLFLAGS ?= -lc-client -lssl -lpam
+ 
+ #
+ #  Debian 3.0
+ #  ----------
+ #  install the packages 'libc-client2001-dev'
+ #  and set the following variables
+-#
+-# IMAPINCDIR ?= /usr/include/c-client
+-# IMAPLFLAGS ?= -lc-client
++
++IMAPINCDIR ?= /usr/include/c-client
++IMAPLFLAGS ?= -lc-client
+ #
+ #  or install 'libc-client-ssh2001-dev'
+ #  and set the following variables

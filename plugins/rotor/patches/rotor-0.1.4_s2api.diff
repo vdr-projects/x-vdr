@@ -1,0 +1,79 @@
+diff -ruN rotor-0.1.4/filter.c rotor-0.1.4-s2api/filter.c
+--- rotor-0.1.4/filter.c	2008-04-16 21:30:02.000000000 +0200
++++ rotor-0.1.4-s2api/filter.c	2009-04-10 12:04:24.000000000 +0200
+@@ -366,6 +366,9 @@
+         SI::PMT::Stream stream;
+         int Vpid = 0;
+         int Ppid = pmt.getPCRPid();
++#if VDRVERSNUM >= 10700
++        int Vtype = stream.getStreamType();
++#endif
+         int Apids[MAXAPIDS + 1] = { 0 };
+         int Dpids[MAXDPIDS + 1] = { 0 };
+         int Spids[MAXDPIDS + 1] = { 0 };
+@@ -451,7 +454,11 @@
+                 delete d;
+                 }
+             }
++#if VDRVERSNUM >= 10700
++        Menu->SetPids(pmt.getServiceId(), Vpid, Ppid, Vtype, Apids, ALangs, Dpids, DLangs, Spids, SLangs, Tpid);
++#else
+         Menu->SetPids(pmt.getServiceId(),Vpid, Vpid ? Ppid : 0, Apids, ALangs, Dpids, DLangs, Spids, SLangs, Tpid);
++#endif
+         Menu->SetCaIds(pmt.getServiceId(),CaDescriptors->CaIds());
+         Menu->SetCaDescriptors(pmt.getServiceId(),CaDescriptorHandler.AddCaDescriptors(CaDescriptors));
+         }
+diff -ruN rotor-0.1.4/menu.c rotor-0.1.4-s2api/menu.c
+--- rotor-0.1.4/menu.c	2008-05-16 10:55:33.000000000 +0200
++++ rotor-0.1.4-s2api/menu.c	2009-04-10 12:01:46.000000000 +0200
+@@ -437,7 +437,11 @@
+     }
+     for (int i=0; i<=MAXCAIDS; i++)
+       CaIds[i]=Channel[Num].Ca(i);
++#if VDRVERSNUM >= 10700
++    channel->SetPids(Channel[Num].Vpid(),Channel[Num].Ppid(),Channel[Num].Vtype(),Apids,ALangs,Dpids,DLangs,Spids,SLangs,Channel[Num].Tpid());
++#else
+     channel->SetPids(Channel[Num].Vpid(),Channel[Num].Ppid(),Apids,ALangs,Dpids,DLangs,Spids,SLangs,Channel[Num].Tpid());
++#endif
+     channel->SetCaIds(CaIds);
+   }
+   else
+@@ -466,16 +470,22 @@
+   num++;
+ }
+ 
+-#if VDRVERSNUM>=10332
++#if VDRVERSNUM >= 10700
++void cMenuScan::SetPids(int Sid, int Vpid, int Vtype, int Ppid, int *Apids, char ALangs[][MAXLANGCODE2], int *Dpids, char DLangs[][MAXLANGCODE2], int *Spids, char SLangs[][MAXLANGCODE2], int Tpid)
++#elif VDRVERSNUM >= 10332
+ void cMenuScan::SetPids(int Sid,int Vpid, int Ppid, int *Apids, char ALangs[][MAXLANGCODE2], int *Dpids, char DLangs[][MAXLANGCODE2], int *Spids, char SLangs[][MAXLANGCODE2], int Tpid)
+ #else
+ void cMenuScan::SetPids(int Sid,int Vpid, int Ppid, int *Apids, char ALangs[][4], int *Dpids, char DLangs[][4], int Tpid)
+ #endif
+ {
+   for (int i=0; i<num; i++)
+     if (Sid==Channel[i].Sid())
+     {
++#if VDRVERSNUM >= 10700
++      Channel[i].SetPids(Vpid,Ppid,Vtype,Apids,ALangs,Dpids,DLangs,Spids,SLangs,Tpid);
++#else
+       Channel[i].SetPids(Vpid,Ppid,Apids,ALangs,Dpids,DLangs,Spids,SLangs,Tpid);
++#endif
+       display(i);
+     }
+ }
+diff -ruN rotor-0.1.4/menu.h rotor-0.1.4-s2api/menu.h
+--- rotor-0.1.4/menu.h	2008-04-16 21:30:02.000000000 +0200
++++ rotor-0.1.4-s2api/menu.h	2009-04-10 12:02:32.000000000 +0200
+@@ -116,7 +116,11 @@
+   virtual eOSState ProcessKey(eKeys Key);
+   void AddChannel(int Num);
+   void NewChannel(const cChannel *Transponder, const char *Name, const char *ShortName, const char *Provider, int Nid, int Tid, int Sid);
++#if VDRVERSNUM >= 10700
++  void SetPids(int Sid, int Vpid, int Ppid, int Vtype, int *Apids, char ALangs[][MAXLANGCODE2], int *Dpids, char DLangs[][MAXLANGCODE2], int *Spids, char SLangs[][MAXLANGCODE2], int Tpid);
++#else
+   void SetPids(int Sid,int Vpid, int Ppid, int *Apids, char ALangs[][MAXLANGCODE2], int *Dpids, char DLangs[][MAXLANGCODE2], int *Spids, char SLangs[][MAXLANGCODE2], int Tpid);
++#endif
+   void SetCaIds(int Sid,const int *CaIds);
+   void SetCaDescriptors(int Sid,int Level);
+   cChannel* GetChannel(int Sid);

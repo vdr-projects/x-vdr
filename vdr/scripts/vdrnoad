@@ -1,0 +1,99 @@
+#!/bin/bash
+#
+# vdrnoad
+#
+# Required: noad, at
+#
+# add this lines to your reccmds.conf:
+# folgende zeilen in die reccmds.conf eintragen:
+#
+# Run noad                         : /usr/lib/vdr/scripts/vdrnoad -start
+# Run noad, all recordings (batch) : /usr/lib/vdr/scripts/vdrnoad -batch
+# View Cut list                    : /usr/lib/vdr/scripts/vdrnoad -view
+# In prozess                       : /usr/lib/vdr/scripts/vdrnoad -count
+# Stop noad (killpid)              : /usr/lib/vdr/scripts/vdrnoad -killpid
+# Stop noad (killall)?             : /usr/lib/vdr/scripts/vdrnoad -killall
+# Remove marks                     : /usr/lib/vdr/scripts/vdrnoad -marks
+# Remove pid                       : /usr/lib/vdr/scripts/vdrnoad -pid
+# Remove all marks                 : /usr/lib/vdr/scripts/vdrnoad -marks.vdr
+# Remove all pids                  : /usr/lib/vdr/scripts/vdrnoad -noad.pid
+
+# CONFIG START
+  NOADOPTS="nice --background --ac3 --asd --overlap --jumplogo --comments --OSD --statisticfile=/var/log/noadstat"
+  #VIDEODIR="/video"
+  source /etc/default/vdr
+# CONFIG END
+
+#PATH=/usr/local/bin:$PATH
+
+case "$1" in
+    -start)
+        echo "recording: "
+        echo
+        echo "$2"
+        echo
+        if [ -e "$2/noad.pid" ] ; then
+            echo "noad is already active..."
+        else
+            echo "noad $NOADOPTS \"$2\" >/dev/null 2>&1" | at now
+            echo "noad startet..."
+        fi
+        ;;
+    -batch)
+        while read i ; do
+            if [ ! -e "$i/marks.vdr" -a ! -e "$i/noad.pid" ] ; then
+                echo "noad $NOADOPTS \"$i\" >/dev/null 2>&1" | batch
+            fi
+        done < <(find "$VIDEODIR" -follow -name "*.rec")
+        ;;
+    -view)
+        echo "recording: "
+        echo
+        echo "$2"
+        echo
+        if [ -e "$2/noad.pid" ] ; then
+            echo "noad is still active..."
+            echo
+        fi
+        if [ -e "$2/marks.vdr" ] ; then
+            cat "$2/marks.vdr"
+        else
+            echo "cut list not found..."
+        fi
+        ;;
+    -count)
+        echo "all noad processes:"
+        echo
+        pidof noad | wc -w | tr -d ' '
+        ;;
+    -killpid)
+        echo "recording: "
+        echo
+        echo "$2"
+        echo
+        if [ -e "$2/noad.pid" ] ; then
+            kill `cat "$2/noad.pid"`
+            echo "noad stopped..."
+        else
+            echo "noad is not active..."
+        fi
+        ;;
+    -killall)
+        PID=`pidof noad`
+        eval ${PID:+kill $PID}
+        ;;
+    -marks)
+        rm -f "$2/marks.vdr"
+        ;;
+    -pid)
+        rm -f "$2/noad.pid"
+        ;;
+    -marks.vdr|-noad.pid)
+        find "$VIDEODIR" -follow -type f -name "${1/-}" -exec  rm -f '{}' ';' &
+        ;;
+    *)
+        echo "unrecognized option: $1"
+        exit 1
+        ;;
+esac
+

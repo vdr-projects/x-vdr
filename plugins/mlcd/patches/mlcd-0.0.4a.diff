@@ -1,0 +1,132 @@
+diff -Nur mlcd-0.0.4a/Makefile mlcd-0.0.4a-n/Makefile
+--- mlcd-0.0.4a/Makefile	2004-04-25 12:49:19.000000000 +0200
++++ mlcd-0.0.4a-n/Makefile	2006-11-21 05:10:22.000000000 +0100
+@@ -21,9 +21,13 @@
+ LIBDIR = ../../lib
+ TMPDIR = /tmp
+ 
++### Allow user defined options to overwrite defaults:
++
++-include $(VDRDIR)/Make.config
++
+ ### The version number of VDR (taken from VDR's "config.h"):
+ 
+-VDRVERSION = $(shell grep 'define VDRVERSION ' $(VDRDIR)/config.h | awk '{ print $$3 }' | sed -e 's/"//g')
++APIVERSION = $(shell grep 'define APIVERSION ' $(VDRDIR)/config.h | awk '{ print $$3 }' | sed -e 's/"//g')
+ 
+ ### The name of the distribution archive:
+ 
+@@ -43,7 +47,7 @@
+ ### The C++ compiler and options:
+ 
+ CXX      = g++
+-CXXFLAGS = -O2 -Wall -Woverloaded-virtual
++CXXFLAGS = -fPIC -O2 -Wall -Woverloaded-virtual
+ 
+ ### Implicit rules:
+ 
+@@ -65,7 +69,7 @@
+ 
+ libvdr-$(PLUGIN).so: $(OBJS)
+ 	$(CXX) $(CXXFLAGS) -shared $(OBJS) -o $@
+-	@cp $@ $(LIBDIR)/$@.$(VDRVERSION)
++	@cp $@ $(LIBDIR)/$@.$(APIVERSION)
+ 
+ dist: clean
+ 	@-rm -rf $(TMPDIR)/$(ARCHIVE)
+diff -Nur mlcd-0.0.4a/mlcd.c mlcd-0.0.4a-n/mlcd.c
+--- mlcd-0.0.4a/mlcd.c	2005-01-09 16:08:55.000000000 +0100
++++ mlcd-0.0.4a-n/mlcd.c	2006-11-21 04:57:40.000000000 +0100
+@@ -22,8 +22,13 @@
+   virtual void ChannelSwitch(const cDevice *Device, int ChannelNumber);
+   virtual void SetVolume(int Volume, bool Absolute);
+   //  virtual void OsdProgramme(time_t PresentTime, const char *PresentTitle, const char *PresentSubtitle, time_t FollowingTime, const char *FollowingTitle, const char *FollowingSubtitle);
++#if VDRVERSNUM >= 10338
++  virtual void Recording(const cDevice *Device, const char *Name, const char *FileName, bool On);
++  virtual void Replaying(const cControl *Control, const char *Name, const char *FileName, bool On);
++#else
+   virtual void Recording(const cDevice *Device, const char *Name);
+   virtual void Replaying(const cControl *Control, const char *Name);
++#endif
+   };
+ 
+ void clcdStatus::ChannelSwitch(const cDevice *Device, int ChannelNumber)
+@@ -58,6 +63,17 @@
+ }
+ */
+ 
++#if VDRVERSNUM >= 10338
++void clcdStatus::Recording(const cDevice *Device, const char *Name, const char *FileName, bool On)
++{
++  LCD->SetRecordingState(Device->CardIndex(), On ? Name ? Name : "" : NULL);
++}
++
++void clcdStatus::Replaying(const cControl *Control, const char *Name, const char *FileName, bool On)
++{
++  LCD->ReplayControl((cControl *) Control, On ? Name ? Name : "" : NULL);
++}
++#else
+ void clcdStatus::Recording(const cDevice *Device, const char *Name)
+ {
+   LCD->SetRecordingState(Device->CardIndex(), Name);
+@@ -68,6 +84,7 @@
+ 
+   LCD->ReplayControl((cControl *) Control,Name);
+ }
++#endif
+ 
+ class cPluginMlcd : public cPlugin {
+ private:
+diff -Nur mlcd-0.0.4a/multilcd.c mlcd-0.0.4a-n/multilcd.c
+--- mlcd-0.0.4a/multilcd.c	2005-01-09 16:07:51.000000000 +0100
++++ mlcd-0.0.4a-n/multilcd.c	2006-11-21 04:57:40.000000000 +0100
+@@ -10,6 +10,7 @@
+ #include "multilcd.h"
+ #include <vdr/tools.h>
+ #include <vdr/config.h>
++#include <vdr/plugin.h>
+ // #define M_DEBUG
+ 
+ 
+@@ -154,16 +155,18 @@
+   //Initialisierung des Arrays
+   int i;
+   int j;
++  char* path;
++  asprintf(&path, "%s/%s", cPlugin::ConfigDirectory("mlcd"), FONTFILE);
++
+ #ifdef M_DEBUG
+-  dsyslog(LOG_INFO,"Reading Font description from %s",FONTFILE);
++  dsyslog(LOG_INFO,"Reading Font description from %s", path);
+ #endif
+   for (i=0;i<256;i++)
+     {
+       for(j=0;j<6;j++) font[i][j] = 0;
+     }
+   //Oeffnen der Fontdatei
+-  const char *name;
+-  FILE *f=fopen(name=FONTFILE,"r");
++  FILE *f=fopen(path, "r");
+  if(f){
+    int n, i;
+    char buffer[128];
+@@ -181,6 +184,7 @@
+  fclose(f);
+  }
+ 
++ free(path);
+  return 0;
+ }
+ 
+diff -Nur mlcd-0.0.4a/multilcd.h mlcd-0.0.4a-n/multilcd.h
+--- mlcd-0.0.4a/multilcd.h	2004-05-22 10:02:17.000000000 +0200
++++ mlcd-0.0.4a-n/multilcd.h	2006-11-21 04:57:40.000000000 +0100
+@@ -13,7 +13,7 @@
+ #define TEXT 0xb3
+ #define GRAPH 0xb4
+ 
+-#define FONTFILE "/etc/char.dat"
++#define FONTFILE "char.dat"
+ 
+ class mLCD : public cThread {
+  private:

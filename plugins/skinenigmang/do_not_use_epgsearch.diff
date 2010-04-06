@@ -1,0 +1,9 @@
+--- Makefile~
++++ Makefile
+@@ -17,5 +17,5 @@
+ # If you are using the epgsearch plugin and want to see the number of
+ # timer conflicts in the main menu's info area.
+-SKINENIGMA_USE_PLUGIN_EPGSEARCH = 1
++#SKINENIGMA_USE_PLUGIN_EPGSEARCH = 1
+ 
+ # If you use the mailbox plugin this will include support for it.

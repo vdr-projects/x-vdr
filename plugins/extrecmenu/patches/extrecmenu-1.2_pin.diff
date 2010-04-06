@@ -1,0 +1,29 @@
+--- mymenurecordings.c~
++++ mymenurecordings.c
+@@ -582,7 +582,7 @@
+     if(!base||(strstr(listitem->recording->Name(),base)==listitem->recording->Name()&&listitem->recording->Name()[strlen(base)]=='~'))
+     {
+       myMenuRecordingsItem *recitem=new myMenuRecordingsItem(listitem->recording,level);
+-#ifdef WITHPINPLUGIN
++#ifdef USE_PINPLUGIN
+       bool hidepinprotectedrecs=false;
+       cPlugin *pinplugin=cPluginManager::GetPlugin("pin");
+       if(pinplugin)
+@@ -672,7 +672,7 @@
+   myMenuRecordingsItem *item=(myMenuRecordingsItem*)Get(Current());
+   if(item)
+   {
+-#ifdef WITHPINPLUGIN
++#ifdef USE_PINPLUGIN
+     if(cStatus::MsgReplayProtected(GetRecording(item),item->Name(),base,item->IsDirectory())==true)
+       return osContinue;
+ #endif
+@@ -1059,7 +1059,7 @@
+                               cRecording *rec=GetRecording(item);
+                               if(rec)
+                               {
+-#ifdef WITHPINPLUGIN
++#ifdef USE_PINPLUGIN
+                                 if(cStatus::MsgReplayProtected(rec,item->Name(),base,item->IsDirectory())==true)
+                                   break;
+ #endif

@@ -1,0 +1,7 @@
+--- sleeptimer-0.6/sleeptimer.c
++++ sleeptimer-0.6/sleeptimer.c
+@@ -8,2 +8,3 @@
+ 
++#include <vdr/device.h>
+ #include <vdr/plugin.h>
+

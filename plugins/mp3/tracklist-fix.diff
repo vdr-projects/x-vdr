@@ -1,0 +1,33 @@
+diff -ruN mp3/mp3.c mp3/mp3.c
+--- mp3/mp3.c
++++ mp3/mp3.c
+@@ -780,16 +780,15 @@
+     case kNext:
+     case kNext|k_Repeat:    
+ #endif
+-      mgr->Next(); player->Play();
++      if(!mgr->Eol() && mgr->Next()) player->Play();
+       break;
+     case kDown:
+     case kDown|k_Repeat:
+ #if APIVERSNUM >= 10347
+     case kPrev:
+     case kPrev|k_Repeat:
+ #endif
+-      if(!player->PrevCheck()) mgr->Prev();
+-      player->Play();
++      if(mgr->Prev()) player->Play();
+       break;
+     case kLeft:
+     case kLeft|k_Repeat:
+diff -ruN mp3/player-mp3.h mp3/player-mp3.h
+--- mp3/player-mp3.h
++++ mp3/player-mp3.h
+@@ -118,6 +118,7 @@
+   bool NextCurrent(void);
+   void Release(void);
+   void Throttle(bool thr);
++  bool Eol(void) { return eol; }
+   };
+ 
+ extern cPlayManager *mgr;

@@ -1,0 +1,333 @@
+diff -ruNp chanman-0.0.7/i18n.c chanman-0.0.7-i18n/i18n.c
+--- chanman-0.0.7/i18n.c	2008-05-11 09:49:13.000000000 +0200
++++ chanman-0.0.7-i18n/i18n.c	2008-05-12 09:51:52.000000000 +0200
+@@ -11,9 +11,163 @@
+ #if APIVERSNUM < 10507
+ 
+ const tI18nPhrase Phrases[] = {
+-  { "Group",
++  { "Channel manager plugin",
++    "Kanal Manager Plugin",
++    "",// TODO
++    "Plugin per gestire i canali",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "Channel Manager",
++    "Kanal Manager",
++    "",// TODO
++    "Gestione canali",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "Channel manager",
++    "Kanal Manager",
++    "",// TODO
++    "Gestione canali",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "Radio",
++    "Radio",
++    "",// TODO
++    "Radio",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "Tv",
++    "TV",
++    "",// TODO
++    "Tv",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
+     "",
+     "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "Tv Crypt",
++    "TV verschlüsselt",
++    "",// TODO
++    "Tv codif.",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "All",
++    "Alle",
++    "",// TODO
++    "Tutti",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "Group",
++    "Gruppe",
++    "",// TODO
+     "Gruppo",
+     "",// TODO
+     "",// TODO
+@@ -34,10 +188,10 @@ const tI18nPhrase Phrases[] = {
+     "",
+   },
+   { "Name",
+-    "",
++    "Name",
+     "",// TODO
+     "Nome",
+-    "",// TODO    
++    "",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -55,11 +209,33 @@ const tI18nPhrase Phrases[] = {
+     "",// TODO
+     "",
+   },
+-  { "Src+Name",
++  { "Channels",
++    "Kanäle",
++    "",// TODO
++    "Canali",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
+     "",
+     "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "Src+Name",
++    "Quelle+Name",
++    "",// TODO
+     "Srg+Nome",
+-    "",// TODO    
++    "",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -78,10 +254,10 @@ const tI18nPhrase Phrases[] = {
+     "",
+   },
+   { "Provider",
+-    "",
++    "Provider",
+     "",// TODO
+     "Provider",
+-    "",// TODO    
++    "",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -100,10 +276,10 @@ const tI18nPhrase Phrases[] = {
+     "",
+   },
+   { "Src+Provider",
+-    "",
++    "Quelle+Provider",
+     "",// TODO
+     "Srg+Provider",
+-    "",// TODO    
++    "",// TODO
+     "",// TODO
+     "",// TODO
+     "",// TODO
+@@ -121,9 +297,31 @@ const tI18nPhrase Phrases[] = {
+     "",// TODO
+     "",
+   },
+-  { "Max items for alphabetic order",
++  { "Src+Frequency",
++    "Quelle+Frequenz",
++    "",// TODO
++    "Srg+Freq.",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
+     "",
+     "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "Max items for alphabetic order",
++    "Max Elemente für alphabetische Sortierung",
++    "",// TODO
+     "Massimo elementi ordine Alfabetico",
+     "",// TODO
+     "",// TODO
+@@ -143,10 +341,54 @@ const tI18nPhrase Phrases[] = {
+     "",// TODO
+     "",
+   },
+-  { "Show : 1) Prov.; 2) ChannelID",
++  { "Show : 1) Prov.; 2) ChID; 3) Freq.",
++    "Zeige : 1) Prov.; 2) ID; 3) Freq.",
++    "",// TODO
++    "Mostra: 1) Prov 2) ID Can 3) Freq",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "Jump : 1) Alphabetic; 2) Numeric",
++    "Springe : 1) Alphabetisch; 2) Numerisch",
++    "",// TODO
++    "Vai a: 1) Alfabetico 2) Num.",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
+     "",
+     "",// TODO
+-    "Mostra : 1) Prov.; 2) ChannelID",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++    "",// TODO
++    "",// TODO
++    "",// TODO
++    "",
++  },
++  { "Button$Switch",
++    "Umschalten",
++    "",// TODO
++    "Cambia",
+     "",// TODO
+     "",// TODO
+     "",// TODO

@@ -1,0 +1,47 @@
+#!/bin/sh
+# /etc/init.d/lcdd
+
+KILL="/usr/bin/killall -q -e -TERM"
+
+# load VDR configuration
+. /etc/default/vdr
+
+if [ "$LCDproc" != "on" ]; then
+  echo "LCDd - exit 0"
+  echo "#####################################################"
+  echo "## To Start the LCD-Daemon you may set             ##"
+  echo "## LCDproc=\"on\" in /etc/default/vdr                ##"
+  echo "#####################################################"
+  exit 0
+fi
+
+case "$1" in
+  start)
+    # starting LCD-Daemon
+    echo "Starting LCDd"
+    LCDd -c /etc/LCDd.conf &
+#    sleep 1
+#    lcdexec -c /etc/lcdexec.conf &
+  ;;
+  stop)
+    # stopping LCD-Daemon
+    echo "Stopping LCDd"
+#    $KILL lcdexec
+    $KILL LCDd
+  ;;
+  restart | force-reload)
+    $0 stop
+    for i in `seq 1 5`; do
+      echo -n "#"
+      sleep 1
+    done
+    echo ""
+    $0 start
+  ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|force-reload}"
+    exit 1
+  ;;
+esac
+
+exit 0

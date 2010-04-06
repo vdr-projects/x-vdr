@@ -1,0 +1,34 @@
+diff -ruNp podcatcher-0.1.1/src/pesaudiopacket.h podcatcher-0.1.1-new/src/pesaudiopacket.h
+--- podcatcher-0.1.1/src/pesaudiopacket.h	2006-04-24 23:30:29.000000000 +0200
++++ podcatcher-0.1.1-new/src/pesaudiopacket.h	2009-01-30 19:41:46.000000000 +0100
+@@ -23,6 +23,8 @@
+ #ifndef ___PESAUDIOPACKET_H
+ #define ___PESAUDIOPACKET_H
+ 
++#include <stdlib.h>
++#include <string.h>
+ #include "refptr.h"
+ 
+ class PesAudioPacket
+diff -ruNp podcatcher-0.1.1/src/rfc822datetime.h podcatcher-0.1.1-new/src/rfc822datetime.h
+--- podcatcher-0.1.1/src/rfc822datetime.h	2006-04-24 23:30:29.000000000 +0200
++++ podcatcher-0.1.1-new/src/rfc822datetime.h	2009-01-30 19:41:48.000000000 +0100
+@@ -23,6 +23,7 @@
+ #ifndef ___RFC822DATETIME_H
+ #define ___RFC822DATETIME_H
+ 
++#include <stdlib.h>
+ #include <string>
+ 
+ class Rfc822DateTime
+diff -ruNp podcatcher-0.1.1/src/rssfeedparser.h podcatcher-0.1.1-new/src/rssfeedparser.h
+--- podcatcher-0.1.1/src/rssfeedparser.h	2006-04-24 23:30:29.000000000 +0200
++++ podcatcher-0.1.1-new/src/rssfeedparser.h	2009-01-30 19:41:33.000000000 +0100
+@@ -23,6 +23,7 @@
+ #ifndef ___RSSFEEDPARSER_H
+ #define ___RSSFEEDPARSER_H
+ 
++#include <string.h>
+ #include <libxml++/libxml++.h>
+ #include "feedparser.h"
+ 

@@ -1,0 +1,68 @@
+diff -ruN music-0.1.0/mp3control.c music/mp3control.c
+--- music-0.1.0/mp3control.c
++++ music/mp3control.c
+@@ -978,6 +978,8 @@
+ 	clrListTextFG         = MP3Skin.clrListTextFG;
+ 	clrListTextActiveFG   = MP3Skin.clrListTextActiveFG;
+ 	clrListTextActiveBG   = MP3Skin.clrListTextActiveBG;
++	clrListTextScrollFG   = MP3Skin.clrListTextScrollFG;
++	clrListTextScrollBG   = MP3Skin.clrListTextScrollBG;
+ 	clrListRating         = MP3Skin.clrListRating;
+ 
+ 	clrInfoBG1            = MP3Skin.clrInfoBG1;
+@@ -1441,8 +1443,8 @@
+ #else
+               font=cFont::GetFont(fontOsd);
+ #endif
+-	      bg=clrListTextActiveFG;
+-	      fg=clrListTextActiveBG;
++	      bg=clrListTextScrollBG;
++	      fg=clrListTextScrollFG;
+ 	      hash=(hash^77) + 23;
+ 	    }
+             else  font=cFont::GetFont(fontSml);
+diff -ruN music-0.1.0/mp3control.h music/mp3control.h
+--- music-0.1.0/mp3control.h
++++ music/mp3control.h
+@@ -62,6 +62,8 @@
+   int clrListTextFG;
+   int clrListTextActiveFG;
+   int clrListTextActiveBG;
++  int clrListTextScrollFG;
++  int clrListTextScrollBG;
+   int clrListRating;
+   int clrInfoBG1;
+   int clrInfoBG2;
+diff -ruN music-0.1.0/skin.c music/skin.c
+--- music-0.1.0/skin.c
++++ music/skin.c
+@@ -52,6 +52,8 @@
+   clrListTextFG          = 0xFFBABBC0;
+   clrListTextActiveFG    = 0xFFF2A00C;
+   clrListTextActiveBG    = 0xDF303F52;
++  clrListTextScrollFG    = 0xFFF2A00C;
++  clrListTextScrollBG    = 0xDF303F52;
+   clrListRating          = 0xFFCC0C0C;
+ // INFO:  4 colors
+   clrInfoBG1             = 0xEF2D435A;
+@@ -148,6 +150,8 @@
+          else if (strstr(line.c_str(),"clrListTextFG"))         clrListTextFG         = strtoul(Value.c_str(), NULL,16);
+          else if (strstr(line.c_str(),"clrListTextActiveFG"))   clrListTextActiveFG   = strtoul(Value.c_str(), NULL,16);
+          else if (strstr(line.c_str(),"clrListTextActiveBG"))   clrListTextActiveBG   = strtoul(Value.c_str(), NULL,16);
++         else if (strstr(line.c_str(),"clrListTextScrollFG"))   clrListTextScrollFG   = strtoul(Value.c_str(), NULL,16);
++         else if (strstr(line.c_str(),"clrListTextScrollBG"))   clrListTextScrollBG   = strtoul(Value.c_str(), NULL,16);
+          else if (strstr(line.c_str(),"clrListRating"))         clrListRating         = strtoul(Value.c_str(), NULL,16);
+ 
+          else if (strstr(line.c_str(),"clrInfoBG1"))            clrInfoBG1            = strtoul(Value.c_str(), NULL,16);
+diff -ruN music-0.1.0/skin.h music/skin.h
+--- music-0.1.0/skin.h
++++ music/skin.h
+@@ -45,6 +45,8 @@
+   int clrListTextFG;
+   int clrListTextActiveFG;
+   int clrListTextActiveBG;
++  int clrListTextScrollFG;
++  int clrListTextScrollBG;
+   int clrListRating;
+   int clrInfoBG1;
+   int clrInfoBG2;

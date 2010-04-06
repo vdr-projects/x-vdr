@@ -1,0 +1,11 @@
+--- directorosd.c~	2006-06-11 12:20:38.000000000 +0200
++++ directorosd.c	2007-06-25 21:41:40.000000000 +0200
+@@ -300,7 +300,7 @@
+ 		char *buffer=0;
+ 		asprintf(&buffer,"1 %s %d", Channel->Name(), number);
+ 				
+-		int theHeigth = font->Height('A');
++		int theHeigth = font->Height("A");
+ 		int m_height = (number * theHeigth) + 10;
+ 		
+ 		//get the width		

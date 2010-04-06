@@ -1,0 +1,25 @@
+diff -Nur bitstreamout-0.85/types.h bitstreamout-0.85-n/types.h
+--- bitstreamout-0.85/types.h	2006-02-07 15:31:11.000000000 +0100
++++ bitstreamout-0.85-n/types.h	2006-11-07 02:30:48.000000000 +0100
+@@ -26,9 +26,9 @@
+ #include <sys/mman.h>
+ #include <asm/types.h>
+ #include <sys/types.h>
+-#if defined(__i386__) || defined(__x86_64__)
+-# include <asm/bitops.h>
+-#else
++//#if defined(__i386__) || defined(__x86_64__)
++//# include <asm/bitops.h>
++//#else
+ # define clear_bit(n,addr)  (*(addr) &= ~(1 << (n)))
+ # define set_bit(n,addr)    (*(addr) |= (1 << (n)))
+ # define test_bit(n,addr)   (*(addr) & (1 << (n)))
+@@ -47,7 +47,7 @@
+     clear_bit(n, addr);
+     return result;
+ }
+-#endif
++//#endif
+ 
+ #ifndef AARONS_TYPES
+ #define AARONS_TYPES

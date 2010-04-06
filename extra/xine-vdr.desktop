@@ -1,0 +1,22 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=xine-vdr
+Comment=
+Comment[de]=
+Exec=xine "vdr:/tmp/vdr-xine/stream#demux:mpeg_pes" -f -g --post vdr --post vdr_audio
+GenericName=dvb
+GenericName[de]=dvb
+Icon=video
+MimeType=video/mp4;video/mpeg;video/quicktime;video/x-flic;video/x-msvideo;video/x-ogm;video/x-theora;
+Name[de]=xine-vdr
+Path=
+ServiceTypes=
+StartupNotify=false
+Terminal=false
+TerminalOptions=
+Type=Application
+X-DCOP-ServiceType=none
+X-KDE-SubstituteUID=false
+X-KDE-Username=
+GenericName[de_DE@euro]=dvb

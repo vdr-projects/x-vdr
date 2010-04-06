@@ -1,0 +1,6 @@
+# configuration for adv717x bt865 em8300
+alias char-major-121 em8300
+install em8300 /sbin/modprobe adv717x && /sbin/modprobe --ignore-install em8300
+remove em8300 /sbin/modprobe -r --ignore-remove em8300 && /sbin/modprobe -r adv717x
+options adv717x pixelport_16bit=1 pixelport_other_pal=1
+options em8300 use_bt865=0 bt865_ucode_timeout=1 dicom_fix=0 dicom_control=0 dicom_other_pal=1 activate_loopback=0 audio_driver=oss

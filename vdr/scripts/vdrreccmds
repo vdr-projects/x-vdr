@@ -1,0 +1,32 @@
+#!/bin/sh
+# 24.06.2007
+
+# Load VDR configuration
+. /etc/default/vdr
+
+function NoadExclude() {
+   Channel="$*"
+   [ -r $VDRCONFDIR/noad-exclude-channels.conf ] || return 1
+   cat $VDRCONFDIR/noad-exclude-channels.conf | while read NewLine; do
+      [ -n "`echo "$Channel" | grep "D\ .*\ -"`" ] && Channel="`echo "$Channel" | cut -c1,2,3`"
+      [ "$NewLine" = "$Channel" ] && killall -9 $(basename $0)
+   done
+}
+
+case "$1" in
+     before)
+            echo "Start recording $2"
+            ;;
+     after)
+            echo "Finished recording $2"
+            [ "$noad" = "on" ] || exit
+            [ $# -ge 3 ] && NoadExclude "$3"
+            $VDRSCRIPTDIR/vdrnoad -start $2
+            ;;
+     edited)
+            echo "Edited recording $2"
+            ;;
+     *)
+            echo "ERROR: unknown state: $1"
+            ;;
+esac

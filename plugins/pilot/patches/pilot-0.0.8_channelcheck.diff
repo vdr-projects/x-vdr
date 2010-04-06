@@ -1,0 +1,11 @@
+--- pilotosd.c.orig	2006-05-02 23:33:11.000000000 +0200
++++ pilotosd.c	2007-06-25 00:40:27.000000000 +0200
+@@ -632,7 +632,7 @@
+   DrawMenu(0,2);
+   DisplayBitmap();
+   cChannel *Channel =  Channels.GetByNumber(PilotChannelNumber);
+-  if (Channel){
++  if (Channel && Channel->Number() != cDevice::CurrentChannel()){
+     cDevice::PrimaryDevice()->SwitchChannel(Channel, true);
+   }
+ }

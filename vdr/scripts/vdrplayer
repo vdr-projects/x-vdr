@@ -1,0 +1,279 @@
+#!/bin/bash
+
+# vdrplayer 0.0.5 (start-script for shmclient, tvtime, vdrtvtime, vdr-sxfe, xine or xineliboutput)
+# by Marc Wernecke - www.zulu-entertainment.de
+# 10.02.2009
+
+### Config ####################################################################################
+NONROOT="true" # true or false
+STARTX="true"  # allways, true or false
+VDRIP=         # 127.0.0.1 for localhost or any other ip for a vdr-server in your local-network
+VDRPLAYER=     # shmclient, tvtime, vdr-sxfe, xine, xineliboutput or xine-network
+
+[ "$HOME" = "/" ] && HOME=/etc
+[ -r $HOME/vdrplayer.conf ] && . $HOME/vdrplayer.conf
+
+### Arguments #################################################################################
+EXIT="false"
+KILLALL="false"
+VERSION="vdrplayer 0.0.4"
+
+for i in $* ; do
+  case $1 in
+    --exit|-e)
+      EXIT="true"
+      ;;
+    --help|-h)
+      echo "$VERSION"
+      echo "--exit|-e       Kill all active player and exit"
+      echo "--help|-h       Shows the help text and exit"
+      echo "--killall|-k    Kill all active player, the X server and exit"
+      echo "--nonroot|-n    Sets NONROOT flag"
+      echo "--reset|-r      Remove the configuration file (\$HOME/vdrplayer.conf)"
+      echo "--startx|-s [allways|true|false]"
+      echo "--ip|-i [ip]    127.0.0.1 for localhost or any other ip for a vdr-server in your local-network"
+      echo "--player|-p [shmclient|tvtime|vdr-sxfe|xine|xineliboutput|xine-network]"
+      echo "--version|-v    Shows the script version and exit"
+      exit 0
+      ;;
+    --killall|-k)
+      KILLALL="true"
+      ;;
+    --nonroot|-n)
+      NONROOT="true"
+      ;;
+    --reset|-r)
+      if [ -f $HOME/vdrplayer.conf ]; then
+        rm -f $HOME/vdrplayer.conf
+        VDRIP=
+        VDRPLAYER=
+      fi
+      ;;
+    --startx|-s)
+      shift 1
+      STARTX="$1"
+      ;;
+    --ip|-i)
+      shift 1
+      VDRIP="$1"
+      ;;
+    --player|-p)
+      shift 1
+      VDRPLAYER="$1"
+      ;;
+    --version|-v)
+      echo "$VERSION"
+      exit 0
+      ;;
+  esac
+  shift 1
+done
+
+if [ -n "`ps x --user root | grep "/usr/.*bin/X.*:0" | grep -v grep`" ]; then   # X is running
+  DIALOG="Xdialog"
+else
+  DIALOG="dialog"
+fi
+
+### Functions #################################################################################
+function _exit() {
+  case $1 in
+    0) exit 0
+      ;;
+    1) exit 1
+      ;;
+    2) exit 2
+      ;;
+  esac
+  exit 0
+}
+
+function _vdr() {
+  # Max waiting time in Seconds
+  n=10
+  # Check if VDR is running
+  if [ `ps -C vdr | grep -cw "vdr"` -eq 0 ]; then
+    echo "vdr is not running"
+    echo -n "Waiting $n seconds ..."
+    # test if vdr is running
+    while [ `ps -C vdr | grep -cw "vdr"` -eq 0 ] && [ $n -gt 0 ]; do
+      sleep 1
+      (( n=$n-1 ))
+      echo -n " $n"
+      if [ $n -eq 0 ]; then
+        echo " exit"
+        return 1
+      fi
+    done
+    echo ""
+    echo "vdr is online"
+  fi
+  return 0
+}
+
+function _vdrip() {
+  VDRIP=`$DIALOG --inputbox "VDR Server IP" 10 50 "127.0.0.1" 3>&1 1>&2 2>&3`
+  [ $? != 0 ] && return 1
+  [ "$VDRIP" = "" ] && return 1
+  echo "VDRIP=$VDRIP" >> $HOME/vdrplayer.conf
+  return 0
+}
+
+function _x() {
+  case $STARTX in
+    allways) STARTX="allways";;
+    true) STARTX="true";;
+    *) STARTX="false"; return 0 ;;
+  esac
+  VT=vt7
+
+  # if no X is running and user=root, start it
+  if [ -n "`ps x --user root | grep "/usr/.*bin/X.*:1" | grep -v "grep"`" ]; then
+    # X:1 is running
+    export DISPLAY=:1
+    return 0
+  elif [ -n "`ps x --user root | grep "/usr/.*bin/X" | grep -v "grep"`" ]; then
+    # X:0 is running
+    if [ "$STARTX" = "allways" ]; then
+      if [ "$NONROOT" = "false" ]; then
+        [ "`id -u`" = "0" ] || return 1
+      fi
+      export DISPLAY=:1
+      VT=vt9
+    else
+      export DISPLAY=:0
+      return 0
+    fi
+  else
+    if [ "$NONROOT" = "false" ]; then
+      [ "`id -u`" = "0" ] || return 1
+    fi
+    export DISPLAY=:0
+  fi
+
+  # start X
+  echo "Starting the X server..."
+  /usr/bin/X -ac -dpi 100 $DISPLAY $VT & sleep 4
+#  xhost local:localhost
+  return 0
+}
+
+function _shmclient() {
+  _x || return 1
+  CMD="--fullscreen"
+  ShmClient $CMD &
+  return 0
+}
+
+function _tvtime() {
+#  chmod 666 /dev/rtc
+#  echo 1024 > /proc/sys/dev/rtc/max-user-freq
+  _x || return 1
+  CMD="--fullscreen --display=$DISPLAY"
+  tvtime $CMD &
+  sleep 2
+  tvtime-command MENU_EXIT
+  return 0
+}
+
+function _vdrtvtime() {
+#  chmod 666 /dev/rtc
+#  echo 1024 > /proc/sys/dev/rtc/max-user-freq
+  _x || return 1
+  svdrpsend.pl PLUG vdrtvtime start &
+  return 0
+}
+
+function _vdrsxfe() {
+  [ -n "$VDRIP" ] || _vdrip || return 1
+  _x || return 1
+  CMD="--video=xv --fullscreen --post tvtime:method=LinearBlend,cheap_mode=1,pulldown=0,use_progressive_frame_flag=1"
+  MRL="xvdr+tcp://$VDRIP"
+  vdr-sxfe $CMD $MRL &
+  return 0
+}
+
+function _xineliboutput() {
+  [ -n "$VDRIP" ] || _vdrip || return 1
+  _x || return 1
+  CMD="--fullscreen --hide-gui"
+  MRL="xvdr+tcp://$VDRIP#nocache;demux:mpeg_block"
+  xine $CMD "$MRL" &
+  return 0
+}
+
+function _xine() {
+  _x || return 1
+  CMD="--fullscreen --hide-gui --post vdr --post vdr_audio"
+  MRL="vdr:/tmp/vdr-xine/stream#demux:mpeg_pes"
+  xine $CMD "$MRL" &
+  return 0
+}
+
+function _xinenetwork() {
+  [ -n "$VDRIP" ] || _vdrip || return 1
+  _x || return 1
+  CMD="--fullscreen --hide-gui --post vdr --post vdr_audio"
+  MRL="netvdr://$VDRIP#demux:mpeg_pes"
+  xine $CMD "$MRL" &
+  return 0
+}
+
+### Main Script ###############################################################################
+
+_vdr || exit 1 # Check if VDR is running
+
+[ -n "`ps x | grep ShmClient`" ] && killall -q -9 ShmClient # If ShmClient is running, stop it
+[ -n "`ps x | grep tvtime`" ] && killall -q -9 tvtime       # If tvtime is running, stop it
+[ -n "`ps x | grep vdr-sxfe`" ] && killall -q -9 vdr-sxfe   # If vdr-sxfe is running, stop it
+[ -n "`ps cx | grep xine`" ] && killall -q -9 xine          # If xine is running, stop it
+[ "$VDRPLAYER" = "vdrtvtime" ] && svdrpsend.pl PLUG vdrtvtime stop
+
+if [ "$EXIT" = "true" ]; then # Exit
+  exit 0
+fi
+
+if [ "$KILLALL" = "true" ]; then # Stop X and Exit
+  [ -n "`ps x --user root | grep "/usr/.*bin/X" | grep -v "grep"`" ] && killall -q -9 Xorg
+  exit 0
+fi
+
+# Player
+if [ -n "$VDRPLAYER" ]; then
+  case $VDRPLAYER in
+    shmclient) _shmclient ;;
+    tvtime) _tvtime ;;
+    vdrtvtime) _vdrtvtime ;;
+    vdr-sxfe) _vdrsxfe ;;
+    xineliboutput) _xineliboutput ;;
+    xine) _xine ;;
+    xine-network) _xinenetwork ;;
+    *) VDRPLAYER="" ;;
+  esac
+fi
+
+# Dialog
+if [ -z "$VDRPLAYER" ]; then
+  option=`$DIALOG --menu \
+  'Aktiviere den Player, den du nutzen moechtest.' 0 0 8 \
+  '1' 'ShmClient (Softdevice)' \
+  '2' 'Tvtime (FF-Karte)' \
+  '3' 'vdrtvtime (tvtime als Plugin, FF-Karte)' \
+  '4' 'vdr-sxfe (Xineliboutput)' \
+  '5' 'Xine' \
+  '6' 'Xine (Xineliboutput)' \
+  '7' 'Xine-Network'  3>&1 1>&2 2>&3`
+  [ $? != 0 ] && exit 1
+  VDRIP=
+  case $option in
+    1) echo "VDRPLAYER=\"shmclient\"" > $HOME/vdrplayer.conf && _shmclient ;;
+    2) echo "VDRPLAYER=\"tvtime\"" > $HOME/vdrplayer.conf && _tvtime ;;
+    3) echo "VDRPLAYER=\"vdrtvtime\"" > $HOME/vdrplayer.conf && _vdrtvtime ;;
+    4) echo "VDRPLAYER=\"vdr-sxfe\"" > $HOME/vdrplayer.conf && _vdrsxfe ;;
+    5) echo "VDRPLAYER=\"xine\"" > $HOME/vdrplayer.conf && _xine ;;
+    6) echo "VDRPLAYER=\"xineliboutput\"" > $HOME/vdrplayer.conf && _xineliboutput ;;
+    7) echo "VDRPLAYER=\"xine-network\"" > $HOME/vdrplayer.conf && _xinenetwork ;;
+  esac
+fi
+
+exit 0
