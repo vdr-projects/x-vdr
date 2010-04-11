@@ -1,0 +1,10 @@
+--- icons.c.orig	2008-12-20 17:18:50.000000000 +0100
++++ icons.c	2008-12-20 17:21:40.000000000 +0100
+@@ -2,6 +2,7 @@
+ #include <vdr/plugin.h>
+ #include "icons.h"
+ #include "config.h"
++#include <langinfo.h>
+ 
+ // --- Icons ------------------------------------------------------------------
+ bool Icons::IsUTF8=false;

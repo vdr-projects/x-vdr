@@ -1,0 +1,203 @@
+diff -Nru music_old/config.c music_new/config.c
+--- music_old/config.c	2008-05-07 00:34:00.000000000 +0200
++++ music_new/config.c	2009-11-16 19:54:56.000000000 +0100
+@@ -5,6 +5,7 @@
+  */
+ 
+ #include <vdr/font.h>
++#include <algorithm>
+ #include "config.h"
+ 
+ 
+@@ -198,7 +199,7 @@
+ void cMusicConfig::SetFont(int id, const char *font)
+ {
+   if (id >= 0 && id < FONT_NUMFONTS && font) {
+-    char *tmp = strrchr(font, ':');
++    const char *tmp = strrchr(font, ':');
+     if (tmp) {
+       strncpy(allFonts[id].Name, font, std::min((int)sizeof(allFonts[id].Name),(int) (tmp - font)));
+       allFonts[id].Size = atoi(tmp + 1);
+diff -Nru music_old/data.c music_new/data.c
+--- music_old/data.c	2008-04-09 22:48:00.000000000 +0200
++++ music_new/data.c	2009-11-16 19:54:56.000000000 +0100
+@@ -479,7 +479,7 @@
+   description=strdup(Description);
+   if(Include) {
+     do {
+-      char *s=index(Include,'/');
++      const char *s=index(Include,'/');
+       int l=s ? s-Include : strlen(Include);
+       if(l) {
+         char **s=(char **)realloc(include,(incCount+2)*sizeof(char *));
+diff -Nru music_old/decoder.c music_new/decoder.c
+--- music_old/decoder.c	2008-05-23 00:56:00.000000000 +0200
++++ music_new/decoder.c	2009-11-17 01:01:44.406001683 +0100
+@@ -116,7 +116,7 @@
+ {
+   // if no title, try to build a reasonable from the filename
+   if(!Title && filename)  {
+-    char *s=rindex(filename,'/');
++    char *s=(char*)rindex(filename,'/');
+     if(s && *s=='/') {
+       s++;
+       Title=strdup(s);
+diff -Nru music_old/decoder-ogg.c music_new/decoder-ogg.c
+--- music_old/decoder-ogg.c	2008-03-12 09:49:00.000000000 +0100
++++ music_new/decoder-ogg.c	2009-11-16 21:27:39.000000000 +0100
+@@ -161,7 +161,7 @@
+     for(int i=0 ; i<vc->comments ; i++) {
+       const char *cc=vc->user_comments[i];
+       d(printf("music: decoder-ogg: comment%d='%s'\n",i,cc))
+-      char *p=strchr(cc,'=');
++      char *p=(char*)strchr(cc,'=');
+       if(p) {
+         const int len=p-cc;
+         p++;
+diff -Nru music_old/decoder-snd.c music_new/decoder-snd.c
+--- music_old/decoder-snd.c	2008-04-09 17:59:00.000000000 +0200
++++ music_new/decoder-snd.c	2009-11-16 21:27:07.000000000 +0100
+@@ -582,8 +582,8 @@
+ {
+   int pos=-1, n=0;
+   char *p, l[4]={ ' ',div,' ',0 };
+-  if ((p=strstr(source,l))) { pos=p-source; n=3; }
+-  else if(!only3 && (p=strchr(source,div)))  { pos=p-source; n=1; }
++  if ((p=(char*)strstr(source,l))) { pos=p-source; n=3; }
++  else if(!only3 && (p=(char*)strchr(source,div)))  { pos=p-source; n=1; }
+   if(pos>=0) {
+     free(first); first=strdup(source); first[pos]=0; compactspace(first);
+     free(second); second=strdup(source+pos+n); compactspace(second);
+@@ -861,7 +861,7 @@
+ {
+   if(id->Get()) {
+     int tr;
+-    char *s=strstr(filename,CDFS_TRACK);
++    char *s=(char*)strstr(filename,CDFS_TRACK);
+     if(s && sscanf(s+strlen(CDFS_TRACK),"%d",&tr)==1) {
+       d(printf("music: decoder-snd: looking up disc id %08x track %d\n",id->discid,tr))
+       return cddb.Lookup(id,tr-1,this);
+diff -Nru music_old/icons.c music_new/icons.c
+--- music_old/icons.c	2008-05-06 14:18:00.000000000 +0200
++++ music_new/icons.c	2009-11-16 19:54:56.000000000 +0100
+@@ -1,5 +1,6 @@
+ #include <string>
+ #include <vdr/plugin.h>
++#include <langinfo.h>
+ #include "icons.h"
+ #include "config.h"
+ 
+diff -Nru music_old/imagecache.h music_new/imagecache.h
+--- music_old/imagecache.h	2008-02-20 15:05:00.000000000 +0100
++++ music_new/imagecache.h	2009-11-16 19:54:56.000000000 +0100
+@@ -8,6 +8,7 @@
+ #include <map>
+ #include <vector>
+ #include <string>
++#include <cstring>
+ 
+ template<class key_type, class data_type>
+ class cxCache {
+@@ -19,21 +20,22 @@
+ 
+ 	item_map   mItems;
+ 	usage_list mUsage;
+-	uint       mMaxItems;
++        unsigned   mMaxItems;
++
+ 
+ protected:
+ 	virtual void DeleteObject(const key_type &Key, data_type &Data) = 0;
+ 	virtual void ResetObject(data_type &Data) = 0;
+ 
+ public:
+-	cxCache(uint MaxItems);
++        cxCache(unsigned MaxItems);
+ 	virtual ~cxCache();
+ 
+ 	void Reset(void);
+ 	void Flush(void);
+ 	bool Contains(const key_type &Key);
+ 	data_type &operator[](const key_type &Key);
+-	uint Count(void) { return mUsage.size(); }
++        unsigned Count(void) { return mUsage.size(); }
+ };
+ 
+ template<class key_type, class data_type>
+@@ -43,7 +45,7 @@
+ }
+ 
+ template<class key_type, class data_type>
+-cxCache<key_type, data_type>::cxCache(uint MaxItems) 
++cxCache<key_type, data_type>::cxCache(unsigned MaxItems) 
+ {
+ 	mMaxItems = MaxItems;
+ }
+diff -Nru music_old/player-mp3.c music_new/player-mp3.c
+--- music_old/player-mp3.c	2008-05-23 03:04:00.000000000 +0200
++++ music_new/player-mp3.c	2009-11-16 22:33:49.005521312 +0100
+@@ -1705,14 +1705,21 @@
+ 
+ cOutputOss::~cOutputOss()
+ {
+-  close(fd);
++  if(fd>=0) close(fd);
+ }
+ 
+ void cOutputOss::Init(void)
+ {
+   if(fd<0) {
+     fd=open(dspdevice,O_WRONLY|O_NONBLOCK);
+-    if(fd>=0) poll.Add(fd,true);
++    if(fd>=0) {
++      if(fcntl(fd,F_SETFL,0)==0)
++        poll.Add(fd,true);
++      else {
++        esyslog("music: ERROR: Cannot make dsp device '%s' blocking: %s!", dspdevice, strerror(errno));
++        close(fd); fd=-1;
++        }
++      }
+     else esyslog("music: ERROR: Cannot open dsp device '%s': %s!",dspdevice,strerror(errno));
+     }
+   cOutput::Init();
+@@ -1799,9 +1806,12 @@
+       n=FHS;
+       Data+=n; Len-=n;
+       }
+-    int r=write(fd,Data,Len);
+-    if(r<0 && !FATALERRNO) r=0;
+-    if(r>=0) return n+r;
++    if(poll.Poll(0)) {
++      int r=write(fd,Data,Len);
++      if(r<0 && FATALERRNO) return -1;
++      if(r>0) n+=r;
++      }
++    return n;
+     }
+   return -1;
+ }
+diff -Nru music_old/stream.c music_new/stream.c
+--- music_old/stream.c	2008-04-09 19:37:00.000000000 +0200
++++ music_new/stream.c	2009-11-16 22:09:09.173521952 +0100
+@@ -411,7 +411,7 @@
+ 
+ bool cNetStream::ParseHeader(const char *buff, const char *name, char **value)
+ {
+-  char *s=index(buff,':');
++  const char *s=index(buff,':');
+   if(s && !strncasecmp(buff,name,s-buff)) {
+     s=skipspace(s+1);
+     d(printf("music: netstream: found header '%s' contents '%s'\n",name,s))
+@@ -536,9 +536,9 @@
+ 
+ char *cNetStream::ParseMetaString(const char *buff, const char *name, char **value)
+ {
+-  char *s=index(buff,'=');
++  char *s=(char*)index(buff,'=');
+   if(s && !strncasecmp(buff,name,s-buff)) {
+-    char *end=index(s+2,'\'');
++   char *end=index(s+2,'\'');
+     if(s[1]=='\'' && end) {
+       *end=0;
+       s=stripspace(skipspace(s+2));
+

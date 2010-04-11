@@ -13,8 +13,9 @@ source ./../../functions
 
 [ -f ./../../vdr/patchlevel.conf ] && source ./../../vdr/patchlevel.conf
 
-WEB="http://www.glaserei-franz.de/VDR/Moronimo2/files/vdr-music-0.4.0-b3.tgz"
-VERSION="music-0.4.0-b3"
+WEB="http://www.vdr.glaserei-franz.de/files/vdr-music-0.9.3-testing.tgz"
+#WEB="http://www.glaserei-franz.de/VDR/Moronimo2/files/vdr-music-0.4.0-b3.tgz"
+VERSION="music-0.9.3-testing"
 LINK="music"
 
 VAR=`basename $WEB`
