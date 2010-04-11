@@ -495,6 +495,7 @@ function verify_utilities() {
   vdradmin=`verify_input "$vdradmin"`
   vdrfonts=`verify_input "$vdrfonts"`
   vidix=`verify_input "$vidix"`
+  xbmc=`verify_input "$xbmc"`
   xine_lib=`verify_input "$xine_lib"`
   case "$xine_lib_vers" in
     2) xine_lib_vers=2 ;;
@@ -519,7 +520,8 @@ function sd_utilities() {
   '9'  'vdradmin'           "$vdradmin" \
   '10' 'vdrfonts'           "$vdrfonts" \
   '11' 'vidix'              "$vidix" \
-  '12' 'xine-lib + xine-ui' "$xine_lib" 3>&1 1>&2 2>&3`
+  '12' 'xbmc'		    "$xbmc" \
+  '13' 'xine-lib + xine-ui' "$xine_lib" 3>&1 1>&2 2>&3`
   if [ $? = 0 ]; then
     # new settings (utilities)
     em8300="off"; dxr3="off"
@@ -533,6 +535,7 @@ function sd_utilities() {
     vdradmin="off"
     vdrfonts="off"
     vidix="off"
+    xbmc="off"
     xine_lib="off"; xine="off"; xineliboutput="off"
 
     for i in $options; do
@@ -548,7 +551,8 @@ function sd_utilities() {
         9)  vdradmin="on" ;;
         10) vdrfonts="on" ;;
         11) vidix="on" ;;
-        12) xine_lib="on"; xine="on"; xineliboutput="on" ;;
+        12) xbmc="on" ;;
+        13) xine_lib="on"; xine="on"; xineliboutput="on" ;;
       esac
     done
 
@@ -697,6 +701,7 @@ function sd_write() {
   echo "vdradmin=\"$vdradmin\""
   echo "vdrfonts=\"$vdrfonts\""
   echo "vidix=\"$vidix\""
+  echo "xmbc=\"$xbmc\""
   echo "xine_lib=\"$xine_lib\""
   echo "xine_lib_vers=\"$xine_lib_vers\""
   # plugins
