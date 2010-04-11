@@ -3,16 +3,16 @@
 # x-vdr (Installations-Skript fuer einen VDR mit Debian als Basis)
 # von Marc Wernecke - www.zulu-entertainment.de
 # 05.03.2009
-
+# kwacker: Burn auf 0.2.0-beta3 aktualisiert
 # vdr-burn
 
 # defaults
 source ./../../x-vdr.conf
 source ./../../setup.conf
 source ./../../functions
-
-WEB="http://www.zulu-entertainment.de/files/vdr-burn/vdr-burn-0.1.0-pre22x.tgz"
-VERSION="burn-0.1.0-pre22x"
+WEB="http://projects.vdr-developer.org/attachments/download/285/vdr-burn-0.2.0-beta3.tgz"
+#WEB="http://www.zulu-entertainment.de/files/vdr-burn/vdr-burn-0.1.0-pre22x.tgz"
+VERSION="burn-0.2.0-beta3"
 LINK="burn"
 
 VAR=`basename $WEB`

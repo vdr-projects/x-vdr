@@ -3,7 +3,7 @@
 # x-vdr (Installations-Skript fuer einen VDR mit Debian als Basis)
 # von Marc Wernecke - www.zulu-entertainment.de
 # 07.04.2009
-#
+# kwacker: auf cvs umgestellt und Patches hinzugefuegt 11.04.2010
 # vdr-streamdev
 
 # defaults
@@ -14,7 +14,7 @@ source ./../../functions
 WEB="http://www.zulu-entertainment.de/files/vdr-streamdev/vdr-streamdev-0.5.0-pre.tgz"
 VERSION="streamdev-0.5.0-pre"
 LINK="streamdev"
-CVS="0"
+CVS="1"
 
 [ "$CVS" = "1" ] && VERSION="streamdev-cvs"
 
