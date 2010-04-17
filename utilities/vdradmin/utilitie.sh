@@ -10,8 +10,8 @@ source ./../../x-vdr.conf
 source ./../../setup.conf
 source ./../../functions
 
-WEB="http://andreas.vdr-developer.org/vdradmin-am/download/vdradmin-am-3.6.4.tar.bz2"
-VERSION="vdradmin-am-3.6.4"
+WEB="http://andreas.vdr-developer.org/vdradmin-am/download/vdradmin-am-3.6.7.tar.bz2"
+VERSION="vdradmin-am-3.6.7"
 LINK="vdradmin"
 
 VAR=`basename $WEB`
@@ -25,7 +25,11 @@ function make_util() {
   # setzen des symlinks
   cd $SOURCEDIR
   rm -f $LINK
+  rm -rf /usr/share/vdradmin
   ln -vfs $VERSION $LINK
+  mkdir /var/cache/vdradmin
+  mkdir /var/log/vdradmin
+  mkdir /var/run/vdradmin
   # vdradmin-am
   cd $SOURCEDIR/$LINK
   # patch ./install.sh (comment this if you want to install the "Optional" perl-modules for vdradmin-am)
