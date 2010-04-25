@@ -10,9 +10,8 @@
 source ./../../x-vdr.conf
 source ./../../setup.conf
 source ./../../functions
-
-WEB="http://www.zulu-entertainment.de/files/vdr-fritzbox/vdr-fritzbox-1.1.4.tgz"
-VERSION="fritzbox-1.1.4"
+WEB="http://www.joachim-wilke.de/dl.htm?ct=gz&dir=vdr-fritz&file=vdr-fritzbox-1.3.2.tgz"
+VERSION="fritzbox-1.3.2"
 LINK="fritzbox"
 
 VAR=`basename $WEB`

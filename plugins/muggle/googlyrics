@@ -1,0 +1,13 @@
+#!/bin/sh
+ # Googlyric2 Beta 3
+  if [ -f /usr/share/apps/amarok/scripts/Googlyrics2.Beta3.amarokscript.tar.gz ]; then
+    echo "Googlyrics vorhanden"
+  else
+  cd /usr/share/apps
+  mkdir amarok
+  mkdir amarok/scripts
+  cd /usr/share/apps/amarok/scripts/
+  wget http://quicode.com/Googlyrics2.Beta3.amarokscript.tar.gz
+  tar -xzf Googlyrics2.Beta3.amarokscript.tar.gz
+  fi
+

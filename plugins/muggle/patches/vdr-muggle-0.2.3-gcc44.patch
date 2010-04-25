@@ -1,0 +1,64 @@
+diff -ruN muggle-0.2.3.orig/mg_db.c muggle-0.2.3/mg_db.c
+--- muggle-0.2.3.orig/mg_db.c	2009-01-15 16:01:23.000000000 +0100
++++ muggle-0.2.3/mg_db.c	2009-03-31 15:18:32.133400460 +0200
+@@ -1140,7 +1140,7 @@
+ 	if (genre1.empty()) {
+ 		genre1 = m_TCON.toCString(the_setup.utf8);
+ 		const char *tcon=genre1.c_str();
+-		char *rparen=strchr(tcon,')');
++		char *rparen=strchr(strdup(tcon),')');
+ 		if (tcon[0]=='(' && rparen) {
+ 			*rparen=0;
+ 			genre1 = m_GenreIds[tcon+1];
+diff -ruN muggle-0.2.3.orig/mg_image_provider.c muggle-0.2.3/mg_image_provider.c
+--- muggle-0.2.3.orig/mg_image_provider.c	2009-01-15 16:01:23.000000000 +0100
++++ muggle-0.2.3/mg_image_provider.c	2009-03-31 15:15:09.648153178 +0200
+@@ -39,7 +39,8 @@
+ 		return (FALSE);
+ 	}
+ 	else {
+-		char *ext = rindex( entry->d_name, '.' );
++		char *dname = strdup(entry->d_name);
++		char *ext = rindex( dname, '.' );
+ 
+ 		if( ext ) {
+ 			if( !strcmp( ext, ".jpg" ) || !strcmp( ext, ".png" ) || !strcmp( ext, ".JPG" ) || !strcmp( ext, ".PNG" ) ) {
+diff -ruN muggle-0.2.3.orig/mg_tools.c muggle-0.2.3/mg_tools.c
+--- muggle-0.2.3.orig/mg_tools.c	2009-01-15 16:01:23.000000000 +0100
++++ muggle-0.2.3/mg_tools.c	2009-03-31 15:11:59.913150640 +0200
+@@ -170,9 +170,10 @@
+ 
+ char *
+ extension(const char *filename) {
+-	char *dot = strrchr(filename,'.');
++	char *fname = strdup(filename);
++	char *dot = strrchr(fname,'.');
+ 	if (!dot)
+-		dot = strrchr(filename,0)-1;
++		dot = strrchr(fname,0)-1;
+ 	return dot+1;
+ }
+ 
+@@ -209,9 +210,9 @@
+ }
+ 
+ bool mkdir_p(const char *s) {
+-	char *slash=strrchr(s,'/');
+-	if (!slash) return false;
+ 	char *sc = strdup(s);
++	char *slash=strrchr(sc,'/');
++	if (!slash) return false;
+ 	*strrchr(sc,'/')=0;	// cut off the filename
+ 	char *p = sc;
+ 	int mode;
+diff -ruN muggle-0.2.3.orig/mg_tools.h muggle-0.2.3/mg_tools.h
+--- muggle-0.2.3.orig/mg_tools.h	2009-01-15 16:01:23.000000000 +0100
++++ muggle-0.2.3/mg_tools.h	2009-03-31 14:57:30.649150865 +0200
+@@ -14,6 +14,7 @@
+ #ifndef _MUGGLE_TOOLS_H
+ #define _MUGGLE_TOOLS_H
+ 
++#include <cstdarg>
+ #include <iostream>
+ #include <sstream>
+ #include <string>

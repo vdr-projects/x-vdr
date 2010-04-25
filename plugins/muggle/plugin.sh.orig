@@ -11,8 +11,8 @@ source ./../../x-vdr.conf
 source ./../../setup.conf
 source ./../../functions
 
-WEB="http://projects.vdr-developer.org/attachments/download/35/vdr-muggle-0.2.3.tgz"
-VERSION="muggle-git"
+WEB="http://projects.vdr-developer.org/attachments/download/53/vdr-muggle-0.2.3.tgz"
+VERSION="muggle-0.2.3"
 LINK="muggle"
 
 VAR=`basename $WEB`
@@ -29,13 +29,8 @@ function clean_plugin() {
 
 # plugin installieren
 function install_plugin() {
- cd $DIR
-    rm -rf muggle $VERSION
-    mv -f muggle $VERSION
-    git clone git://projects.vdr-developer.org/vdr-plugin-muggle.git muggle-git
-    cp -R $VERSION $SOURCEDIR/VDR/PLUGINS/src
-#  download_plugin
-#  extract_plugin
+  download_plugin
+  extract_plugin
   cd $SOURCEDIR/VDR/PLUGINS/src
   rm -f $LINK
   ln -vfs $VERSION $LINK
@@ -49,9 +44,8 @@ function install_plugin() {
   apt_install "libmad0-dev libtag1-dev libvorbis-dev"
   apt_install "libwrap0-dev"
   # Googlyric2 Beta 3 und Python
-  apt_install "python"
-  if [ -f /usr/share/apps/amarok/scripts/Googlyrics2.Beta3.amarokscript.tar.gz ]
- then
+  apt_intall "python"
+  if [ -f /usr/share/apps/amarok/scripts/Googlyrics2.Beta3.amarokscript.tar.gz ]; then
     echo "Googlyrics vorhanden"
   else 
     cd /usr/share/apps

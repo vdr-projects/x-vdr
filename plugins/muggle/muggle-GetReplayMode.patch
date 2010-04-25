@@ -1,0 +1,47 @@
+diff --git a/mg_db_gd_mysql.c b/mg_db_gd_mysql.c
+index c067a81..a35eaa7 100644
+--- a/mg_db_gd_mysql.c
++++ b/mg_db_gd_mysql.c
+@@ -8,6 +8,7 @@
+ 
+ #include <cstring>
+ #include <string>
++#include <string.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <unistd.h>
+diff --git a/pcmplayer.c b/pcmplayer.c
+index 162c654..2a51877 100644
+--- a/pcmplayer.c
++++ b/pcmplayer.c
+@@ -656,6 +656,17 @@ bool mgPCMPlayer::GetIndex (int &current, int &total, bool snaptoiframe) {
+ 	return false;
+ }
+ 
++bool mgPCMPlayer::GetReplayMode(bool &Play, bool &Forward, int &Speed) {
++  Speed = -1;
++  Forward = true;
++  switch(PlayMode()) {
++    case pmPlay:  Play = true; break;
++    default:  
++                  Play = false; break;
++  }
++  return true;
++}
++
+ void mgPCMPlayer::internShowMPGFile() {
+ 	if (!imagefile.size())
+ 		return;
+diff --git a/pcmplayer.h b/pcmplayer.h
+index ae6558b..1c4f80c 100644
+--- a/pcmplayer.h
++++ b/pcmplayer.h
+@@ -219,6 +219,7 @@ class mgPCMPlayer : public cPlayer, cThread
+ 
+ 		virtual bool GetIndex (int &Current, int &Total, bool SnapToIFrame = false);
+ 		//  bool GetPlayInfo(cMP3PlayInfo *rm); // LVW
++   virtual bool GetReplayMode(bool &Play, bool &Forward, int &Speed);
+ 
+ 		void ReloadPlaylist();
+ 		void NewPlaylist (mgSelection * plist);
+

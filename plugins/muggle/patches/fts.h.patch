@@ -1,0 +1,132 @@
+diff -Nru muggle-0.2.3/common.h muggle-0.2.3-fixed/common.h
+--- muggle-0.2.3/common.h	2009-01-15 16:01:23.000000000 +0100
++++ muggle-0.2.3-fixed/common.h	2010-04-22 03:02:53.000000000 +0200
+@@ -25,7 +25,7 @@
+ #ifndef APIVERSNUM
+ #include <vdr/config.h>
+ #endif
+-#include "config.h"
++//#include "config.h"
+ 
+ #if APIVERSNUM >= 10313
+ #define SLEEP(x) cCondWait::SleepMs(x)
+diff -Nru muggle-0.2.3/config.c muggle-0.2.3-fixed/config.c
+--- muggle-0.2.3/config.c	1970-01-01 01:00:00.000000000 +0100
++++ muggle-0.2.3-fixed/config.c	2010-04-22 02:59:40.000000000 +0200
+@@ -0,0 +1,71 @@
++#include <vdr/thread.h>
++#include "config.h"
++
++#if VDRVERSNUM >=10712
++
++// --- cCommand --------------------------------------------------------------
++
++char *cCommand::result = NULL;
++
++cCommand::cCommand(void)
++{
++  title = command = NULL;
++  confirm = false;
++}
++
++cCommand::~cCommand()
++{
++  free(title);
++  free(command);
++}
++
++bool cCommand::Parse(const char *s)
++{
++  const char *p = strchr(s, ':');
++  if (p) {
++     int l = p - s;
++     if (l > 0) {
++        title = MALLOC(char, l + 1);
++        stripspace(strn0cpy(title, s, l + 1));
++        if (!isempty(title)) {
++           int l = strlen(title);
++           if (l > 1 && title[l - 1] == '?') {
++              confirm = true;
++              title[l - 1] = 0;
++              }
++           command = stripspace(strdup(skipspace(p + 1)));
++           return !isempty(command);
++           }
++        }
++     }
++  return false;
++}
++
++const char *cCommand::Execute(const char *Parameters)
++{
++  free(result);
++  result = NULL;
++  cString cmdbuf;
++  if (Parameters)
++     cmdbuf = cString::sprintf("%s %s", command, Parameters);
++  const char *cmd = *cmdbuf ? *cmdbuf : command;
++  dsyslog("executing command '%s'", cmd);
++  cPipe p;
++  if (p.Open(cmd, "r")) {
++     int l = 0;
++     int c;
++     while ((c = fgetc(p)) != EOF) {
++           if (l % 20 == 0)
++              result = (char *)realloc(result, l + 21);
++           result[l++] = char(c);
++           }
++     if (result)
++        result[l] = 0;
++     p.Close();
++     }
++  else
++     esyslog("ERROR: can't open pipe for command '%s'", cmd);
++  return result;
++}
++
++#endif
+diff -Nru muggle-0.2.3/config.h muggle-0.2.3-fixed/config.h
+--- muggle-0.2.3/config.h	2009-01-15 16:01:23.000000000 +0100
++++ muggle-0.2.3-fixed/config.h	2010-04-22 03:00:40.000000000 +0200
+@@ -58,3 +58,25 @@
+ // is closed again.
+ #define SELECTHIDE_TIMEOUT 3
+ #endif							 //___CONFIG_H
++
++#if VDRVERSNUM >=10712
++
++// --- cCommands -------------------------------------------------------------------
++class cCommand : public cListObject {
++private:
++  char *title;
++  char *command;
++  bool confirm;
++  static char *result;
++public:
++  cCommand(void);
++  virtual ~cCommand();
++  bool Parse(const char *s);
++  const char *Title(void) { return title; }
++  bool Confirm(void) { return confirm; }
++  const char *Execute(const char *Parameters = NULL);
++  };
++
++class cCommands : public cConfig<cCommand> {};
++
++#endif
+diff -Nru muggle-0.2.3/Makefile muggle-0.2.3-fixed/Makefile
+--- muggle-0.2.3/Makefile	2009-01-15 16:01:23.000000000 +0100
++++ muggle-0.2.3-fixed/Makefile	2010-04-22 03:48:12.000000000 +0200
+@@ -91,7 +91,7 @@
+ OBJS = $(PLUGIN).o mg_valmap.o mg_thread_sync.o \
+ 	mg_item.o mg_item_gd.o mg_listitem.o mg_selection.o mg_sel_gd.o vdr_actions.o mg_menu.o vdr_menu.o mg_tools.o \
+ 	vdr_decoder_mp3.o vdr_stream.o vdr_decoder.o vdr_player.o \
+-	vdr_setup.o mg_setup.o mg_incremental_search.o mg_image_provider.o \
++	config.o vdr_setup.o mg_setup.o mg_incremental_search.o mg_image_provider.o \
+ 	mg_skin.o quantize.o mg_playcommands.o pcmplayer.o \
+ 	lyrics.o bitmap.o imagecache.o
+ 
+Dateien muggle-0.2.3/po/de.mo und muggle-0.2.3-fixed/po/de.mo sind verschieden.
+Dateien muggle-0.2.3/po/fi.mo und muggle-0.2.3-fixed/po/fi.mo sind verschieden.
+Dateien muggle-0.2.3/po/fr.mo und muggle-0.2.3-fixed/po/fr.mo sind verschieden.
+Dateien muggle-0.2.3/po/it.mo und muggle-0.2.3-fixed/po/it.mo sind verschieden.

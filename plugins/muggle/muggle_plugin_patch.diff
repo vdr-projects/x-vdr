@@ -1,0 +1,37 @@
+--- plugin.sh.orig	2009-01-18 13:36:12.000000000 +0100
++++ plugin.sh	2009-01-19 17:46:00.000000000 +0100
+@@ -11,8 +11,8 @@
+ source ./../../setup.conf
+ source ./../../functions
+ 
+-WEB="http://projects.vdr-developer.org/attachments/download/35/vdr-muggle-0.2.2.tgz"
+-VERSION="muggle-0.2.2"
++WEB="http://projects.vdr-developer.org/attachments/download/53/vdr-muggle-0.2.3.tgz"
++VERSION="muggle-0.2.3"
+ LINK="muggle"
+ 
+ VAR=`basename $WEB`
+@@ -43,6 +43,23 @@
+ 
+   apt_install "libmad0-dev libtag1-dev libvorbis-dev"
+   apt_install "libwrap0-dev"
++  # Googlyric2 Beta 3 und Python
++  apt_install "python"
++  if [ -f /usr/share/apps/amarok/scripts/Googlyrics2.Beta3.amarokscript.tar.gz ]; then
++    echo "Googlyrics vorhanden"
++  else 
++    cd /usr/share/apps
++    mkdir amarok
++    mkdir amarok/scripts
++    cd /usr/share/apps/amarok/scripts/
++    wget http://quicode.com/Googlyrics2.Beta3.amarokscript.tar.gz
++    tar -xzf Googlyrics2.Beta3.amarokscript.tar.gz
++  fi  
++  mkdir $VDRCONFDIR/plugins/$LINK
++  mkdir $VDRCONFDIR/plugins/$LINK/scripts
++  cp -f $SOURCEDIR/VDR/PLUGINS/src/$LINK/scripts/* $VDRCONFDIR/plugins/$LINK/scripts
++  chmod 0755 $VDRCONFDIR/plugins/$LINK/scripts/muggle_getlyrics
++  chmod 0755 $VDRCONFDIR/plugins/$LINK/scripts/*.py
+ 
+   # scripts
+   if [ -f $DIR/muggle-image-convert ]; then

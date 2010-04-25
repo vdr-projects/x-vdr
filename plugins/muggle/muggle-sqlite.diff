@@ -1,0 +1,14 @@
+--- Makefile.orig
++++ Makefile
+@@ -24,9 +24,9 @@
+ 
+ # Define what database you want to use, one of MySQL (HAVE_MYSQL=1),
+ # PostgreSQL (HAVE_PG=1) or SQLite (HAVE_SQLITE=1).  Default is MySQL.
+-#HAVE_SQLITE = 1
++HAVE_SQLITE = 1
+ #HAVE_PG = 1
+-HAVE_MYSQL = 1
++#HAVE_MYSQL = 1
+ 
+ ### The version number of this plugin (taken from the main source file):
+ 
