@@ -11,8 +11,8 @@ source ./../../x-vdr.conf
 source ./../../setup.conf
 source ./../../functions
 
-WEB="http://wirbel.htpc-forum.de/wirbelscan/vdr-wirbelscan-0.0.4_20080512.tgz"
-VERSION="wirbelscan-0.0.4"
+WEB="http://wirbel.htpc-forum.de/wirbelscan/vdr-wirbelscan-0.0.5-pre11e.tgz"
+VERSION="wirbelscan-0.0.5-pre11e"
 LINK="wirbelscan"
 
 VAR=`basename $WEB`
